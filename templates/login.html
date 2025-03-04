@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Admin Dashboard</title>
+    <!-- Theme initialization script -->
+    <script>
+        function setTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+        }
+        // Initialize theme immediately
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        setTheme(savedTheme);
+    </script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="{{ url_for('static', filename='js/validation.js') }}"></script>
+    <style>
+        :root {
+            /* Light theme variables (default) */
+            --bg-primary: #ffffff;
+            --bg-secondary: #f3f4f6;
+            --bg-tertiary: #e5e7eb;
+            --text-primary: #111827;
+            --text-secondary: #4b5563;
+            --border-color: #d1d5db;
+            --accent-color: #3b82f6;
+            --accent-hover: #2563eb;
+            --danger-color: #ef4444;
+            --danger-hover: #dc2626;
+            --success-color: #22c55e;
+            --success-hover: #16a34a;
+            --danger-rgb: 239,68,68;
+            --success-rgb: 34,197,94;
+            --accent-rgb: 59,130,246;
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #242424;
+            --bg-tertiary: #2a2a2a;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --border-color: #333333;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        .login-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            background-color: var(--bg-primary);
+        }
+
+        .login-card {
+            background-color: var(--bg-secondary);
+            border-radius: 12px;
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .login-logo {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 1.5rem;
+        }
+
+        .login-header h1 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        .login-header p {
+            color: var(--text-secondary);
+        }
+
+        .input-group {
+            display: flex;
+            align-items: center;
+            background-color: var(--bg-tertiary);
+            border-radius: 6px;
+            padding: 0.75rem;
+        }
+
+        .input-group i {
+            color: var(--text-secondary);
+            margin-right: 0.75rem;
+        }
+
+        .input-group input {
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            width: 100%;
+            outline: none;
+        }
+
+        .input-group input::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .login-button {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .login-button:hover {
+            background-color: var(--accent-hover);
+        }
+
+        .alert {
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 6px;
+            color: white;
+            background-color: var(--danger-color);
+        }
+
+        .alert.success {
+            background-color: var(--success-color);
+        }
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed; /* Stay in place */
+            z-index: 1; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%; /* Full width */
+            height: 100%; /* Full height */
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgb(0,0,0); /* Fallback color */
+            background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto; /* 15% from the top and centered */
+            padding: 20px;
+            border: 1px solid #888;
+            width: 30%; /* Could be percentage or pixels */
+            box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .action-btn{
+            padding: 0.75rem;
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .action-btn.primary:hover {
+            background-color: var(--accent-hover);
+        }
+        .action-btn.secondary {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+        .action-btn.secondary:hover {
+            background-color: var(--bg-secondary);
+        }
+
+        .forgot-password-container {
+            text-align: center;
+            margin-top: 1rem;
+        }
+
+        .forgot-password-link {
+            color: var(--accent-color);
+            text-decoration: none;
+            font-size: 0.875rem;
+        }
+
+        .forgot-password-link:hover {
+            text-decoration: underline;
+        }
+
+        .notification-modal {
+            max-width: 400px;
+        }
+
+        .notification-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .notification-header i {
+            font-size: 1.5rem;
+            padding: 0.5rem;
+            border-radius: 50%;
+            background-color: var(--bg-tertiary);
+        }
+
+        .notification-header.success i {
+            color: var(--success-color);
+            background-color: rgba(var(--success-rgb), 0.1);
+        }
+
+        .notification-header.error i {
+            color: var(--danger-color);
+            background-color: rgba(var(--danger-rgb), 0.1);
+        }
+
+        .notification-header h3 {
+            margin: 0;
+            flex: 1;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .close-btn:hover {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .notification-body {
+            margin-bottom: 2rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .notification-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <img src="{{ url_for('static', filename='img/logo.svg') }}" alt="Logo" class="login-logo">
+                <h1>Welcome Back</h1>
+                <p>Please sign in to continue</p>
+            </div>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert {{ category }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+            <form id="loginForm" class="login-form" action="{{ url_for('login') }}" method="POST">
+                <div class="form-group">
+                    <label for="identifier">Identifier</label>
+                    <div class="input-group">
+                        <i data-feather="user"></i>
+                        <input type="text" id="identifier" name="identifier" placeholder="Enter your identifier" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <div class="input-group">
+                        <i data-feather="lock"></i>
+                        <input type="password" id="password" name="password" placeholder="Enter your password" required>
+                    </div>
+                </div>
+                <button type="submit" class="login-button">Sign In</button>
+                <div class="forgot-password-container">
+                    <a href="#" onclick="showForgotPasswordModal()" class="forgot-password-link">Forgot Password?</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Password Change Modal -->
+    <div id="passwordChangeModal" class="modal">
+        <div class="modal-content">
+            <h2>Change Password</h2>
+            <p>You must change your password before continuing.</p>
+            <form id="passwordChangeForm" onsubmit="handlePasswordChange(event)">
+                <div class="form-group">
+                    <label for="currentPassword">Current Password</label>
+                    <input type="password" id="currentPassword" name="currentPassword" required>
+                </div>
+                <div class="form-group">
+                    <label for="newPassword">New Password</label>
+                    <input type="password" id="newPassword" name="newPassword" required>
+                </div>
+                <div class="form-group">
+                    <label for="confirmPassword">Confirm New Password</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" required>
+                </div>
+                <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                    <button type="button" class="action-btn secondary" onclick="hidePasswordChangeModal()">Cancel</button>
+                    <button type="submit" class="action-btn primary">Change Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Forgot Password Modal -->
+    <div id="forgotPasswordModal" class="modal">
+        <div class="modal-content">
+            <h2>Forgot Password</h2>
+            <p>Enter your identifier to reset your password.</p>
+            <form id="forgotPasswordForm" onsubmit="handleForgotPassword(event)">
+                <div class="form-group">
+                    <label for="forgotPasswordIdentifier">Identifier</label>
+                    <input type="text" id="forgotPasswordIdentifier" name="identifier" required>
+                </div>
+                <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                    <button type="button" class="action-btn secondary" onclick="hideForgotPasswordModal()">Cancel</button>
+                    <button type="submit" class="action-btn primary">Reset Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+     <!-- Notification Modal -->
+     <div id="notificationModal" class="modal">
+        <div class="modal-content notification-modal">
+            <div class="notification-header">
+                <i data-feather="info" id="notificationIcon"></i>
+                <h3 id="notificationTitle">Notification</h3>
+                <button class="close-btn" onclick="hideNotificationModal()">
+                    <i data-feather="x"></i>
+                </button>
+            </div>
+            <div class="notification-body">
+                <p id="notificationMessage"></p>
+            </div>
+            <div class="notification-actions">
+                <button class="action-btn" onclick="hideNotificationModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        feather.replace();
+
+        setupFormValidation('loginForm', {
+            'identifier': [
+                ValidationRules.required,
+                ValidationRules.minLength(3)
+            ],
+            'password': [
+                ValidationRules.required
+            ]
+        });
+
+        // Password change modal functions
+        function showPasswordChangeModal() {
+            document.getElementById('passwordChangeModal').style.display = 'block';
+        }
+
+        function hidePasswordChangeModal() {
+            document.getElementById('passwordChangeModal').style.display = 'none';
+            // Se o usuário cancelar a troca de senha, fazer logout
+            fetch('/logout', {
+                method: 'GET'
+            }).then(() => {
+                window.location.href = '/login';
+            }).catch(error => {
+                console.error('Error:', error);
+                window.location.href = '/login';
+            });
+        }
+
+        async function handlePasswordChange(event) {
+            event.preventDefault();
+            const form = event.target;
+            const currentPassword = form.currentPassword.value;
+            const newPassword = form.newPassword.value;
+            const confirmPassword = form.confirmPassword.value;
+
+            const submitButton = form.querySelector('button[type="submit"]');
+            showLoading(submitButton);
+
+            if (newPassword !== confirmPassword) {
+                showNotification('New passwords do not match', 'error');
+                hideLoading(submitButton);
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/change-password', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        current_password: currentPassword,
+                        new_password: newPassword
+                    })
+                });
+
+                if (response.ok) {
+                    showNotification('Password changed successfully. Please login with your new password.', 'success');
+                    window.location.href = '/login';
+                } else {
+                    const data = await response.json();
+                    showNotification(data.error || 'Failed to change password', 'error');
+                }
+            } catch (error) {
+                showNotification('An error occurred while changing password', 'error');
+            }finally{
+                hideLoading(submitButton);
+            }
+        }
+
+        // Show password change modal if required
+        {% if show_password_modal %}
+            showPasswordChangeModal();
+        {% endif %}
+
+
+        // Forgot password modal functions
+        function showForgotPasswordModal() {
+            document.getElementById('forgotPasswordModal').style.display = 'block';
+        }
+
+        function hideForgotPasswordModal() {
+            document.getElementById('forgotPasswordModal').style.display = 'none';
+        }
+
+        async function handleForgotPassword(event) {
+            event.preventDefault();
+            const form = event.target;
+            const identifier = form.identifier.value;
+
+            const submitButton = form.querySelector('button[type="submit"]');
+            showLoading(submitButton);
+
+            try {
+                const response = await fetch('/api/forgot-password', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        identifier: identifier
+                    })
+                });
+
+                if (response.ok) {
+                    showNotification('If the identifier exists in our system, you will receive instructions to reset your password.', 'success');
+                    hideForgotPasswordModal();
+                } else {
+                    const data = await response.json();
+                    showNotification(data.error || 'Failed to process password reset request', 'error');
+                }
+            } catch (error) {
+                showNotification('An error occurred while processing your request', 'error');
+            }finally{
+                hideLoading(submitButton);
+            }
+        }
+
+        window.hideLoading = function(element) {
+        if (!element) return;
+        const loadingIndicator = element.querySelector('.loading-indicator');
+        if (loadingIndicator) {
+            loadingIndicator.remove();
+        }
+        element.classList.remove('loading');
+        element.removeAttribute('disabled');
+        }
+
+        window.showLoading = function(element) {
+        if (!element) return;
+        const loadingDiv = document.createElement('div');
+        loadingDiv.className = 'loading-indicator';
+        loadingDiv.innerHTML = `
+            <div class="spinner"></div>
+            <span>Loading...</span>
+        `;
+        element.classList.add('loading');
+        element.appendChild(loadingDiv);
+        element.setAttribute('disabled', 'true');
+        }
+
+        function showNotification(message, type = 'error') {
+            const modal = document.getElementById('notificationModal');
+            const header = modal.querySelector('.notification-header');
+            const icon = document.getElementById('notificationIcon');
+            const title = document.getElementById('notificationTitle');
+            const messageEl = document.getElementById('notificationMessage');
+
+            // Reset classes
+            header.classList.remove('success', 'error');
+
+            if (type === 'success') {
+                header.classList.add('success');
+                title.textContent = 'Success';
+                icon.setAttribute('data-feather', 'check-circle');
+            } else {
+                header.classList.add('error');
+                title.textContent = 'Error';
+                icon.setAttribute('data-feather', 'alert-circle');
+            }
+
+            messageEl.textContent = message;
+            modal.style.display = 'block';
+            feather.replace();
+        }
+
+        function hideNotificationModal() {
+            document.getElementById('notificationModal').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
