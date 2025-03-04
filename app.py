@@ -198,7 +198,7 @@ def handle_api_response(response,
 @app.route('/')
 def index():
     if 'access_token' in session:
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('departments')) # Changed redirect target
     return redirect(url_for('login'))
 
 
@@ -245,7 +245,7 @@ def change_password():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if 'access_token' in session:
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('departments')) # Changed redirect target
 
     if request.method == 'POST':
         identifier = request.form.get('identifier')
@@ -284,7 +284,7 @@ def login():
 
                 # Only allow proceeding if password change is not required
                 if not session.get('requires_password_change'):
-                    return redirect("document_types_documents.html")
+                    return redirect(url_for('departments')) # Changed redirect target
                 else:
                     # If somehow we got here with requires_password_change still True,
                     # show the modal again
@@ -330,7 +330,7 @@ def categories_document_types(category_id):
     try:
         # Get department details
         logger.info(f"Fetching document types details for ID: {category_id}")
-       
+
         categories_response = requests.get(f"{CATEGORIES_URL}/{category_id}",
                                            headers=headers,
                                            timeout=REQUEST_TIMEOUT)
@@ -349,7 +349,7 @@ def categories_document_types(category_id):
         category = categories_response.json()
 
         return render_template('category_document_types.html',
-                               
+
                                category=category)
     except requests.Timeout:
         logger.error("Request timed out while fetching department categories")
@@ -509,17 +509,17 @@ def proxy_storage(url):
     try:
         storage_url = f"https://storage.googleapis.com/{url}"
         response = requests.get(storage_url, stream=True)
-        
+
         proxy_response = Response(
             response.iter_content(chunk_size=8192),
             content_type=response.headers['Content-Type']
         )
-        
+
         # Add CORS headers
         proxy_response.headers['Access-Control-Allow-Origin'] = '*'
         proxy_response.headers['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
         proxy_response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
-        
+
         return proxy_response
     except Exception as e:
         return jsonify({'error': str(e)}), 500
