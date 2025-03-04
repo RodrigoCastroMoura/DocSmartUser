@@ -198,7 +198,7 @@ def handle_api_response(response,
 @app.route('/')
 def index():
     if 'access_token' in session:
-        return redirect(url_for('departments')) # Changed redirect target
+        return redirect(url_for('departments'))  # Changed redirect target
     return redirect(url_for('login'))
 
 
@@ -245,7 +245,7 @@ def change_password():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if 'access_token' in session:
-        return redirect(url_for('departments')) # Changed redirect target
+        return redirect(url_for('departments'))  # Changed redirect target
 
     if request.method == 'POST':
         identifier = request.form.get('identifier')
@@ -284,7 +284,8 @@ def login():
 
                 # Only allow proceeding if password change is not required
                 if not session.get('requires_password_change'):
-                    return redirect(url_for('document_types')) # Changed redirect target
+                    return redirect(
+                        url_for('document_types'))  # Changed redirect target
                 else:
                     # If somehow we got here with requires_password_change still True,
                     # show the modal again
@@ -321,6 +322,7 @@ def logout():
 
     session.clear()
     return redirect(url_for('login'))
+
 
 @app.route('/document_types')
 @login_required
@@ -476,8 +478,7 @@ def proxy_storage(url):
 
         proxy_response = Response(
             response.iter_content(chunk_size=8192),
-            content_type=response.headers['Content-Type']
-        )
+            content_type=response.headers['Content-Type'])
 
         # Add CORS headers
         proxy_response.headers['Access-Control-Allow-Origin'] = '*'
@@ -487,6 +488,22 @@ def proxy_storage(url):
         return proxy_response
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/departments')
+@login_required
+def departments_api():
+    headers = get_auth_headers()
+    company_id = session.get('company_id')
+    if not company_id:
+        return jsonify({'error': 'Company ID not found in session'}), 400
+
+    response = requests.get(
+        f"{DEPARTMENTS_URL}/companies/{company_id}/departments",
+        headers=headers,
+        timeout=REQUEST_TIMEOUT)
+    return handle_api_response(response,
+                               error_message='Failed to fetch departments')
 
 
 if __name__ == "__main__":
