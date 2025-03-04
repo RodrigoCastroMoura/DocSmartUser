@@ -29,7 +29,7 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # API endpoints
-API_BASE_URL = "http://localhost:8000/api"
+API_BASE_URL = "https://doc-smart-api-rodrigocastromo.replit.app/api"
 LOGIN_URL = f"{API_BASE_URL}/auth/login"
 LOGOUT_URL = f"{API_BASE_URL}/auth/logout"
 REFRESH_URL = f"{API_BASE_URL}/auth/refresh"
@@ -284,7 +284,7 @@ def login():
 
                 # Only allow proceeding if password change is not required
                 if not session.get('requires_password_change'):
-                    return redirect(url_for('departments')) # Changed redirect target
+                    return redirect(url_for('document_types')) # Changed redirect target
                 else:
                     # If somehow we got here with requires_password_change still True,
                     # show the modal again
@@ -322,46 +322,10 @@ def logout():
     session.clear()
     return redirect(url_for('login'))
 
-
-@app.route('/categories/<category_id>/document_types')
+@app.route('/document_types')
 @login_required
-def categories_document_types(category_id):
-    headers = get_auth_headers()
-    try:
-        # Get department details
-        logger.info(f"Fetching document types details for ID: {category_id}")
-
-        categories_response = requests.get(f"{CATEGORIES_URL}/{category_id}",
-                                           headers=headers,
-                                           timeout=REQUEST_TIMEOUT)
-
-        if categories_response.ok:
-            logger.info(
-                f"Successfully fetched {len(categories_response.json())} categories"
-            )
-        else:
-            logger.error(
-                f"Failed to fetch categories: {categories_response.status_code}"
-            )
-            categories = []
-            flash('Error loading categories', 'error')
-
-        category = categories_response.json()
-
-        return render_template('category_document_types.html',
-
-                               category=category)
-    except requests.Timeout:
-        logger.error("Request timed out while fetching department categories")
-        flash('Request timed out', 'error')
-    except requests.ConnectionError:
-        logger.error("Connection error while fetching department categories")
-        flash('Failed to connect to server', 'error')
-    except Exception as e:
-        logger.error(f"Unexpected error in department_categories: {e}")
-        flash('An unexpected error occurred', 'error')
-
-    return redirect(url_for('departments'))
+def document_types():
+    return render_template('document_types.html')
 
 
 @app.route('/document_type/<document_type_id>/documents')
