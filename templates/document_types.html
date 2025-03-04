@@ -437,26 +437,6 @@
                     <span>Created: ${new Date(type.created_at).toLocaleDateString()}</span>
                 </p>
             </div>
-            <div class="document-type-actions">
-                ${
-                    !type.public
-                        ? `
-                    <button class="action-btn success" onclick='showUserAccessModal("${type.id}", "add")'>
-                        <i data-feather="user-plus"></i>
-                    </button>
-                    <button class="action-btn warning" onclick='showUserAccessModal("${type.id}", "remove")'>
-                        <i data-feather="user-minus"></i>
-                    </button>
-                `
-                        : ""
-                }
-                <button class="action-btn" onclick='showEditDocumentTypeModal("${type.id}", ${JSON.stringify(type)})'>
-                    <i data-feather="edit-2"></i>
-                </button>
-                <button class="action-btn danger" onclick="deleteDocumentType('${type.id}')">
-                    <i data-feather="trash-2"></i>
-                </button>
-            </div>
         </div>
     `,
             )

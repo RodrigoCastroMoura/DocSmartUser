@@ -29,17 +29,14 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # API endpoints
-API_BASE_URL = "https://doc-smart-api-rodrigocastromo.replit.app/api"
+API_BASE_URL = "http://127.0.0.1:8000/api"
 LOGIN_URL = f"{API_BASE_URL}/auth/login"
 LOGOUT_URL = f"{API_BASE_URL}/auth/logout"
 REFRESH_URL = f"{API_BASE_URL}/auth/refresh"
 
 # CRUD endpoints
-DEPARTMENTS_URL = f"{API_BASE_URL}/departments"
 CATEGORIES_URL = f"{API_BASE_URL}/categories"
 DOCUMENTS_URL = f"{API_BASE_URL}/documents"
-USERS_URL = f"{API_BASE_URL}/users"
-ADMIN_URL = f"{API_BASE_URL}/admins"
 DOCUMENT_TYPES_URL = f"{API_BASE_URL}/document_types"
 
 # Request timeout in seconds
@@ -198,7 +195,7 @@ def handle_api_response(response,
 @app.route('/')
 def index():
     if 'access_token' in session:
-        return redirect(url_for('departments'))  # Changed redirect target
+        return redirect(url_for('document_types'))  # Changed redirect target
     return redirect(url_for('login'))
 
 
@@ -245,7 +242,7 @@ def change_password():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if 'access_token' in session:
-        return redirect(url_for('departments'))  # Changed redirect target
+        return redirect(url_for('document_types'))  # Changed redirect target
 
     if request.method == 'POST':
         identifier = request.form.get('identifier')
@@ -340,7 +337,7 @@ def document_type_documents(document_type_id):
         return jsonify({'error': 'Company ID not found in session'}), 400
 
     try:
-        response = requests.get(f"{DOCUMENT_TYPES_URL}/{document_type_id}",
+        response = requests.get(f"{DOCUMENT_TYPES_URL}/user/{document_type_id}",
                                 headers=headers,
                                 timeout=REQUEST_TIMEOUT)
 
@@ -353,7 +350,7 @@ def document_type_documents(document_type_id):
         document_type = response.json()
 
         categories_response = requests.get(
-            f"{CATEGORIES_URL}/{document_type.get('category_id')}",
+            f"{CATEGORIES_URL}/user/{document_type.get('category_id')}",
             headers=headers,
             timeout=REQUEST_TIMEOUT)
 
@@ -377,7 +374,40 @@ def document_type_documents(document_type_id):
     except Exception as e:
         logger.error(f"Unexpected error in document_type_documents: {e}")
         flash('An unexpected error occurred', 'error')
-    return redirect(url_for('departments'))
+    return redirect(url_for('document_types'))
+
+
+@app.route('/api/documents')
+@login_required
+def documents_api():
+    headers = get_auth_headers()
+    company_id = session.get('company_id')
+
+    if not company_id:
+        return jsonify({'error': 'Company ID not found in session'}), 400
+
+    try:
+        params = {
+            'page': request.args.get('page', 1),
+            'per_page': request.args.get('per_page', 9)
+        }
+
+        # Remove None values
+        params = {k: v for k, v in params.items() if v is not None}
+
+        response = requests.get(f"{DOCUMENTS_URL}/user",
+                                headers=headers,
+                                params=params,
+                                timeout=REQUEST_TIMEOUT)
+        return handle_api_response(response,
+                                   error_message='Failed to fetch documents')
+    except requests.Timeout:
+        return jsonify({'error': 'Request timed out'}), 504
+    except requests.ConnectionError:
+        return jsonify({'error': 'Failed to connect to server'}), 503
+    except Exception as e:
+        print(f"Error fetching documents: {e}")
+        return jsonify({'error': 'An unexpected error occurred'}), 500
 
 
 @app.route('/api/documents', methods=['POST'])
@@ -490,24 +520,35 @@ def proxy_storage(url):
         return jsonify({'error': str(e)}), 500
 
 
-@app.route('/api/departments')
+@app.route('/api/document_types')
 @login_required
-def departments_api():
+def document_types_api():
     headers = get_auth_headers()
     company_id = session.get('company_id')
+
     if not company_id:
         return jsonify({'error': 'Company ID not found in session'}), 400
 
-    response = requests.get(
-        f"{DEPARTMENTS_URL}/companies/{company_id}/departments",
-        headers=headers,
-        timeout=REQUEST_TIMEOUT)
-    return handle_api_response(response,
-                               error_message='Failed to fetch departments')
+    if request.method == 'GET':
 
+        params = {
+            'page': request.args.get('page', 1),
+            'per_page': request.args.get('per_page', 9),
+            'company_id': session.get('company_id')
+        }
+
+        response = requests.get(
+            f"{DOCUMENT_TYPES_URL}/public-or-allowed",
+            headers=headers,
+            params=params,
+            timeout=REQUEST_TIMEOUT)
+        return handle_api_response(
+            response, error_message='Failed to fetch document types')
+
+    
 
 if __name__ == "__main__":
     # Ensure upload folder exists
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
     port = int(os.environ.get('PORT', 3000))  # Changed from 5000 to 3000
-    app.run(host='0.0.0.0', port=port, debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)
