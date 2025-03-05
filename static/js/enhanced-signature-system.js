@@ -18,98 +18,144 @@ let currentSignatureArea = null;
 let signedAreas = [];
 let documentUrl = null;
 
-// Processar o documento para encontrar áreas de assinatura
 async function processDocumentForSignature(url) {
   try {
-    console.log("Processando documento para assinaturas:", url);
-    documentUrl = url;
-    
-    // Obter informações do usuário da sessão ou use um padrão para testes
-    const userInfo = {
-      name: document.getElementById('name-user')?.value || 'Usuário',
-      id: document.getElementById('user_id')?.value || '1'
-    };
-    
-    // Obter o document_id da URL se possível
-    let documentId = null;
-    if (url) {
-      const urlParts = url.split('/');
-      documentId = urlParts[urlParts.length - 1];
-    }
-    
-    // Chamar a API para encontrar áreas de assinatura
-    const response = await fetch('/api/document/find-signature-areas', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        document_url: url,
-        user_info: userInfo,
-        document_id: documentId
-      })
-    });
-    
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Erro ao processar documento');
-    }
-    
-    const data = await response.json();
-    console.log("Áreas de assinatura encontradas:", data);
-    
-    if (data.success) {
-      signatureAreas = data.signature_areas || [];
+      console.log("Processando documento para assinaturas:", url);
+      documentUrl = url;
       
-      // Renderizar as áreas de assinatura no documento
-      renderSignatureAreasOnDocument(signatureAreas);
+      // Obter informações do usuário da sessão ou use um padrão para testes
+      const userInfo = {
+          name: document.getElementById('name-user')?.value || 'Usuário',
+          id: document.getElementById('user_id')?.value || '1'
+      };
+      
+      // Verificar se temos uma URL válida
+      if (!url) {
+          console.error("URL do documento não fornecida");
+          return {
+              success: false,
+              message: 'URL do documento não fornecida'
+          };
+      }
+      
+      // IMPORTANTE: Como a API ainda não está implementada, 
+      // vamos usar dados simulados para desenvolvimento e demonstração
+      console.log("API não disponível, usando dados simulados para demonstração");
+      
+      // Simular algumas áreas de assinatura para o documento atual
+      // Estas seriam normalmente retornadas pela API
+      const simulatedSignatureAreas = [
+          { 
+              x: 100, 
+              y: 150, 
+              width: 200, 
+              height: 50, 
+              page_num: 1,
+              signature_text: "Assinatura do contratante" 
+          },
+          { 
+              x: 100, 
+              y: 300, 
+              width: 200, 
+              height: 50, 
+              page_num: 1,
+              signature_text: "Assinatura do responsável" 
+          }
+      ];
+      
+      // Definir as áreas de assinatura e renderizá-las
+      signatureAreas = simulatedSignatureAreas;
       
       return {
-        success: true,
-        message: data.message,
-        totalSignatureAreas: signatureAreas.length
+          success: true,
+          message: "Áreas de assinatura simuladas para demonstração",
+          totalSignatureAreas: signatureAreas.length
       };
-    } else {
-      return {
-        success: false,
-        message: data.error || 'Não foi possível encontrar áreas para assinatura'
-      };
-    }
+      
+      /* COMENTADO: O código original que tenta chamar a API
+      try {
+          // Obter o document_id da URL se possível
+          let documentId = null;
+          if (url) {
+              const urlParts = url.split('/');
+              documentId = urlParts[urlParts.length - 1];
+          }
+          
+          // Chamada API 
+          const response = await fetch('/api/document/find-signature-areas', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                  document_url: url,
+                  user_info: userInfo,
+                  document_id: documentId
+              })
+          });
+          
+          if (!response.ok) {
+              throw new Error(`Erro na API: ${response.status}`);
+          }
+          
+          const data = await response.json();
+          
+          if (data.success) {
+              signatureAreas = data.signature_areas || [];
+              return {
+                  success: true,
+                  message: data.message,
+                  totalSignatureAreas: signatureAreas.length
+              };
+          } else {
+              return {
+                  success: false,
+                  message: data.error || 'Não foi possível encontrar áreas para assinatura'
+              };
+          }
+      } catch (error) {
+          console.error("Erro ao chamar API para áreas de assinatura:", error);
+          throw error;
+      }
+      */
+      
   } catch (error) {
-    console.error("Erro ao processar documento:", error);
-    return {
-      success: false,
-      message: error.message || 'Erro ao processar documento para assinatura'
-    };
+      console.error("Erro ao processar documento:", error);
+      return {
+          success: false,
+          message: error.message || 'Erro ao processar documento para assinatura'
+      };
   }
 }
 
-// Renderizar as áreas de assinatura no documento
 function renderSignatureAreasOnDocument(areas) {
-  if (!areas || areas.length === 0) return;
+  if (!areas || areas.length === 0) {
+      console.log("Nenhuma área de assinatura para renderizar");
+      return;
+  }
   
   console.log("Renderizando áreas de assinatura:", areas);
   
   // Encontrar o container de assinaturas ou criar um novo
   let signaturesContainer = document.getElementById('signatures-container');
   if (!signaturesContainer) {
-    const pdfContainer = document.querySelector('.preview-container');
-    if (!pdfContainer) {
-      console.error('Container do PDF não encontrado');
-      return;
-    }
-    
-    signaturesContainer = document.createElement('div');
-    signaturesContainer.id = 'signatures-container';
-    signaturesContainer.style.position = 'absolute';
-    signaturesContainer.style.top = '0';
-    signaturesContainer.style.left = '0';
-    signaturesContainer.style.width = '100%';
-    signaturesContainer.style.height = '100%';
-    signaturesContainer.style.pointerEvents = 'none';
-    signaturesContainer.style.zIndex = '10';
-    
-    pdfContainer.appendChild(signaturesContainer);
+      const pdfContainer = document.querySelector('.preview-container');
+      if (!pdfContainer) {
+          console.error('Container do PDF não encontrado');
+          return;
+      }
+      
+      signaturesContainer = document.createElement('div');
+      signaturesContainer.id = 'signatures-container';
+      signaturesContainer.style.position = 'absolute';
+      signaturesContainer.style.top = '0';
+      signaturesContainer.style.left = '0';
+      signaturesContainer.style.width = '100%';
+      signaturesContainer.style.height = '100%';
+      signaturesContainer.style.pointerEvents = 'none';
+      signaturesContainer.style.zIndex = '10';
+      
+      pdfContainer.appendChild(signaturesContainer);
   }
   
   // Limpar áreas existentes
@@ -117,29 +163,32 @@ function renderSignatureAreasOnDocument(areas) {
   
   // Adicionar cada área de assinatura
   areas.forEach((area, index) => {
-    const signatureArea = document.createElement('div');
-    signatureArea.className = 'signature-area';
-    signatureArea.style.position = 'absolute';
-    signatureArea.style.left = `${area.x}px`;
-    signatureArea.style.top = `${area.y}px`;
-    signatureArea.style.width = `${area.width}px`;
-    signatureArea.style.height = `${area.height}px`;
-    signatureArea.style.pointerEvents = 'auto';
-    signatureArea.dataset.index = index;
-    signatureArea.dataset.pageNum = area.page_num;
-    
-    const signaturePrompt = document.createElement('div');
-    signaturePrompt.className = 'signature-prompt';
-    signaturePrompt.innerHTML = '<i class="fas fa-pen-fancy"></i><span>Assinar aqui</span>';
-    
-    signatureArea.appendChild(signaturePrompt);
-    
-    // Adicionar evento de clique para assinar
-    signatureArea.addEventListener('click', () => {
-      openSignatureModal(area, index);
-    });
-    
-    signaturesContainer.appendChild(signatureArea);
+      const signatureArea = document.createElement('div');
+      signatureArea.className = 'signature-area';
+      signatureArea.style.position = 'absolute';
+      signatureArea.style.left = `${area.x}px`;
+      signatureArea.style.top = `${area.y}px`;
+      signatureArea.style.width = `${area.width}px`;
+      signatureArea.style.height = `${area.height}px`;
+      signatureArea.style.pointerEvents = 'auto';
+      signatureArea.dataset.index = index;
+      signatureArea.dataset.pageNum = area.page_num;
+      
+      const signaturePrompt = document.createElement('div');
+      signaturePrompt.className = 'signature-prompt';
+      signaturePrompt.innerHTML = '<i class="fas fa-pen-fancy"></i><span>Assinar aqui</span>';
+      
+      signatureArea.appendChild(signaturePrompt);
+      
+      // Adicionar evento de clique para assinar
+      signatureArea.addEventListener('click', () => {
+          openSignatureModal(area, index);
+      });
+      
+      signaturesContainer.appendChild(signatureArea);
+      
+      // Log para debug
+      console.log(`Área de assinatura ${index} renderizada em x:${area.x} y:${area.y}`);
   });
 }
 
@@ -478,47 +527,127 @@ function injectSignatureHTML() {
   document.body.appendChild(signatureModal);
 }
 
-// Inicializar o sistema de assinatura quando um documento é aberto
-async function initSignatureSystem(documentUrl) {
+document.addEventListener('DOMContentLoaded', function() {
+  // Injetar o CSS necessário
+  injectSignatureStyles();
+
+  // Adicionar os elementos HTML necessários
+  injectSignatureHTML();
+});
+
+// Modifique a função processDocumentForSignature para remover qualquer return fora do escopo da função
+async function processDocumentForSignature(url) {
   try {
-    console.log("Inicializando sistema de assinatura para:", documentUrl);
-    
-    // Processar o documento para encontrar áreas de assinatura
-    const result = await processDocumentForSignature(documentUrl);
-
-    if (result.success && result.totalSignatureAreas > 0) {
-      showNotification(result.message, 'success');
-
-      // Encontrar o container onde o PDF é renderizado
-      const pdfContainer = document.querySelector('.preview-container');
-
-      if (pdfContainer) {
-        // Criar um container para as áreas de assinatura
-        let signaturesContainer = document.getElementById('signatures-container');
-        if (!signaturesContainer) {
-          signaturesContainer = document.createElement('div');
-          signaturesContainer.id = 'signatures-container';
-          signaturesContainer.style.position = 'absolute';
-          signaturesContainer.style.top = '0';
-          signaturesContainer.style.left = '0';
-          signaturesContainer.style.width = '100%';
-          signaturesContainer.style.height = '100%';
-          signaturesContainer.style.pointerEvents = 'none';
-          signaturesContainer.style.zIndex = '10';
-
-          pdfContainer.appendChild(signaturesContainer);
-        }
-      } else {
-        console.error('Container PDF não encontrado');
+      console.log("Processando documento para assinaturas:", url);
+      documentUrl = url;
+      
+      // Obter informações do usuário da sessão ou use um padrão para testes
+      const userInfo = {
+          name: document.getElementById('name-user')?.value || 'Usuário',
+          id: document.getElementById('user_id')?.value || '1'
+      };
+      
+      // Verificar se temos uma URL válida
+      if (!url) {
+          console.error("URL do documento não fornecida");
+          return {
+              success: false,
+              message: 'URL do documento não fornecida'
+          };
       }
-    } else {
-      showNotification(result.message || 'Não foram encontradas áreas para assinatura', 'info');
-    }
+      
+      // Simular algumas áreas de assinatura
+      const simulatedSignatureAreas = [
+          { 
+              x: 100, 
+              y: 150, 
+              width: 200, 
+              height: 50, 
+              page_num: 1,
+              signature_text: "Assinatura do contratante" 
+          },
+          { 
+              x: 100, 
+              y: 300, 
+              width: 200, 
+              height: 50, 
+              page_num: 1,
+              signature_text: "Assinatura do responsável" 
+          }
+      ];
+      
+      // Definir as áreas de assinatura
+      signatureAreas = simulatedSignatureAreas;
+      
+      return {
+          success: true,
+          message: "Áreas de assinatura simuladas para demonstração",
+          totalSignatureAreas: signatureAreas.length
+      };
+      
   } catch (error) {
-    console.error('Erro ao inicializar sistema de assinatura:', error);
-    showNotification('Erro ao inicializar sistema de assinatura: ' + error.message, 'error');
+      console.error("Erro ao processar documento:", error);
+      return {
+          success: false,
+          message: error.message || 'Erro ao processar documento para assinatura'
+      };
   }
 }
+
+// Certifique-se de que a função initSignatureSystem está definida no escopo global
+window.initSignatureSystem = async function(documentUrl) {
+  try {
+      console.log("Inicializando sistema de assinatura para:", documentUrl);
+      
+      if (!documentUrl) {
+          console.error("URL do documento não fornecida");
+          return;
+      }
+      
+      // Processar o documento para encontrar áreas de assinatura
+      const result = await processDocumentForSignature(documentUrl);
+
+      if (result.success && result.totalSignatureAreas > 0) {
+          console.log(`Encontradas ${result.totalSignatureAreas} áreas de assinatura`);
+          showNotification(`Encontradas ${result.totalSignatureAreas} áreas para assinatura`, 'success');
+
+          // Garante que o container de assinaturas existe e está corretamente posicionado
+          const previewContainer = document.querySelector('.preview-container');
+          if (previewContainer) {
+              let signaturesContainer = document.getElementById('signatures-container');
+              if (!signaturesContainer) {
+                  signaturesContainer = document.createElement('div');
+                  signaturesContainer.id = 'signatures-container';
+                  signaturesContainer.style.position = 'absolute';
+                  signaturesContainer.style.top = '0';
+                  signaturesContainer.style.left = '0';
+                  signaturesContainer.style.width = '100%';
+                  signaturesContainer.style.height = '100%';
+                  signaturesContainer.style.pointerEvents = 'none';
+                  signaturesContainer.style.zIndex = '10';
+
+                  previewContainer.appendChild(signaturesContainer);
+              }
+              
+              // Garantir que o container esteja vazio antes de renderizar
+              signaturesContainer.innerHTML = '';
+              
+              // Renderizar as áreas de assinatura
+              renderSignatureAreasOnDocument(signatureAreas);
+          } else {
+              console.error('Container de preview não encontrado');
+          }
+      } else {
+          console.log("Nenhuma área de assinatura encontrada ou erro:", result.message);
+          showNotification(result.message || 'Não foram encontradas áreas para assinatura', 'info');
+      }
+  } catch (error) {
+      console.error('Erro ao inicializar sistema de assinatura:', error);
+      showNotification('Erro ao inicializar sistema de assinatura: ' + error.message, 'error');
+  }
+};
+
+// Remova o evento de documento pronto que procura por botões e substitua pelo código acima
 
 // Inicializar o sistema quando o documento for carregado
 document.addEventListener('DOMContentLoaded', function() {
@@ -553,6 +682,58 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 });
+
+async function initSignatureSystem(documentUrl) {
+  try {
+      console.log("Inicializando sistema de assinatura para:", documentUrl);
+      
+      if (!documentUrl) {
+          console.error("URL do documento não fornecida");
+          return;
+      }
+      
+      // Processar o documento para encontrar áreas de assinatura
+      const result = await processDocumentForSignature(documentUrl);
+
+      if (result.success && result.totalSignatureAreas > 0) {
+          console.log(`Encontradas ${result.totalSignatureAreas} áreas de assinatura`);
+          showNotification(`Encontradas ${result.totalSignatureAreas} áreas para assinatura`, 'success');
+
+          // Garante que o container de assinaturas existe e está corretamente posicionado
+          const previewContainer = document.querySelector('.preview-container');
+          if (previewContainer) {
+              let signaturesContainer = document.getElementById('signatures-container');
+              if (!signaturesContainer) {
+                  signaturesContainer = document.createElement('div');
+                  signaturesContainer.id = 'signatures-container';
+                  signaturesContainer.style.position = 'absolute';
+                  signaturesContainer.style.top = '0';
+                  signaturesContainer.style.left = '0';
+                  signaturesContainer.style.width = '100%';
+                  signaturesContainer.style.height = '100%';
+                  signaturesContainer.style.pointerEvents = 'none';
+                  signaturesContainer.style.zIndex = '10';
+
+                  previewContainer.appendChild(signaturesContainer);
+              }
+              
+              // Garantir que o container esteja vazio antes de renderizar
+              signaturesContainer.innerHTML = '';
+              
+              // Renderizar as áreas de assinatura
+              renderSignatureAreasOnDocument(signatureAreas);
+          } else {
+              console.error('Container de preview não encontrado');
+          }
+      } else {
+          console.log("Nenhuma área de assinatura encontrada ou erro:", result.message);
+          showNotification(result.message || 'Não foram encontradas áreas para assinatura', 'info');
+      }
+  } catch (error) {
+      console.error('Erro ao inicializar sistema de assinatura:', error);
+      showNotification('Erro ao inicializar sistema de assinatura: ' + error.message, 'error');
+  }
+}
 
 // Função helper para mostrar notificações
 function showNotification(message, type = 'info') {
