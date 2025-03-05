@@ -129,6 +129,7 @@ def apply_signatures():
 def process_document_for_signature_areas(document_path, user_info):
     """
     Processa um documento PDF para encontrar possíveis áreas de assinatura.
+    Utiliza análise de texto e padrões visuais para detectar onde as assinaturas devem ser colocadas.
     """
     signature_areas = []
     
@@ -144,13 +145,22 @@ def process_document_for_signature_areas(document_path, user_info):
                 # Extrair texto da página
                 text = page.extract_text()
                 
-                # Palavras-chave que podem indicar áreas de assinatura
-                signature_keywords = ['assinar', 'assinatura', 'assinado', 'firma', 'certificado', 
-                                     'contratante', 'responsável', 'testemunha']
+                # Palavras-chave que podem indicar áreas de assinatura em português
+                signature_keywords = [
+                    'assinar', 'assinatura', 'assinado', 'firma', 'certificado', 
+                    'contratante', 'responsável', 'testemunha', 'reconheço', 'confirmo',
+                    'concordo', 'autorizo', 'aprovo', 'declaro', 'ciente'
+                ]
                 
                 # Dividir o nome do usuário para busca
                 user_name_parts = user_info['name'].lower().split()
                 
+                # Obter dimensões da página
+                mediabox = page.mediabox
+                width = float(mediabox.width)
+                height = float(mediabox.height)
+                
+                # Processar texto linha por linha para encontrar indicações de assinatura
                 lines = text.split('\n')
                 for i, line in enumerate(lines):
                     line_lower = line.lower()
@@ -159,32 +169,53 @@ def process_document_for_signature_areas(document_path, user_info):
                     contains_signature_keyword = any(keyword in line_lower for keyword in signature_keywords)
                     
                     # Verificar se a linha contém partes do nome do usuário
-                    contains_user_name = any(part in line_lower for part in user_name_parts)
+                    contains_user_name = any(part in line_lower for part in user_name_parts if len(part) > 2)
                     
-                    # Verificar se a linha contém underscores, traços ou pontos (possíveis linhas)
-                    contains_line_indicator = '____' in line or '----' in line or '....' in line
+                    # Verificar se a linha contém indicadores visuais de linha para assinatura
+                    contains_line_indicator = '____' in line or '---' in line or '...' in line or '__' in line or 'X___' in line
                     
-                    if contains_signature_keyword or contains_user_name or contains_line_indicator:
-                        # Estimar posição vertical baseada na posição da linha no texto
-                        mediabox = page.mediabox
-                        width = float(mediabox.width)
-                        height = float(mediabox.height)
-                        
-                        # Estimar Y baseado na posição da linha no texto
-                        y_ratio = 1.0 - (i / max(len(lines), 1))
+                    # Verificar padrões específicos de documentos
+                    contains_signature_pattern = 'assinatura do' in line_lower or 'assinar aqui' in line_lower
+                    
+                    if contains_signature_keyword or contains_user_name or contains_line_indicator or contains_signature_pattern:
+                        # Calcular posição com base na posição da linha no texto
+                        # Esta é uma estimativa, considerando que a ordem das linhas corresponde aproximadamente à posição vertical
+                        y_ratio = 1.0 - ((i + 1) / (len(lines) + 1))
                         y_position = height * y_ratio
                         
-                        # Adicionar área de assinatura
+                        # Adicionar área de assinatura com tamanho apropriado
+                        # Ajustamos o tamanho para uma assinatura legível
                         signature_areas.append({
                             'page_num': page_num,
-                            'x': width * 0.1,  # 10% da largura
-                            'y': y_position,
+                            'x': width * 0.1,  # 10% da largura (margem esquerda)
+                            'y': y_position - (height * 0.03),  # Ajuste para posicionar abaixo da linha
                             'width': width * 0.3,  # 30% da largura
                             'height': height * 0.05,  # 5% da altura
                             'text': line
                         })
             
-            # Adicionar áreas de rubrica em todas as páginas sem assinatura
+            # Se não encontramos nenhuma área de assinatura, adicionar áreas padrão
+            if not signature_areas:
+                # Adicionar uma assinatura na última página
+                last_page_num = len(pdf.pages) - 1
+                last_page = pdf.pages[last_page_num]
+                mediabox = last_page.mediabox
+                width = float(mediabox.width)
+                height = float(mediabox.height)
+                
+                # Adicionar área de assinatura principal na parte inferior
+                signature_areas.append({
+                    'page_num': last_page_num,
+                    'x': width * 0.1,  # 10% da largura
+                    'y': height * 0.2,  # 20% da altura a partir do fundo
+                    'width': width * 0.3,  # 30% da largura
+                    'height': height * 0.05,  # 5% da altura
+                    'text': 'Assinatura principal',
+                    'is_primary': True
+                })
+            
+            # Adicionar áreas de rubrica em todas as páginas exceto a última
+            # (ou a que já tem a assinatura principal)
             pages_with_signatures = set(area['page_num'] for area in signature_areas)
             for page_num in range(len(pdf.pages)):
                 if page_num not in pages_with_signatures:
@@ -197,13 +228,14 @@ def process_document_for_signature_areas(document_path, user_info):
                     signature_areas.append({
                         'page_num': page_num,
                         'x': width * 0.8,  # 80% da largura (canto direito)
-                        'y': height * 0.9,  # 90% da altura (parte inferior)
+                        'y': height * 0.95,  # 95% da altura (parte inferior)
                         'width': width * 0.15,  # 15% da largura
-                        'height': height * 0.07,  # 7% da altura
+                        'height': height * 0.04,  # 4% da altura
                         'text': 'Rubrica',
                         'is_initials': True
                     })
         
+        logger.info(f"Encontradas {len(signature_areas)} áreas de assinatura")
         return signature_areas
     
     except Exception as e:

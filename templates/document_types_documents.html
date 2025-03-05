@@ -94,14 +94,32 @@
         </div>
     </div>
 </div>
-<!-- No template document_types_documents.html, dentro do div com classe preview-container -->
+<!-- Container para as assinaturas -->
 <div id="signatures-container" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; pointer-events: none;"></div>
+
+<!-- Carregando bibliotecas necessárias -->
+<script src="https://cdn.jsdelivr.net/npm/pdf.js@2.10.377/build/pdf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.0.3/dist/tesseract.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script src="{{ url_for('static', filename='js/enhanced-signature-system.js') }}"></script>
+
 <style>
   .preview-container {
     position: relative;
+  }
+  
+  /* Estilos adicionais para melhorar a visualização do PDF */
+  .pdf-viewer-container {
+    position: relative;
+    overflow: auto;
+    background-color: #f8f9fa;
+  }
+  
+  /* Estilos para áreas de assinatura */
+  .signature-area {
+    position: absolute;
+    cursor: pointer;
+    transition: all 0.2s;
   }
 </style>
 <script>
