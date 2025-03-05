@@ -41,146 +41,133 @@ async function detectSignatureAreasByOCR(pdfUrl, searchNames = ['Contratante', '
           // Obter todos os textos da página
           const textItems = textContent.items;
           
-          // Primeiro, encontrar referências diretas às assinaturas
+          // PRIMEIRA ESTRATÉGIA: Buscar pelo nome exato passado pelo usuário
           for (const searchName of searchNames) {
-              const searchTerm = `Assinatura do ${searchName}`.toLowerCase();
+              const searchNameLower = searchName.toLowerCase();
               
               for (let i = 0; i < textItems.length; i++) {
                   const item = textItems[i];
                   const text = item.str.toLowerCase();
                   
-                  // Verificar se encontramos uma referência à assinatura da pessoa buscada
-                  if (text.includes(searchTerm) || 
-                      (text.includes("assinatura") && text.includes(searchName.toLowerCase()))) {
+                  // Verificar se o texto contém o nome buscado
+                  if (text.includes(searchNameLower)) {
                       
-                      console.log(`Encontrado campo de assinatura para "${searchName}" na página ${pageNum}`);
+                      console.log(`Encontrado nome "${searchName}" na página ${pageNum}: "${item.str}"`);
                       
-                      // Procurar pela linha horizontal que geralmente vem logo após o texto
-                      // Geralmente é a linha onde a pessoa deve assinar
-                      let lineX = item.transform[4];
-                      let lineY = item.transform[5];
+                      // Coordenadas do nome encontrado
+                      const nameX = item.transform[4];
+                      const nameY = item.transform[5];
                       
-                      // Usar a posição exata indicada pela linha ou pelo texto
-                      detectedAreas.push({
-                          x: lineX * zoomScale, 
-                          y: (lineY + 20) * zoomScale, // Posicionar um pouco abaixo do texto
-                          width: 300 * zoomScale,
-                          height: 40 * zoomScale,
-                          page_num: pageNum,
-                          signature_text: `Assinatura do ${searchName}`,
-                          searchName: searchName
-                      });
-                  }
-              }
-          }
-          
-          // Segunda estratégia: procurar por linhas de assinatura e seus contextos
-          // As linhas geralmente são representadas por underscores ou espaços em PDF
-          const signatureLines = [];
-          
-          for (let i = 0; i < textItems.length; i++) {
-              const item = textItems[i];
-              const text = item.str;
-              
-              // Procurar por elementos que parecem ser linhas de assinatura
-              if (text.includes('_') || 
-                  text.match(/^\s+$/) || 
-                  text === '' && item.width > 50) {
-                  
-                  signatureLines.push({
-                      x: item.transform[4],
-                      y: item.transform[5],
-                      width: item.width || 200,
-                      lineItem: item,
-                      index: i
-                  });
-              }
-          }
-          
-          // Agora, para cada linha, procurar contexto sobre quem deve assinar
-          for (const line of signatureLines) {
-              // Verificar os textos próximos (principalmente acima ou à esquerda)
-              let contextFound = false;
-              
-              // Verificar 5 itens anteriores e 5 posteriores para contexto
-              const startIdx = Math.max(0, line.index - 5);
-              const endIdx = Math.min(textItems.length - 1, line.index + 5);
-              
-              for (let i = startIdx; i <= endIdx; i++) {
-                  const item = textItems[i];
-                  const text = item.str.toLowerCase();
-                  
-                  // Para cada nome buscado, verificar se há um contexto correspondente
-                  for (const searchName of searchNames) {
-                      if (text.includes(searchName.toLowerCase())) {
-                          console.log(`Encontrada relação entre linha de assinatura e "${searchName}"`);
+                      const rightText = item.str;
+
+                      if (rightText.includes("_") || rightText.includes("-") || 
+                          rightText.match(/^\s+$/) || rightText.length > 10) {
+                          
+                          foundSpaceToRight = true;
+                          console.log(`Encontrado espaço para assinatura à direita de "${searchName}"`);
                           
                           detectedAreas.push({
-                              x: line.x * zoomScale,
-                              y: (line.y - 30) * zoomScale, // Posicionar acima da linha
-                              width: line.width * zoomScale,
-                              height: 40 * zoomScale,
+                              x: rightItem.transform[4] * zoomScale,
+                              y: rightItem.transform[5] * zoomScale - 30, // Ligeiramente acima da linha
+                              width: 300,
+                              height: 50,
                               page_num: pageNum,
                               signature_text: `Assinatura do ${searchName}`,
-                              searchName: searchName
+                              searchName: searchName,
+                              detection: "à direita do nome"
                           });
                           
-                          contextFound = true;
                           break;
                       }
-                  }
-                  
-                  if (contextFound) break;
-              }
-          }
-          
-          // Terceira estratégia: verificar especificamente os campos de assinatura
-          // mais comuns em contratos brasileiros
-          for (const searchName of searchNames) {
-              // Procurar diretamente por campos de assinatura comuns
-              for (let i = 0; i < textItems.length; i++) {
-                  const item = textItems[i];
-                  const text = item.str.toLowerCase();
-                  
-                  // Verificar padrões comuns de campos de assinatura
-                  if ((text.includes("assinatura") && text.includes(searchName.toLowerCase())) ||
-                      (text.includes("assinado por") && text.includes(searchName.toLowerCase())) ||
-                      (text.includes("assinar") && text.includes(searchName.toLowerCase()))) {
                       
-                      // Verificar se há uma linha de assinatura próxima
-                      let foundLine = false;
-                      
-                      for (const line of signatureLines) {
-                          // A linha deve estar próxima (vertical ou horizontal)
-                          const verticalDiff = Math.abs(line.y - item.transform[5]);
-                          const horizontalDiff = Math.abs(line.x - item.transform[4]);
+                      // 2. Se não encontrou à direita, procurar ACIMA do nome
+                      if (!foundSpaceToRight) {
+                          let foundSpaceAbove = false;
+                          const aboveThreshold = nameY + 50; // Considerar até 50 pontos acima
                           
-                          if (verticalDiff < 50 && horizontalDiff < 300) {
+                          for (let j = 0; j < textItems.length; j++) {
+                              const aboveItem = textItems[j];
+                              // Se está aproximadamente na mesma coluna e acima
+                              if (Math.abs(aboveItem.transform[4] - nameX) < 100 && 
+                                  aboveItem.transform[5] > nameY && 
+                                  aboveItem.transform[5] < aboveThreshold) {
+                                  
+                                  // Se encontrou um texto que parece ser uma linha de assinatura
+                                  const aboveText = aboveItem.str;
+                                  if (aboveText.includes("_") || aboveText.includes("-") || 
+                                      aboveText.match(/^\s+$/) || aboveText.length > 10) {
+                                      
+                                      foundSpaceAbove = true;
+                                      console.log(`Encontrado espaço para assinatura acima de "${searchName}"`);
+                                      
+                                      detectedAreas.push({
+                                          x: aboveItem.transform[4] * zoomScale,
+                                          y: aboveItem.transform[5] * zoomScale - 30, // Ligeiramente acima da linha
+                                          width: 300,
+                                          height: 50,
+                                          page_num: pageNum,
+                                          signature_text: `Assinatura do ${searchName}`,
+                                          searchName: searchName,
+                                          detection: "acima do nome"
+                                      });
+                                      
+                                      break;
+                                  }
+                              }
+                          }
+                          
+                          // 3. Se não encontrou nem à direita nem acima, criar área próxima ao nome
+                          if (!foundSpaceAbove) {
+                              console.log(`Não encontrado espaço específico, criando área próxima ao nome "${searchName}"`);
+                              
                               detectedAreas.push({
-                                  x: line.x * zoomScale,
-                                  y: (line.y - 30) * zoomScale,
-                                  width: line.width * zoomScale,
-                                  height: 40 * zoomScale,
+                                  x: (nameX + 50) * zoomScale, // Um pouco à direita do nome
+                                  y: nameY * zoomScale - 40, // Um pouco acima do nome
+                                  width: 300,
+                                  height: 50,
                                   page_num: pageNum,
                                   signature_text: `Assinatura do ${searchName}`,
-                                  searchName: searchName
+                                  searchName: searchName,
+                                  detection: "próximo ao nome"
                               });
-                              
-                              foundLine = true;
-                              break;
                           }
                       }
+                  }
+              }
+          }
+      }
+      
+      // QUARTA ESTRATÉGIA: Verificar se existe botão "Assinar" no documento
+      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+          const page = await pdf.getPage(pageNum);
+          const textContent = await page.getTextContent();
+          const items = textContent.items;
+          
+          for (let i = 0; i < items.length; i++) {
+              const item = items[i];
+              const text = item.str.toLowerCase();
+              
+              if (text === "assinar" || text === "assinatura" || text === "assine aqui") {
+                  console.log(`Encontrado botão "Assinar" na página ${pageNum}`);
+                  
+                  // Para cada nome, criar uma área próxima ao botão
+                  for (const searchName of searchNames) {
+                      // Verificar se já existe uma área para este nome nesta página
+                      const existingArea = detectedAreas.find(area => 
+                          area.page_num === pageNum && 
+                          area.searchName === searchName
+                      );
                       
-                      // Se não encontramos uma linha, posicionar um botão no próprio texto
-                      if (!foundLine) {
+                      if (!existingArea) {
                           detectedAreas.push({
-                              x: item.transform[4] * zoomScale,
-                              y: (item.transform[5] + 20) * zoomScale,
-                              width: 200 * zoomScale,
-                              height: 40 * zoomScale,
+                              x: (item.transform[4] - 100) * zoomScale, // Posicionar à esquerda do botão
+                              y: item.transform[5] * zoomScale - 30,     // Um pouco acima
+                              width: 300,
+                              height: 50,
                               page_num: pageNum,
                               signature_text: `Assinatura do ${searchName}`,
-                              searchName: searchName
+                              searchName: searchName,
+                              detection: "próximo ao botão assinar"
                           });
                       }
                   }
@@ -188,29 +175,44 @@ async function detectSignatureAreasByOCR(pdfUrl, searchNames = ['Contratante', '
           }
       }
       
-      // Calibração adicional para este contrato específico mostrado na captura de tela
-      // Estas são posições específicas observadas com zoom de 160%
+      // Se nenhuma área foi encontrada, usar coordenadas específicas para o documento mostrado
       if (detectedAreas.length === 0) {
+          console.log("Nenhuma área de assinatura detectada. Usando coordenadas específicas para o zoom de 160%");
+          
           for (const searchName of searchNames) {
-              if (searchName.toLowerCase() === 'contratante') {
+              if (searchName.toLowerCase().includes('contratante')) {
                   detectedAreas.push({
-                      x: 580,  // Ajustado para zoom de 160%
-                      y: 640,  // Ajustado para zoom de 160% 
+                      x: 850,  // Ajustado para zoom de 160%
+                      y: 350,  // Ajustado para zoom de 160% 
                       width: 300,
-                      height: 40,
+                      height: 50,
                       page_num: 1,
                       signature_text: `Assinatura do Contratante`,
-                      searchName: 'Contratante'
+                      searchName: 'Contratante',
+                      detection: "coordenadas padrão"
                   });
-              } else if (searchName.toLowerCase() === 'responsável') {
+              } else if (searchName.toLowerCase().includes('responsável')) {
                   detectedAreas.push({
-                      x: 580,  // Ajustado para zoom de 160%
-                      y: 683,  // Ajustado para zoom de 160%
+                      x: 850,  // Ajustado para zoom de 160%
+                      y: 750,  // Ajustado para zoom de 160%
                       width: 300,
-                      height: 40,
+                      height: 50,
                       page_num: 1,
                       signature_text: `Assinatura do Responsável`,
-                      searchName: 'Responsável'
+                      searchName: 'Responsável',
+                      detection: "coordenadas padrão"
+                  });
+              } else {
+                  // Para outros nomes não específicos
+                  detectedAreas.push({
+                      x: 850,  // Ajustado para zoom de 160%
+                      y: 350,  // Ajustado para zoom de 160%
+                      width: 300,
+                      height: 50,
+                      page_num: 1,
+                      signature_text: `Assinatura do ${searchName}`,
+                      searchName: searchName,
+                      detection: "coordenadas padrão genérico"
                   });
               }
           }
@@ -223,7 +225,6 @@ async function detectSignatureAreasByOCR(pdfUrl, searchNames = ['Contratante', '
       return [];
   }
 }
-
 
 // Adicionar áreas para rubrica nas páginas sem assinatura
 async function addRubricAreasToPages(pdfUrl, existingSignatureAreas) {
@@ -347,6 +348,8 @@ async function processDocumentForSignature(url, searchTerms) {
     }
 }
 
+// No arquivo: static/js/enhanced-signature-system.js
+// Ajuste a função renderSignatureAreasOnDocument para considerar o zoom atual
 function renderSignatureAreasOnDocument(areas) {
   if (!areas || areas.length === 0) {
       console.log("Nenhuma área de assinatura para renderizar");
@@ -354,6 +357,10 @@ function renderSignatureAreasOnDocument(areas) {
   }
   
   console.log("Renderizando áreas de assinatura:", areas);
+  
+  // Remover áreas existentes primeiro
+  const existingAreas = document.querySelectorAll('.signature-area');
+  existingAreas.forEach(area => area.remove());
   
   // Agrupar áreas por número de página
   const areasByPage = {};
@@ -393,22 +400,31 @@ function renderSignatureAreasOnDocument(areas) {
       
       // Adicionar cada área de assinatura para esta página
       areasByPage[pageNum].forEach((area, index) => {
+          // Mapear coordenadas do PDF para o canvas
+          const mappedCoords = mapPdfToCanvasCoordinates(area, pageElement, currentScale || 1.6);
+          
           const signatureArea = document.createElement('div');
           signatureArea.className = 'signature-area';
           
           // Usar o estilo DocuSign
           signatureArea.classList.add('docusign-style');
           
-          // Posicionamento relativo à página
+          // Posicionamento relativo à página com coordenadas mapeadas
           signatureArea.style.position = 'absolute';
-          signatureArea.style.left = `${area.x}px`;
-          signatureArea.style.top = `${area.y}px`;
-          signatureArea.style.width = `${area.width}px`;
-          signatureArea.style.height = `${area.height}px`;
+          signatureArea.style.left = `${mappedCoords.x}px`;
+          signatureArea.style.top = `${mappedCoords.y}px`;
+          signatureArea.style.width = `${mappedCoords.width}px`;
+          signatureArea.style.height = `${mappedCoords.height}px`;
           signatureArea.style.pointerEvents = 'auto';
           signatureArea.dataset.index = areas.indexOf(area); // Índice global
           signatureArea.dataset.pageNum = pageNum;
           signatureArea.dataset.searchName = area.searchName || '';
+          
+          // Adicionar informação de debug para facilitar ajustes
+          if (area.detection) {
+              signatureArea.dataset.detection = area.detection;
+              console.log(`Área ${index} detectada por: ${area.detection}`);
+          }
           
           // Conteúdo da área de assinatura - estilo DocuSign
           const signaturePrompt = document.createElement('div');
@@ -424,7 +440,7 @@ function renderSignatureAreasOnDocument(areas) {
           
           pageSignaturesContainer.appendChild(signatureArea);
           
-          console.log(`Área de assinatura ${index} para "${area.searchName}" renderizada na página ${pageNum} em x:${area.x}, y:${area.y}`);
+          console.log(`Área de assinatura ${index} para "${area.searchName}" renderizada na página ${pageNum} em x:${mappedCoords.x}, y:${mappedCoords.y} (original: x:${area.x}, y:${area.y})`);
       });
   });
 }
@@ -695,6 +711,9 @@ function downloadSignedDocument(signedDocumentUrl) {
 }
 
 // Injetar o CSS necessário para o sistema de assinatura
+// No arquivo: static/js/enhanced-signature-system.js
+// Modifique a função injectSignatureStyles para melhorar a visibilidade das áreas de assinatura
+
 function injectSignatureStyles() {
   const styleElement = document.createElement('style');
   styleElement.textContent = `
@@ -715,7 +734,7 @@ function injectSignatureStyles() {
       
       .signature-area {
           border: 2px solid #0b57d0;
-          background-color: rgba(224, 242, 254, 0.3);
+          background-color: rgba(224, 242, 254, 0.6);
           border-radius: 4px;
           cursor: pointer;
           display: flex;
@@ -723,10 +742,12 @@ function injectSignatureStyles() {
           justify-content: center;
           pointer-events: auto;
           transition: all 0.2s ease;
+          box-shadow: 0 0 8px rgba(11, 87, 208, 0.5);
       }
 
       .signature-area:hover {
-          background-color: rgba(224, 242, 254, 0.5);
+          background-color: rgba(224, 242, 254, 0.8);
+          box-shadow: 0 0 12px rgba(11, 87, 208, 0.7);
       }
       
       .signature-prompt {
@@ -734,49 +755,23 @@ function injectSignatureStyles() {
           align-items: center;
           justify-content: center;
           color: #0b57d0;
-          font-size: 0.875rem;
-          gap: 5px;
+          font-size: 1rem;
+          font-weight: bold;
+          gap: 8px;
       }
 
       .signature-prompt i {
-          font-size: 0.875rem;
+          font-size: 1.2rem;
       }
       
       .signature-area.signed {
           background-color: rgba(237, 247, 237, 0.5);
           border-color: #0f9d58;
+          box-shadow: 0 0 8px rgba(15, 157, 88, 0.5);
       }
       
       .signature-area.signed .signature-prompt {
           color: #0f9d58;
-      }
-      
-      /* Estilo semelhante ao DocuSign */
-      .signature-area::before {
-          content: "";
-          position: absolute;
-          top: -2px;
-          right: -2px;
-          width: 10px;
-          height: 10px;
-          border-top: 2px solid #0b57d0;
-          border-right: 2px solid #0b57d0;
-      }
-      
-      .signature-area::after {
-          content: "";
-          position: absolute;
-          bottom: -2px;
-          left: -2px;
-          width: 10px;
-          height: 10px;
-          border-bottom: 2px solid #0b57d0;
-          border-left: 2px solid #0b57d0;
-      }
-      
-      .signature-area.signed::before,
-      .signature-area.signed::after {
-          border-color: #0f9d58;
       }
   `;
   
@@ -837,7 +832,8 @@ document.addEventListener('DOMContentLoaded', function() {
     injectSignatureHTML();
 });
 
-// Função principal para inicializar o sistema de assinatura
+// No arquivo: static/js/enhanced-signature-system.js
+// Modificar a função initSignatureSystem para melhor manipular os resultados da detecção
 async function initSignatureSystem(documentUrl, searchNames) {
   try {
       console.log("Inicializando sistema de assinatura para:", documentUrl);
@@ -853,7 +849,7 @@ async function initSignatureSystem(documentUrl, searchNames) {
       
       console.log("Buscando assinaturas para:", searchNames);
       
-      // Detectar áreas de assinatura baseadas no nome específico
+      // Detectar áreas de assinatura usando OCR
       const detectedAreas = await detectSignatureAreasByOCR(documentUrl, searchNames);
       
       if (detectedAreas.length > 0) {
@@ -866,13 +862,227 @@ async function initSignatureSystem(documentUrl, searchNames) {
               renderSignatureAreasOnDocument(signatureAreas);
           }, 500);
       } else {
-          console.log(`Nenhuma área de assinatura encontrada para ${searchNames.join(', ')}`);
-          showNotification(`Não foi possível encontrar áreas para assinatura de ${searchNames.join(', ')}`, 'error');
+          console.log(`Nenhuma área de assinatura encontrada pelo OCR para ${searchNames.join(', ')}. Tentando análise específica...`);
+          
+          // Se OCR falhar, tentar método específico para este tipo de documento
+          const specificAreas = await analyzeSpecificContractForSignatures(documentUrl, searchNames);
+          
+          if (specificAreas && specificAreas.length > 0) {
+              signatureAreas = specificAreas;
+              console.log(`Análise específica encontrou ${specificAreas.length} áreas para ${searchNames.join(', ')}`);
+              showNotification(`Encontrada(s) ${specificAreas.length} área(s) para assinatura de ${searchNames.join(', ')}`, 'success');
+              
+              setTimeout(() => {
+                  renderSignatureAreasOnDocument(signatureAreas);
+              }, 500);
+          } else {
+              // Último recurso: usar posições padrão
+              console.log(`Nenhum método de detecção funcionou. Usando posições padrão para ${searchNames.join(', ')}`);
+              const defaultAreas = createDefaultSignatureAreas(searchNames);
+              signatureAreas = defaultAreas;
+              
+              showNotification(`Usando posições padrão para assinatura de ${searchNames.join(', ')}`, 'info');
+              
+              setTimeout(() => {
+                  renderSignatureAreasOnDocument(signatureAreas);
+              }, 500);
+          }
       }
   } catch (error) {
       console.error('Erro ao inicializar sistema de assinatura:', error);
       showNotification('Erro ao inicializar sistema de assinatura: ' + error.message, 'error');
   }
+}
+
+async function analyzeSpecificContractForSignatures(pdfUrl, searchNames) {
+  try {
+      console.log("Analisando documento específico para áreas de assinatura...");
+      
+      // Carregar o PDF usando pdf.js
+      const loadingTask = pdfjsLib.getDocument(pdfUrl);
+      const pdf = await loadingTask.promise;
+      
+      const foundAreas = [];
+      const zoomScale = 1.6; // Para ajustar ao zoom de 160%
+      
+      // Para cada página do PDF
+      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+          console.log(`Analisando página ${pageNum}...`);
+          const page = await pdf.getPage(pageNum);
+          
+          // 1. Procurar pelo botão "Assinar" - um indicador comum em documentos que precisam de assinatura
+          const textContent = await page.getTextContent();
+          const items = textContent.items;
+          
+          // Procurar por texto "Assinar" ou similar
+          for (let i = 0; i < items.length; i++) {
+              const item = items[i];
+              const text = item.str.toLowerCase();
+              
+              if (text.includes("assinar") || text.includes("assinatura") || text === "assine aqui") {
+                  console.log(`Encontrado texto de assinatura "${item.str}" na página ${pageNum}`);
+                  
+                  // Obter as coordenadas ajustadas para o zoom
+                  const x = item.transform[4] * zoomScale;
+                  const y = item.transform[5] * zoomScale;
+                  
+                  // Para cada nome de busca, criar uma área próxima ao botão "Assinar"
+                  for (const searchName of searchNames) {
+                      foundAreas.push({
+                          x: x - 50, // Ajustar posição para ficar perto do botão
+                          y: y - 10,
+                          width: 300,
+                          height: 50,
+                          page_num: pageNum,
+                          signature_text: `Assinatura do ${searchName}`,
+                          searchName: searchName
+                      });
+                      
+                      console.log(`Adicionada área de assinatura para ${searchName} perto de "${item.str}" em x:${x}, y:${y}`);
+                  }
+              }
+          }
+          
+          // 2. Procurar por linhas longas (underscores) que geralmente indicam áreas de assinatura
+          for (let i = 0; i < items.length; i++) {
+              const item = items[i];
+              const text = item.str;
+              
+              // Verificar se o texto parece uma linha para assinatura (muitos "_" ou "-")
+              if ((text.includes("_") && text.length > 10) || 
+                  (text.includes("-") && text.length > 10) ||
+                  (text.match(/^\s+$/) && item.width > 100)) {
+                  
+                  console.log(`Encontrada possível linha de assinatura na página ${pageNum}`);
+                  
+                  const x = item.transform[4] * zoomScale;
+                  const y = item.transform[5] * zoomScale;
+                  
+                  // Verificar se já existe uma área próxima a esta
+                  const existingArea = foundAreas.find(area => 
+                      area.page_num === pageNum && 
+                      Math.abs(area.x - x) < 100 && 
+                      Math.abs(area.y - y) < 100
+                  );
+                  
+                  if (!existingArea) {
+                      // Para cada nome de busca, criar uma área na linha
+                      for (const searchName of searchNames) {
+                          foundAreas.push({
+                              x: x,
+                              y: y - 30, // Posicionar acima da linha
+                              width: 300,
+                              height: 50,
+                              page_num: pageNum,
+                              signature_text: `Assinatura do ${searchName}`,
+                              searchName: searchName
+                          });
+                          
+                          console.log(`Adicionada área de assinatura para ${searchName} em linha de assinatura x:${x}, y:${y}`);
+                      }
+                  }
+              }
+          }
+          
+          // 3. Análise especial para a estrutura mostrada nas imagens
+          // Se as imagens mostram um botão "Assinar" no canto inferior direito, tentar detectar
+          const viewPort = page.getViewport({ scale: 1.0 });
+          const pageWidth = viewPort.width * zoomScale;
+          const pageHeight = viewPort.height * zoomScale;
+          
+          // Verificar se há elementos próximos ao canto inferior direito
+          let hasLowerRightButton = false;
+          
+          for (let i = 0; i < items.length; i++) {
+              const item = items[i];
+              const x = item.transform[4] * zoomScale;
+              const y = item.transform[5] * zoomScale;
+              
+              // Verificar se está no quadrante inferior direito
+              if (x > pageWidth * 0.7 && y > pageHeight * 0.7) {
+                  const text = item.str.toLowerCase();
+                  if (text.includes("assinar") || text === "assine" || text === "assinatura") {
+                      hasLowerRightButton = true;
+                      console.log(`Detectado botão de assinatura no canto inferior direito da página ${pageNum}`);
+                      
+                      // Para cada nome de busca, criar uma área próxima ao botão
+                      for (const searchName of searchNames) {
+                          foundAreas.push({
+                              x: x - 100, // Ajustar posição para ficar à esquerda do botão
+                              y: y,
+                              width: 300,
+                              height: 50,
+                              page_num: pageNum,
+                              signature_text: `Assinatura do ${searchName}`,
+                              searchName: searchName
+                          });
+                          
+                          console.log(`Adicionada área de assinatura para ${searchName} próxima ao botão x:${x}, y:${y}`);
+                      }
+                  }
+              }
+          }
+          
+          // Se não encontrou o botão mas é a única página, adicionar área padrão
+          if (!hasLowerRightButton && foundAreas.length === 0 && pdf.numPages === 1) {
+              // Se for um documento de uma página sem detecção, usar coordenadas baseadas na estrutura observada
+              console.log("Utilizando heurística para documento de uma página");
+              
+              // Coordenadas calibradas para o botão "Assinar" no canto inferior direito
+              for (const searchName of searchNames) {
+                  foundAreas.push({
+                      x: pageWidth * 0.8, // 80% da largura da página 
+                      y: pageHeight * 0.8, // 80% da altura da página
+                      width: 300,
+                      height: 50,
+                      page_num: pageNum,
+                      signature_text: `Assinatura do ${searchName}`,
+                      searchName: searchName
+                  });
+                  
+                  console.log(`Adicionada área padrão para ${searchName} na página ${pageNum}`);
+              }
+          }
+      }
+      
+      return foundAreas;
+      
+  } catch (error) {
+      console.error("Erro ao analisar estrutura específica do contrato:", error);
+      return [];
+  }
+}
+
+// Adicionar nova função para posições específicas mais confiáveis
+function addSpecificContractSignatureAreas(searchNames) {
+  // Coordenadas específicas para este contrato no zoom de 160%
+  const areas = [];
+  
+  for (const searchName of searchNames) {
+      if (searchName.toLowerCase().includes('contratante')) {
+          areas.push({
+              x: 850,  // Posição calibrada para o botão "Assinar" no zoom de 160%
+              y: 350,
+              width: 300,
+              height: 50,
+              page_num: 1,
+              signature_text: "Assinatura do Contratante",
+              searchName: "Contratante"
+          });
+      } else if (searchName.toLowerCase().includes('responsável')) {
+          areas.push({
+              x: 850,
+              y: 750,
+              width: 300,
+              height: 50,
+              page_num: 1,
+              signature_text: "Assinatura do Responsável",
+              searchName: "Responsável"
+          });
+      }
+  }
+  
+  return areas;
 }
 
 function addSpecificContractSignatureAreas() {
@@ -897,4 +1107,55 @@ function addSpecificContractSignatureAreas() {
           is_field: true
       }
   ];
+}
+
+function createDefaultSignatureAreas(searchNames) {
+  // Criar áreas padrão para quando nenhum método de detecção funcionar
+  const defaultAreas = [];
+  
+  for (const searchName of searchNames) {
+      defaultAreas.push({
+          x: 850,  // Posição padrão para zoom de 160%
+          y: 350,
+          width: 300,
+          height: 50,
+          page_num: 1,
+          signature_text: `Assinatura do ${searchName}`,
+          searchName: searchName
+      });
+  }
+  
+  console.log("Criadas áreas de assinatura padrão como último recurso");
+  return defaultAreas;
+}
+
+// Função para mapear coordenadas do PDF para o canvas HTML
+function mapPdfToCanvasCoordinates(pdfCoords, pageElement, zoomScale = 1.6) {
+  try {
+    // Obter as dimensões do canvas da página
+    const canvas = pageElement.querySelector('.pdf-page-canvas');
+    if (!canvas) {
+      console.error("Canvas não encontrado para mapeamento de coordenadas");
+      return pdfCoords; // Retornar coordenadas originais se não conseguir mapear
+    }
+    
+    // Obter o retângulo do canvas em relação à página
+    const canvasRect = canvas.getBoundingClientRect();
+    const pageRect = pageElement.getBoundingClientRect();
+    
+    // Calcular os deslocamentos
+    const offsetX = (canvasRect.left - pageRect.left);
+    const offsetY = (canvasRect.top - pageRect.top);
+    
+    // Aplicar o mapeamento
+    return {
+      x: (pdfCoords.x + offsetX),
+      y: (pdfCoords.y + offsetY),
+      width: pdfCoords.width,
+      height: pdfCoords.height
+    };
+  } catch (error) {
+    console.error("Erro ao mapear coordenadas:", error);
+    return pdfCoords; // Retornar coordenadas originais em caso de erro
+  }
 }

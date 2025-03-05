@@ -726,7 +726,7 @@ async function previewDocument(url, filename) {
     const previewContainer = document.querySelector('.preview-container');
     const zoomLevelSpan = document.getElementById('zoomLevel');
     
-    // Ajustar zoom para 160%
+    // Ajustar zoom para 160% - consistente com a detecção de assinaturas
     zoomLevel = 1.6;
     zoomLevelSpan.textContent = `${(zoomLevel * 100).toFixed(0)}%`;
 
@@ -764,18 +764,12 @@ async function previewDocument(url, filename) {
             // Render all pages in the viewer
             await renderPdfPages(pdfViewerContainer);
             
-            // Criar um iframe para o sistema de assinatura (invisível)
-            const documentPreview = document.createElement('iframe');
-            documentPreview.id = 'documentPreview';
-            documentPreview.style.display = 'none';
-            documentPreview.src = proxyUrl;
-            previewContainer.appendChild(documentPreview);
-            
             // Mostrar o modal
             showModal('previewModal');
             
-            // Perguntar ao usuário pelos nomes para buscar
+            // Perguntar ao usuário pelos nomes para buscar - com um atraso maior
             setTimeout(() => {
+                // Usar um valor padrão pode tornar a experiência mais simples
                 const searchInput = prompt(
                     "Digite o nome da pessoa que deve assinar (ex: Contratante, Responsável):", 
                     "Contratante"
@@ -785,7 +779,10 @@ async function previewDocument(url, filename) {
                 if (searchInput) {
                     searchName = searchInput.trim();
                     // Inicializar o sistema de assinatura com o nome específico
-                    initSignatureSystem(proxyUrl, [searchName]);
+                    // Use um atraso maior para garantir que o PDF esteja totalmente renderizado
+                    setTimeout(() => {
+                        initSignatureSystem(proxyUrl, [searchName]);
+                    }, 1500);
                 }
             }, 1000);
             
@@ -878,6 +875,9 @@ async function adjustZoom(delta) {
     const zoomLevelSpan = document.getElementById('zoomLevel');
     zoomLevelSpan.textContent = `${(zoomLevel * 100).toFixed(0)}%`;
     
+    // Atualizar a variável global de escala para o sistema de assinatura
+    currentScale = zoomLevel;
+    
     const previewContainer = document.querySelector('.preview-container');
     const pdfContainer = document.querySelector('.pdf-viewer-container');
     const imageElement = document.querySelector('.preview-image');
@@ -904,7 +904,9 @@ async function adjustZoom(delta) {
         
         // Re-aplicar áreas de assinatura com o novo zoom
         if (signatureAreas && signatureAreas.length > 0) {
-            renderSignatureAreasOnDocument(signatureAreas);
+            setTimeout(() => {
+                renderSignatureAreasOnDocument(signatureAreas);
+            }, 200);
         }
     } else if (imageElement) {
         // Handle image zoom
@@ -912,7 +914,6 @@ async function adjustZoom(delta) {
         imageElement.style.transformOrigin = 'center center';
     }
 }
-
 
 function injectSignatureStyles() {
     const styleElement = document.createElement('style');
