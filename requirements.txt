@@ -12,5 +12,3 @@ flask-login
 requests
 werkzeug
 flask-cors
-pytesseract
-reportlab
