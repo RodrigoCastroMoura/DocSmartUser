@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, current_app
+from flask import Blueprint, request, jsonify, current_app, session
 from werkzeug.utils import secure_filename
 from PyPDF2 import PdfReader, PdfWriter
 from reportlab.pdfgen import canvas
