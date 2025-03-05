@@ -7,6 +7,7 @@ import time
 from werkzeug.utils import secure_filename
 import logging
 from flask_cors import CORS
+from signature_routes import init_app as init_signatures
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -262,13 +263,12 @@ def login():
 
             if response.status_code == 200:
                 data = response.json()
-                logger.info(f"Login response: {data}"
-                            )  # Log the entire response for debugging
                 session.permanent = True
                 session['access_token'] = data['access_token']
                 session['refresh_token'] = data['refresh_token']
                 session['user'] = data['user']
                 session['company_id'] = data['user'].get('company_id')
+                session['user__id'] = data['user'].get('id')
                 session['token_expiry'] = time.time(
                 ) + 3600  # Set token expiry to 1 hour
 
@@ -348,7 +348,7 @@ def document_type_documents(document_type_id):
             return redirect(url_for('document_types'))
 
         document_type = response.json()
-
+        
         categories_response = requests.get(
             f"{CATEGORIES_URL}/user/{document_type.get('category_id')}",
             headers=headers,
@@ -362,6 +362,7 @@ def document_type_documents(document_type_id):
 
         category = categories_response.json()
 
+        
         return render_template('document_types_documents.html',
                                document_type=document_type,
                                category=category)
@@ -389,7 +390,8 @@ def documents_api():
     try:
         params = {
             'page': request.args.get('page', 1),
-            'per_page': request.args.get('per_page', 9)
+            'per_page': request.args.get('per_page', 9),
+            'document_type_id' : request.args.get('document_type_id'),
         }
 
         # Remove None values
@@ -434,7 +436,7 @@ def create_document():
             'department_id': request.form.get('department_id'),
             'category_id': request.form.get('category_id'),
             'document_type_id': request.form.get('document_type_id'),
-            'user_id': request.form.get('user_id')
+            'user_id': session.get('user__id')
         }
 
         # Validate required fields
@@ -459,7 +461,7 @@ def create_document():
         upload_headers.pop('Content-Type', None)
 
         response = requests.post(
-            DOCUMENTS_URL,
+            f'{DOCUMENTS_URL}/user',
             headers=headers,
             data=form_data,
             files=files,
@@ -552,3 +554,4 @@ if __name__ == "__main__":
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
     port = int(os.environ.get('PORT', 3000))  # Changed from 5000 to 3000
     app.run(host='0.0.0.0', port=5000, debug=True)
+    init_signatures(app)

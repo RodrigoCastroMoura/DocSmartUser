@@ -52,21 +52,6 @@
                 <label for="documentTitle">Document Title</label>
                 <input type="text" id="documentTitle" name="titulo" >
             </div>
-            <div class="form-grid">
-                <div class="form-group">
-                    <label for="user_cpf">CPF</label>
-                    <div class="filter-input-wrapper search-input">
-                        <input type="text" id="user_cpf" placeholder="Search user..." required>
-                        <button type="button" class="action-btn primary" onclick="searchUser()">
-                            <i data-feather="search"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-            <div class="form-group">
-                <label for="documentTitle">User Name</label>
-                <input type="text" id="name-user" name="name-user" disabled required>
-            </div>
             <div class="form-group">
                 <label for="documentFile">Upload File</label>
                 <input type="file" id="documentFile" name="file" required>
@@ -109,6 +94,11 @@
         </div>
     </div>
 </div>
+<!-- No template document_types_documents.html, dentro do div com classe preview-container -->
+<div id="signatures-container" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; pointer-events: none;"></div>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.0.3/dist/tesseract.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="{{ url_for('static', filename='js/enhanced-signature-system.js') }}"></script>
 <script>
 let currentPage = 1;
 const perPage = 9;
@@ -426,11 +416,7 @@ async function createDocument(event) {
         return;
     }
 
-    if(document.getElementById('user_id').value ==''){
-        showNotification('Enter with CPF', 'error');
-        return;
-    }
-    
+   
     showLoading(submitButton);
     const formData = new FormData(form);
 
@@ -450,7 +436,6 @@ async function createDocument(event) {
         document.getElementById('user_id').value =''
         const filters = {
             document_type_id: '{{document_type.id}}',
-            user_cpf: document.getElementById('user-cpf-filter').value
         };
         await loadDocuments(currentPage,filters);
         showNotification('Document created successfully', 'success');
@@ -1072,13 +1057,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     loadDocuments(1, filters);
     feather.replace();
-    
-    // Set the user-cpf-filter to apply document_type_id filter when searching
-    document.getElementById('user-cpf-filter').addEventListener('keyup', function(event) {
-        if (event.key === 'Enter') {
-            applyFilters();
-        }
-    });
+
 });
 </script>
 
