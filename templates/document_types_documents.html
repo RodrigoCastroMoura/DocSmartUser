@@ -88,20 +88,14 @@
             </button>
         </div>
         <div class="preview-container">
-            <!-- Este é o lugar correto para o container de assinaturas, mas será criado dinamicamente -->
             <canvas id="pdfCanvas"></canvas>
             <img id="imagePreview" alt="Image Preview">
             <iframe id="documentPreview" style="width: 100%; height: 100%; border: none;"></iframe>
         </div>
     </div>
 </div>
-<<<<<<< HEAD
 <!-- No template document_types_documents.html, dentro do div com classe preview-container -->
 <div id="signatures-container" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; pointer-events: none;"></div>
-=======
-<!-- Carregando bibliotecas necessárias -->
-<script src="https://cdn.jsdelivr.net/npm/pdf.js@2.10.377/build/pdf.min.js"></script>
->>>>>>> 80d37553feb96d164faf50d25836806d1b245929
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.0.3/dist/tesseract.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script src="{{ url_for('static', filename='js/enhanced-signature-system.js') }}"></script>
@@ -711,8 +705,8 @@ async function previewDocument(url, filename) {
     const previewContainer = document.querySelector('.preview-container');
     const zoomLevelSpan = document.getElementById('zoomLevel');
     
-    // Ajustar zoom para 160% - consistente com a detecção de assinaturas
-    zoomLevel = 1.6;
+    // Reset zoom level
+    zoomLevel = 1.0;
     zoomLevelSpan.textContent = `${(zoomLevel * 100).toFixed(0)}%`;
 
     // Clear previous content from preview container
@@ -733,13 +727,11 @@ async function previewDocument(url, filename) {
             // Show loading indicator
             const loadingIndicator = document.createElement('div');
             loadingIndicator.className = 'pdf-loading';
-            loadingIndicator.innerHTML = '<div class="loading-spinner"></div><p>Carregando PDF...</p>';
+            loadingIndicator.innerHTML = '<div class="loading-spinner"></div><p>Loading PDF...</p>';
             pdfViewerContainer.appendChild(loadingIndicator);
             
-            // Definir o URL do proxy corretamente
-            const proxyUrl = `/proxy/storage/${url.replace('https://storage.googleapis.com/', '')}`;
-            
             // Load the PDF
+            const proxyUrl = `/proxy/storage/${url.replace('https://storage.googleapis.com/', '')}`;
             const loadingTask = pdfjsLib.getDocument(proxyUrl);
             currentPdf = await loadingTask.promise;
             
@@ -749,38 +741,43 @@ async function previewDocument(url, filename) {
             // Render all pages in the viewer
             await renderPdfPages(pdfViewerContainer);
             
-            // Mostrar o modal
-            showModal('previewModal');
+        } else if (['jpg', 'jpeg', 'png', 'gif'].includes(fileType)) {
+            // Create image container
+            const imgContainer = document.createElement('div');
+            imgContainer.className = 'image-container';
+            previewContainer.appendChild(imgContainer);
             
-            // Perguntar ao usuário pelos nomes para buscar - com um atraso maior
-            setTimeout(() => {
-                // Usar um valor padrão pode tornar a experiência mais simples
-                const searchInput = prompt(
-                    "Digite o nome da pessoa que deve assinar (ex: Contratante, Responsável):", 
-                    "Contratante"
-                );
-                
-                let searchName = null;
-                if (searchInput) {
-                    searchName = searchInput.trim();
-                    // Inicializar o sistema de assinatura com o nome específico
-                    // Use um atraso maior para garantir que o PDF esteja totalmente renderizado
-                    setTimeout(() => {
-                        initSignatureSystem(proxyUrl, [searchName]);
-                    }, 1500);
-                }
-            }, 1000);
+            // Create the image element
+            const imageElement = document.createElement('img');
+            imageElement.className = 'preview-image';
+            imageElement.alt = 'Image Preview';
+            imageElement.src = url;
+            imgContainer.appendChild(imageElement);
+            
+            // Add zoom support for images
+            imageElement.style.transform = `scale(${zoomLevel})`;
+            imageElement.style.transformOrigin = 'center center';
             
         } else {
-            // Código para outros tipos de arquivos
-            showModal('previewModal');
+            // Handle other document types
+            const docContainer = document.createElement('div');
+            docContainer.className = 'document-container';
+            previewContainer.appendChild(docContainer);
+            
+            const iframeElement = document.createElement('iframe');
+            iframeElement.className = 'document-iframe';
+            iframeElement.src = url;
+            docContainer.appendChild(iframeElement);
         }
+
+        showModal('previewModal');
     } catch (error) {
         console.error('Error previewing document:', error);
         showNotification('Failed to preview document', 'error');
     }
 }
 
+// FUNÇÃO QUE ESTAVA FALTANDO
 async function renderPdfPages(container) {
     if (!currentPdf) return;
     
@@ -860,9 +857,6 @@ async function adjustZoom(delta) {
     const zoomLevelSpan = document.getElementById('zoomLevel');
     zoomLevelSpan.textContent = `${(zoomLevel * 100).toFixed(0)}%`;
     
-    // Atualizar a variável global de escala para o sistema de assinatura
-    currentScale = zoomLevel;
-    
     const previewContainer = document.querySelector('.preview-container');
     const pdfContainer = document.querySelector('.pdf-viewer-container');
     const imageElement = document.querySelector('.preview-image');
@@ -886,85 +880,11 @@ async function adjustZoom(delta) {
         setTimeout(() => {
             newScrollContainer.scrollTop = scrollRatio * newScrollContainer.scrollHeight;
         }, 50);
-        
-        // Re-aplicar áreas de assinatura com o novo zoom
-        if (signatureAreas && signatureAreas.length > 0) {
-            setTimeout(() => {
-                renderSignatureAreasOnDocument(signatureAreas);
-            }, 200);
-        }
     } else if (imageElement) {
         // Handle image zoom
         imageElement.style.transform = `scale(${zoomLevel})`;
         imageElement.style.transformOrigin = 'center center';
     }
-}
-
-function injectSignatureStyles() {
-    const styleElement = document.createElement('style');
-    styleElement.textContent = `
-        .pdf-page-wrapper {
-            position: relative;
-            margin-bottom: 20px;
-        }
-        
-        .page-signatures-container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 10;
-        }
-        
-        .signature-area {
-            border: 2px solid #2a7be3;
-            background-color: rgba(243, 249, 254, 0.6);
-            border-radius: 0;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            pointer-events: auto;
-            transition: all 0.2s ease;
-        }
-        
-        .signature-area.docusign-style {
-            border-radius: 0;
-            box-shadow: none;
-            outline: none;
-        }
-
-        .signature-area:hover {
-            background-color: rgba(243, 249, 254, 0.9);
-        }
-        
-        .signature-prompt {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #2a7be3;
-            font-size: 0.875rem;
-            font-weight: 500;
-            gap: 5px;
-        }
-
-        .signature-prompt i {
-            font-size: 0.875rem;
-        }
-        
-        .signature-area.signed {
-            background-color: rgba(237, 247, 237, 0.5);
-            border-color: #43a047;
-        }
-        
-        .signature-area.signed .signature-prompt {
-            color: #43a047;
-        }
-    `;
-    
-    document.head.appendChild(styleElement);
 }
 
 // Add CSS for the improved viewer with image support
@@ -1111,16 +1031,9 @@ function updatePreviewModalStructure() {
 function hideModal(modalId) {
     document.getElementById(modalId).style.display = 'none';
     
-    // Se este foi o modal de preview, limpar recursos
+    // If this was the preview modal, clean up
     if (modalId === 'previewModal') {
         currentPdf = null;
-        signatureAreas = [];
-        
-        // Limpar o container de assinaturas
-        const signaturesContainer = document.getElementById('signatures-container');
-        if (signaturesContainer) {
-            signaturesContainer.innerHTML = '';
-        }
     }
 }
 
@@ -1629,140 +1542,6 @@ document.addEventListener('DOMContentLoaded', () => {
     padding: 1rem;
     background-color: var(--bg-secondary);
     border-top: 1px solid var(--border-color);
-}
-
-.signature-area {
-    border: 2px dashed #3b82f6;
-    background-color: rgba(59, 130, 246, 0.1);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    pointer-events: auto !important;
-    z-index: 999;
-    opacity: 0.8;
-    transition: all 0.2s ease;
-}
-
-.signature-area:hover {
-    background-color: rgba(59, 130, 246, 0.3);
-    border-color: #2563eb;
-    opacity: 1;
-}
-
-.signature-area.signed {
-    border: 2px solid #22c55e;
-    background-color: rgba(34, 197, 94, 0.1);
-}
-
-.signature-area.rubric-area {
-    border: 2px dashed #22c55e;
-    background-color: rgba(34, 197, 94, 0.1);
-}
-
-.signature-area.rubric-area:hover {
-    background-color: rgba(34, 197, 94, 0.2);
-    border-color: #16a34a;
-}
-
-.signature-area.rubric-area .signature-prompt {
-    color: #22c55e;
-}
-
-.signature-prompt {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    color: #3b82f6;
-    font-size: 0.875rem;
-}
-
-.signature-prompt i {
-    font-size: 1.25rem;
-    margin-bottom: 0.25rem;
-}
-
-#signatureModal {
-    z-index: 2000;
-}
-
-#signatures-container {
-    pointer-events: none;
-}
-
-#signatures-container .signature-area {
-    pointer-events: auto;
-}
-
-.pdf-loading {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    width: 100%;
-}
-
-.loading-spinner {
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid var(--accent-color);
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    animation: spin 1s linear infinite;
-    margin-bottom: 15px;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-/* Estilos para o visualizador de PDF */
-.pdf-viewer-container {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-}
-
-.pdf-pages-container {
-    width: 100%;
-    height: 100%;
-    overflow-y: auto;
-    overflow-x: auto;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 20px 0;
-}
-
-.pdf-page-wrapper {
-    margin-bottom: 20px;
-    background-color: white;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-    position: relative;
-    display: flex;
-    justify-content: center;
-}
-
-.pdf-page-canvas {
-    display: block;
-}
-
-.pdf-page-number {
-    position: absolute;
-    bottom: -20px;
-    left: 50%;
-    transform: translateX(-50%);
-    background-color: rgba(0, 0, 0, 0.5);
-    color: white;
-    padding: 2px 10px;
-    border-radius: 10px;
-    font-size: 12px;
-    opacity: 0.7;
 }
 
 </style>
