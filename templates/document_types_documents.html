@@ -719,27 +719,70 @@ async function previewDocument(url, filename) {
 
     try {
         if (fileType === 'pdf') {
+            // Create PDF card viewer
+            const pdfCard = document.createElement('div');
+            pdfCard.className = 'pdf-card';
+            previewContainer.appendChild(pdfCard);
+            
+            // Create card header
+            const cardHeader = document.createElement('div');
+            cardHeader.className = 'card-header';
+            cardHeader.innerHTML = `<h2 class="card-title">Visualizador de PDF</h2>`;
+            pdfCard.appendChild(cardHeader);
+            
+            // Create card body
+            const cardBody = document.createElement('div');
+            cardBody.className = 'card-body';
+            pdfCard.appendChild(cardBody);
+            
             // Create PDF viewer container
-            const pdfViewerContainer = document.createElement('div');
-            pdfViewerContainer.className = 'pdf-viewer-container';
-            previewContainer.appendChild(pdfViewerContainer);
+            const pdfViewer = document.createElement('div');
+            pdfViewer.className = 'pdf-viewer';
+            pdfViewer.style.height = '650px';
+            cardBody.appendChild(pdfViewer);
             
             // Show loading indicator
             const loadingIndicator = document.createElement('div');
             loadingIndicator.className = 'pdf-loading';
             loadingIndicator.innerHTML = '<div class="loading-spinner"></div><p>Loading PDF...</p>';
-            pdfViewerContainer.appendChild(loadingIndicator);
+            pdfViewer.appendChild(loadingIndicator);
             
-            // Load the PDF
-            const proxyUrl = `/proxy/storage/${url.replace('https://storage.googleapis.com/', '')}`;
-            const loadingTask = pdfjsLib.getDocument(proxyUrl);
-            currentPdf = await loadingTask.promise;
+            // Process the URL to use with proxy if needed
+            const proxyUrl = url.includes('storage.googleapis.com') ? 
+                `/proxy/storage/${url.replace('https://storage.googleapis.com/', '')}` : 
+                url;
             
-            // Remove loading indicator
-            pdfViewerContainer.removeChild(loadingIndicator);
+            // Create iframe for PDF viewing
+            const iframeElement = document.createElement('iframe');
+            iframeElement.style.width = '100%';
+            iframeElement.style.height = '100%';
+            iframeElement.style.border = 'none';
+            iframeElement.src = proxyUrl;
             
-            // Render all pages in the viewer
-            await renderPdfPages(pdfViewerContainer);
+            // When iframe loads, remove the loading indicator
+            iframeElement.onload = () => {
+                pdfViewer.removeChild(loadingIndicator);
+            };
+            
+            pdfViewer.appendChild(iframeElement);
+            
+            // Add the search controls
+            const controlsDiv = document.createElement('div');
+            controlsDiv.className = 'd-flex justify-content-between mt-3';
+            controlsDiv.innerHTML = `
+                <div class="input-group">
+                    <input type="text" class="form-control" id="searchText" placeholder="Digite o texto para buscar">
+                    <button class="action-btn primary" onclick="searchInPdf()" id="searchButton">
+                        <i data-feather="search"></i> Buscar
+                    </button>
+                </div>
+            `;
+            cardBody.appendChild(controlsDiv);
+            
+            // Initialize Feather icons after adding to DOM
+            setTimeout(() => {
+                feather.replace();
+            }, 0);
             
         } else if (['jpg', 'jpeg', 'png', 'gif'].includes(fileType)) {
             // Create image container
@@ -775,6 +818,18 @@ async function previewDocument(url, filename) {
         console.error('Error previewing document:', error);
         showNotification('Failed to preview document', 'error');
     }
+}
+
+// Function to search text in PDF (placeholder for future implementation)
+function searchInPdf() {
+    const searchText = document.getElementById('searchText').value;
+    if (!searchText) {
+        showNotification('Please enter text to search', 'error');
+        return;
+    }
+    
+    showNotification('Search functionality will be implemented in a future update', 'info');
+    // This is where you would implement PDF search functionality
 }
 
 // FUNÇÃO QUE ESTAVA FALTANDO
@@ -858,28 +913,13 @@ async function adjustZoom(delta) {
     zoomLevelSpan.textContent = `${(zoomLevel * 100).toFixed(0)}%`;
     
     const previewContainer = document.querySelector('.preview-container');
-    const pdfContainer = document.querySelector('.pdf-viewer-container');
+    const pdfCard = document.querySelector('.pdf-card');
     const imageElement = document.querySelector('.preview-image');
     
-    if (pdfContainer && currentPdf) {
-        // Remember scroll position
-        const scrollContainer = document.querySelector('.pdf-pages-container');
-        const scrollRatio = scrollContainer.scrollTop / scrollContainer.scrollHeight;
-        
-        // First remove existing pages
-        const pagesContainer = document.querySelector('.pdf-pages-container');
-        if (pagesContainer) {
-            pdfContainer.removeChild(pagesContainer);
-        }
-        
-        // Render pages with new zoom
-        await renderPdfPages(pdfContainer);
-        
-        // Restore scroll position
-        const newScrollContainer = document.querySelector('.pdf-pages-container');
-        setTimeout(() => {
-            newScrollContainer.scrollTop = scrollRatio * newScrollContainer.scrollHeight;
-        }, 50);
+    if (pdfCard) {
+        // For new iframe-based PDF viewer, we don't adjust zoom this way
+        // Instead, show a notification suggesting to use browser's zoom controls
+        showNotification('Use browser zoom controls (Ctrl+/- or Cmd+/-) for PDF zoom', 'info');
     } else if (imageElement) {
         // Handle image zoom
         imageElement.style.transform = `scale(${zoomLevel})`;
@@ -980,6 +1020,82 @@ document.addEventListener('DOMContentLoaded', () => {
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
+        }
+        
+        /* PDF Card styling */
+        .pdf-card {
+            width: 100%;
+            max-width: 1200px;
+            background-color: var(--bg-secondary);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            margin: 0 auto;
+        }
+        
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .card-title {
+            margin: 0;
+            font-size: 1.25rem;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .card-body {
+            padding: 1.5rem;
+        }
+        
+        .pdf-viewer {
+            width: 100%;
+            background-color: var(--bg-tertiary);
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        /* Form controls for PDF search */
+        .input-group {
+            display: flex;
+            width: 100%;
+            margin-top: 1rem;
+        }
+        
+        .input-group .form-control {
+            flex: 1;
+            padding: 0.5rem 1rem;
+            font-size: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 4px 0 0 4px;
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+        
+        .input-group .action-btn {
+            border-radius: 0 4px 4px 0;
+            padding: 0.5rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .d-flex {
+            display: flex;
+        }
+        
+        .justify-content-between {
+            justify-content: space-between;
+        }
+        
+        .mt-3 {
+            margin-top: 1rem;
         }
         
         /* Image container */
