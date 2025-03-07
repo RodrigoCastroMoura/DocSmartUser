@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 from flask import Blueprint, request, jsonify, current_app
 from werkzeug.utils import secure_filename
 from PyPDF2 import PdfReader, PdfWriter
@@ -12,118 +13,96 @@ import io
 import time
 from datetime import datetime
 from functools import wraps
+=======
+from flask import Blueprint, request, jsonify
+>>>>>>> 80d37553feb96d164faf50d25836806d1b245929
 import logging
 
-# Configurar logging
-logging.basicConfig(level=logging.INFO)
+# Configure logging
+logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-# Criar Blueprint para as rotas de assinatura
-signatures_bp = Blueprint('signatures', __name__)
+signature_bp = Blueprint('signature', __name__)
 
-# Middleware para verificar autenticação
-def verify_auth(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'access_token' not in session:
-            return jsonify({'error': 'Não autorizado'}), 401
-        return f(*args, **kwargs)
-    return decorated_function
-
-# Rota para processar áreas de assinatura
-@signatures_bp.route('/api/document/find-signature-areas', methods=['POST'])
-@verify_auth
+@signature_bp.route('/api/document/find-signature-areas', methods=['POST'])
 def find_signature_areas():
-    """Encontra possíveis áreas de assinatura em um documento PDF."""
+    """
+    Detecta áreas para assinatura em um documento PDF
+    """
     try:
-        data = request.json
+        data = request.get_json()
         document_url = data.get('document_url')
         user_info = data.get('user_info')
+        document_id = data.get('document_id')
         
-        if not document_url or not user_info:
-            return jsonify({'error': 'URL do documento e informações do usuário são obrigatórias'}), 400
+        logger.info(f"Solicitação de detecção de assinatura para documento: {document_id}")
         
-        # Processar URL para obter o caminho do arquivo
-        if document_url.startswith('/proxy/storage/'):
-            document_path = document_url.replace('/proxy/storage/', '')
-        else:
-            # Extrair o ID do documento da URL
-            doc_id = document_url.split('/')[-1]
-            document_path = os.path.join(current_app.config['UPLOAD_FOLDER'], f"document_{doc_id}.pdf")
+        # Em um sistema real, aqui você usaria uma biblioteca como PyPDF2 ou 
+        # um serviço de AI para detectar áreas para assinatura no documento
         
-        if not os.path.exists(document_path):
-            return jsonify({'error': 'Documento não encontrado'}), 404
-        
-        # Analisar o documento para áreas de assinatura
-        signature_areas = process_document_for_signature_areas(document_path, user_info)
+        # Por enquanto, retornamos áreas simuladas
+        signature_areas = [
+            {
+                "x": 100,
+                "y": 150,
+                "width": 200,
+                "height": 50,
+                "page_num": 1,
+                "signature_text": "Assinatura do contratante"
+            },
+            {
+                "x": 100,
+                "y": 300,
+                "width": 200,
+                "height": 50,
+                "page_num": 1,
+                "signature_text": "Assinatura do responsável"
+            }
+        ]
         
         return jsonify({
-            'success': True,
-            'signature_areas': signature_areas,
-            'total_areas': len(signature_areas),
-            'message': f'Encontradas {len(signature_areas)} áreas para assinatura'
+            "success": True,
+            "message": "Áreas de assinatura detectadas com sucesso",
+            "signature_areas": signature_areas
         })
         
     except Exception as e:
-        logger.error(f"Erro ao processar áreas de assinatura: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+        logger.error(f"Erro ao detectar áreas de assinatura: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": f"Erro ao processar documento: {str(e)}"
+        }), 500
 
-# Rota para aplicar assinaturas ao documento
-@signatures_bp.route('/api/document/apply-signatures', methods=['POST'])
-@verify_auth
+@signature_bp.route('/api/document/apply-signatures', methods=['POST'])
 def apply_signatures():
-    """Aplica assinaturas digitais ao documento PDF."""
+    """
+    Aplica assinaturas ao documento
+    """
     try:
-        # Verificar se o documento e as assinaturas foram enviados
-        if 'document_id' not in request.json or 'signatures' not in request.json:
-            return jsonify({'error': 'ID do documento e assinaturas são obrigatórios'}), 400
+        data = request.get_json()
+        document_id = data.get('document_id')
+        signatures = data.get('signatures', [])
+        user_id = data.get('user_id')
         
-        document_id = request.json['document_id']
-        signatures_data = request.json['signatures']
-        user_id = request.json.get('user_id', session.get('user_id'))
+        logger.info(f"Aplicando assinaturas ao documento {document_id} pelo usuário {user_id}")
         
-        if not document_id or not signatures_data or not user_id:
-            return jsonify({'error': 'Dados incompletos'}), 400
+        # Em um sistema real, aqui você aplicaria as assinaturas ao PDF
+        # e salvaria a versão assinada
         
-        # Obter o caminho do documento
-        document_path = os.path.join(current_app.config['UPLOAD_FOLDER'], f"document_{document_id}.pdf")
-        if not os.path.exists(document_path):
-            return jsonify({'error': 'Documento não encontrado'}), 404
-        
-        # Criar diretório para documentos assinados se não existir
-        signed_docs_dir = os.path.join(current_app.config['UPLOAD_FOLDER'], 'signed_documents')
-        os.makedirs(signed_docs_dir, exist_ok=True)
-        
-        # Nome único para o arquivo assinado
-        timestamp = int(time.time())
-        signed_filename = f"signed_{document_id}_{user_id}_{timestamp}.pdf"
-        signed_path = os.path.join(signed_docs_dir, signed_filename)
-        
-        # Processar o documento e aplicar as assinaturas
-        result = process_signatures(document_path, signatures_data, signed_path)
-        
-        if result['success']:
-            # Registrar a assinatura no banco de dados
-            register_signed_document(
-                user_id=user_id,
-                document_id=document_id,
-                signed_document=signed_filename,
-                signature_count=len(signatures_data),
-                ip_address=request.remote_addr
-            )
-            
-            return jsonify({
-                'success': True,
-                'message': 'Documento assinado com sucesso',
-                'signed_document_url': f"/signed_documents/{signed_filename}"
-            })
-        else:
-            return jsonify({'error': result['message']}), 500
+        return jsonify({
+            "success": True,
+            "message": "Assinaturas aplicadas com sucesso",
+            "signed_document_url": f"https://example.com/documents/{document_id}/signed"
+        })
         
     except Exception as e:
         logger.error(f"Erro ao aplicar assinaturas: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+        return jsonify({
+            "success": False,
+            "error": f"Erro ao aplicar assinaturas: {str(e)}"
+        }), 500
 
+<<<<<<< HEAD
 # Funções auxiliares
 
 def process_document_for_signature_areas(document_path, user_info):
@@ -307,5 +286,11 @@ def register_signed_document(user_id, document_id, signed_document, signature_co
     return True
 
 # Registrar o blueprint no app principal
+=======
+>>>>>>> 80d37553feb96d164faf50d25836806d1b245929
 def init_app(app):
-    app.register_blueprint(signatures_bp)
+    """
+    Inicializa as rotas de assinatura no app Flask
+    """
+    app.register_blueprint(signature_bp)
+    logger.info("Rotas de assinatura inicializadas")

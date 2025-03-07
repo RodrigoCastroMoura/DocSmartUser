@@ -552,6 +552,11 @@ def document_types_api():
 if __name__ == "__main__":
     # Ensure upload folder exists
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-    port = int(os.environ.get('PORT', 3000))  # Changed from 5000 to 3000
-    app.run(host='0.0.0.0', port=5000, debug=True)
-    init_signatures(app)
+    
+    # Initialize signature routes
+    from signature_routes import init_app as init_signature_routes
+    init_signature_routes(app)
+    
+    # Run the app
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=True)
