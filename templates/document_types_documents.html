@@ -817,13 +817,11 @@ async function renderPdfPage(pageNumber, canvas) {
         const viewport = page.getViewport({ scale: zoomLevel });
         
         // Set canvas dimensions to match viewport
-        //canvas.height = viewport.height;
-        //canvas.width = viewport.width;
-        //canvas.style.width = `${viewport.width}px`;
-       // canvas.style.height = `${viewport.height}px`;
-
         canvas.height = viewport.height;
         canvas.width = viewport.width;
+        
+        // Store current zoom level for reference
+        canvas.dataset.zoomLevel = zoomLevel;
         
         // Render PDF page into canvas context
         const renderContext = {
@@ -837,8 +835,8 @@ async function renderPdfPage(pageNumber, canvas) {
         const textContent = await page.getTextContent();
         await this.detectSignatureFields(textContent, page, canvas, viewport);
 
-         // Make the page interactive for signature placement
-         canvas.addEventListener('click', (e) => {
+        // Make the page interactive for signature placement
+        canvas.addEventListener('click', (e) => {
             if (this.currentSignature) {
                 const rect = canvas.getBoundingClientRect();
                 const x = e.clientX - rect.left;
@@ -849,7 +847,8 @@ async function renderPdfPage(pageNumber, canvas) {
                 console.log('Click coordinates:', { 
                     screen: {x, y}, 
                     pdf: pdfPoint,
-                    canvasRect: rect
+                    canvasRect: rect,
+                    zoomLevel: zoomLevel
                 });
 
                 // Find if click was inside a signature field
@@ -865,6 +864,7 @@ async function renderPdfPage(pageNumber, canvas) {
             const pageNumberIndicator = document.createElement('div');
             pageNumberIndicator.className = 'pdf-page-number';
             pageNumberIndicator.textContent = `${pageNumber} / ${currentPdf.numPages}`;
+            pageNumberIndicator.style.fontSize = `${Math.max(10, 12 * zoomLevel)}px`;
             canvas.parentNode.appendChild(pageNumberIndicator);
         }
         
@@ -903,7 +903,8 @@ async function detectSignatureFields(textContent, page, canvas, viewport) {
                     viewportCoords: {x, y},
                     adjustedViewportCoords: {x, y: adjustedY},
                     transform: item.transform,
-                    pageDimensions: {width: pageWidth, height: pageHeight}
+                    pageDimensions: {width: pageWidth, height: pageHeight},
+                    zoomLevel: zoomLevel
                 });
 
                 // Create signature field indicator
@@ -913,7 +914,8 @@ async function detectSignatureFields(textContent, page, canvas, viewport) {
                     width: 200,
                     height: 50,
                     pdfX: pdfX,
-                    pdfY: pdfY
+                    pdfY: pdfY,
+                    pageNum: page.pageNumber
                 };
 
                 // Ensure field is within page bounds
@@ -922,41 +924,61 @@ async function detectSignatureFields(textContent, page, canvas, viewport) {
 
                 this.signatureFields.push(field);
 
+                // Calculate scaled dimensions based on current zoom level
+                const scaledX = field.x * zoomLevel;
+                const scaledY = field.y * zoomLevel;
+                const scaledWidth = field.width * zoomLevel;
+                const scaledHeight = field.height * zoomLevel;
+
                 // Draw signature field indicator
                 ctx.save();
                 ctx.strokeStyle = '#2196F3';
                 ctx.fillStyle = 'rgba(33, 150, 243, 0.1)';
-                ctx.lineWidth = 2;
-                ctx.setLineDash([5, 3]);
+                ctx.lineWidth = 2 * zoomLevel;
+                ctx.setLineDash([5 * zoomLevel, 3 * zoomLevel]);
 
-                // Draw rectangle with adjusted position
-                ctx.strokeRect(field.x, field.y, field.width, field.height);
-                ctx.fillRect(field.x, field.y, field.width, field.height);
+                // Draw rectangle with adjusted position and scaled dimensions
+                ctx.strokeRect(scaledX, scaledY, scaledWidth, scaledHeight);
+                ctx.fillRect(scaledX, scaledY, scaledWidth, scaledHeight);
 
-                // Add signature icon and text
+                // Add signature icon and text with scaled font sizes
                 ctx.fillStyle = '#2196F3';
-                ctx.font = '24px Arial';
-                ctx.fillText('✒️', field.x + 10, field.y + 35);
+                ctx.font = `${24 * zoomLevel}px Arial`;
+                ctx.fillText('✒️', scaledX + 10 * zoomLevel, scaledY + 35 * zoomLevel);
 
-                ctx.font = '14px Arial';
+                ctx.font = `${14 * zoomLevel}px Arial`;
                 ctx.fillStyle = '#666';
-                ctx.fillText('Clique para assinar', field.x + 40, field.y + 35);
+                ctx.fillText('Clique para assinar', scaledX + 40 * zoomLevel, scaledY + 35 * zoomLevel);
 
                 ctx.restore();
 
                 console.log('Field dimensions:', {
                     final: field,
-                    margins: this.margins
+                    scaled: {x: scaledX, y: scaledY, width: scaledWidth, height: scaledHeight},
+                    margins: this.margins,
+                    zoomLevel: zoomLevel
                 });
             }
         }
     }
 
 async function findClickedField(x, y) {
-        return this.signatureFields.find(field => 
-            x >= field.x && x <= field.x + field.width &&
-            y >= field.y && y <= field.y + field.height
-        );
+        const currentZoom = zoomLevel;
+        
+        return this.signatureFields.find(field => {
+            // Apply zoom scaling to field boundaries
+            const scaledX = field.x * currentZoom;
+            const scaledY = field.y * currentZoom;
+            const scaledWidth = field.width * currentZoom;
+            const scaledHeight = field.height * currentZoom;
+            
+            return (
+                x >= scaledX && 
+                x <= scaledX + scaledWidth &&
+                y >= scaledY && 
+                y <= scaledY + scaledHeight
+            );
+        });
     }
 
 async function addSignature(signatureData) {
@@ -964,43 +986,53 @@ async function addSignature(signatureData) {
         this.container.style.cursor = 'pointer';
     }
 
-async function  placeSignature(event, canvas, field) {
+async function placeSignature(event, canvas, field) {
         const img = new Image();
         img.src = this.currentSignature;
         img.onload = () => {
             const ctx = canvas.getContext('2d');
+            const currentZoom = zoomLevel;
 
-            // Clear the field area
-            ctx.clearRect(field.x, field.y, field.width, field.height);
+            // Calculate scaled dimensions
+            const scaledX = field.x * currentZoom;
+            const scaledY = field.y * currentZoom;
+            const scaledWidth = field.width * currentZoom;
+            const scaledHeight = field.height * currentZoom;
 
-            // Draw signature
+            // Clear the field area with scaled dimensions
+            ctx.clearRect(scaledX, scaledY, scaledWidth, scaledHeight);
+
+            // Draw signature with proper scaling
             const aspectRatio = img.width / img.height;
-            const height = Math.min(field.height * 0.8, field.width / aspectRatio);
+            const height = Math.min(scaledHeight * 0.8, scaledWidth / aspectRatio);
             const width = height * aspectRatio;
 
             ctx.drawImage(img, 
-                field.x + (field.width - width) / 2,
-                field.y + (field.height - height) / 2,
+                scaledX + (scaledWidth - width) / 2,
+                scaledY + (scaledHeight - height) / 2,
                 width,
                 height
             );
 
-            // Store position in PDF coordinates
+            // Store position in PDF coordinates (unscaled)
             this.signaturePosition = {
-                page: this.pageNum - 1,
+                page: field.pageNum - 1,
                 x: field.pdfX,
-                y: field.pdfY
+                y: field.pdfY,
+                width: field.width / currentZoom, // Store original size
+                height: field.height / currentZoom
             };
 
             console.log('Signature placement:', {
                 canvas: {
-                    x: field.x,
-                    y: field.y,
+                    x: scaledX,
+                    y: scaledY,
                     width: width,
                     height: height
                 },
                 pdf: this.signaturePosition,
-                field: field
+                field: field,
+                zoomLevel: currentZoom
             });
         };
 
@@ -1043,6 +1075,9 @@ async function adjustZoom(delta) {
         // Render pages with new zoom
         await renderPdfPages(pdfContainer);
         
+        // Scale signature elements
+        scaleSignatureElements(zoomLevel);
+        
         // Restore scroll position
         const newScrollContainer = document.querySelector('.pdf-pages-container');
         setTimeout(() => {
@@ -1052,6 +1087,9 @@ async function adjustZoom(delta) {
         // Handle image zoom
         imageElement.style.transform = `scale(${zoomLevel})`;
         imageElement.style.transformOrigin = 'center center';
+        
+        // Scale signature elements for images too
+        scaleSignatureElements(zoomLevel);
     }
 }
 
@@ -1101,6 +1139,73 @@ document.addEventListener('DOMContentLoaded', () => {
         
         .pdf-page-canvas {
             display: block;
+
+function scaleSignatureElements(scale) {
+    // Scale all signature areas
+    const signatureAreas = document.querySelectorAll('.signature-area');
+    signatureAreas.forEach(area => {
+        // Adjust font size for better readability at different zoom levels
+        const promptText = area.querySelector('.signature-prompt span');
+        if (promptText) {
+            promptText.style.fontSize = `${Math.max(8, Math.min(16, 12 * scale))}px`;
+        }
+        
+        // Adjust icon size
+        const promptIcon = area.querySelector('.signature-prompt i');
+        if (promptIcon) {
+            promptIcon.style.fontSize = `${Math.max(10, Math.min(24, 18 * scale))}px`;
+        }
+    });
+    
+    // Update any signature fields detected during PDF parsing
+    signatureFields.forEach(field => {
+        // Adjust field dimensions based on the new scale
+        field.scaledWidth = field.width * scale;
+        field.scaledHeight = field.height * scale;
+    });
+    
+    // Re-render signature indicator rectangles if needed
+    if (currentPdf) {
+        const canvases = document.querySelectorAll('.pdf-page-canvas');
+        canvases.forEach((canvas, pageIndex) => {
+            // Redraw signature fields for this page
+            const ctx = canvas.getContext('2d');
+            const pageSignatureFields = signatureFields.filter(field => 
+                (field.pageNum === undefined || field.pageNum === pageIndex + 1)
+            );
+            
+            pageSignatureFields.forEach(field => {
+                // Draw signature field indicator with new scale
+                ctx.save();
+                ctx.strokeStyle = '#2196F3';
+                ctx.fillStyle = 'rgba(33, 150, 243, 0.1)';
+                ctx.lineWidth = 2 * scale;
+                ctx.setLineDash([5 * scale, 3 * scale]);
+                
+                // Adjust rectangle position and size based on scaled coordinates
+                const x = field.x * scale;
+                const y = field.y * scale;
+                const width = field.width * scale;
+                const height = field.height * scale;
+                
+                ctx.strokeRect(x, y, width, height);
+                ctx.fillRect(x, y, width, height);
+                
+                // Add signature icon and text
+                ctx.fillStyle = '#2196F3';
+                ctx.font = `${24 * scale}px Arial`;
+                ctx.fillText('✒️', x + 10 * scale, y + 35 * scale);
+                
+                ctx.font = `${14 * scale}px Arial`;
+                ctx.fillStyle = '#666';
+                ctx.fillText('Clique para assinar', x + 40 * scale, y + 35 * scale);
+                
+                ctx.restore();
+            });
+        });
+    }
+}
+
         }
         
         .pdf-page-number {
