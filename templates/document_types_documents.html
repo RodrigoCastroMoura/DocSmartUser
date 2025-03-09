@@ -94,18 +94,6 @@
         </div>
     </div>
 </div>
-<!-- No template document_types_documents.html, dentro do div com classe preview-container -->
-<div id="signatures-container" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; pointer-events: none;"></div>
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.0.3/dist/tesseract.min.js"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<script src="{{ url_for('static', filename='js/enhanced-signature-system.js') }}"></script>
-<script>
-let currentPage = 1;
-const perPage = 9;
-let totalPages = 1;
-let itemToDelete = null;
-
-async function loadFilterOptions() {
 
 <!-- Modal Simples para PDF -->
 <div id="simpleModal" class="modal">
@@ -125,7 +113,18 @@ async function loadFilterOptions() {
         </div>
     </div>
 </div>
+<!-- No template document_types_documents.html, dentro do div com classe preview-container -->
+<div id="signatures-container" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; pointer-events: none;"></div>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.0.3/dist/tesseract.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="{{ url_for('static', filename='js/enhanced-signature-system.js') }}"></script>
+<script>
+let currentPage = 1;
+const perPage = 9;
+let totalPages = 1;
+let itemToDelete = null;
 
+async function loadFilterOptions() {
     const contentDiv = document.getElementById('documentsContent');
     showLoading(contentDiv);
 
