@@ -648,7 +648,7 @@ function changePage(newPage) {
             department_id: urlParams.get('department_id') || '',
             category_id: urlParams.get('category_id') || '',
             document_type_id: '{{document_type.id}}', // Always use the current document_type_id
-            user_cpf: document.getElementById('user-cpf-filter').value || ''
+          
         };
         
         // Clean empty filters
@@ -852,8 +852,12 @@ async function renderPdfPage(pageNumber, canvas) {
                     canvasRect: rect
                 });
 
-                // Find if click was inside a signature field
-                const field = this.findClickedField(x, y);
+                alert({ 
+                    screen: {x, y}, 
+                    pdf: pdfPoint,
+                    canvasRect: rect
+                });
+
                 if (field) {
                     this.placeSignature(e, canvas, field);
                 }
@@ -1011,7 +1015,6 @@ async function  placeSignature(event, canvas, field) {
 async function   getSignaturePosition() {
         return this.signaturePosition;
     }
-
 
 async function adjustZoom(delta) {
     const oldZoom = zoomLevel;
@@ -1204,8 +1207,6 @@ function hideModal(modalId) {
         currentPdf = null;
     }
 }
-
-
 
 document.addEventListener('DOMContentLoaded', () => {
     loadDocuments();
