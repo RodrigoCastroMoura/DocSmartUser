@@ -106,6 +106,26 @@ let totalPages = 1;
 let itemToDelete = null;
 
 async function loadFilterOptions() {
+
+<!-- Modal Simples para PDF -->
+<div id="simpleModal" class="modal">
+    <div class="modal-content simple-modal">
+        <div class="modal-header">
+            <h3>Cabeçalho do Modal</h3>
+            <button class="action-btn" onclick="hideModal('simpleModal')">
+                <i data-feather="x"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <p>Conteúdo do modal simples.</p>
+        </div>
+        <div class="modal-footer">
+            <button class="action-btn" onclick="hideModal('simpleModal')">Cancelar</button>
+            <button class="action-btn primary">Confirmar</button>
+        </div>
+    </div>
+</div>
+
     const contentDiv = document.getElementById('documentsContent');
     showLoading(contentDiv);
 
@@ -770,6 +790,18 @@ async function previewDocument(url, filename) {
             iframeElement.className = 'document-iframe';
             iframeElement.src = url;
             docContainer.appendChild(iframeElement);
+            
+            // Adicionar botão para abrir modal simples apenas para PDFs
+            if (fileType === 'pdf') {
+                const pdfActionButton = document.createElement('button');
+                pdfActionButton.className = 'action-btn primary pdf-action-button';
+                pdfActionButton.innerHTML = '<i data-feather="file-text"></i> Abrir modal simples';
+                pdfActionButton.onclick = function() {
+                    showSimpleModal();
+                };
+                previewContainer.appendChild(pdfActionButton);
+                feather.replace();
+            }
         }
 
         showModal('previewModal');
@@ -1206,6 +1238,11 @@ function hideModal(modalId) {
     if (modalId === 'previewModal') {
         currentPdf = null;
     }
+}
+
+function showSimpleModal() {
+    document.getElementById('simpleModal').style.display = 'block';
+    feather.replace();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -1699,6 +1736,47 @@ document.addEventListener('DOMContentLoaded', () => {
     padding: 1rem;
     background-color: var(--bg-secondary);
     border-top: 1px solid var(--border-color);
+}
+
+/* Estilos para o botão de ação do PDF */
+.pdf-action-button {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    z-index: 100;
+    padding: 10px 15px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+/* Estilos para o modal simples */
+.simple-modal {
+    max-width: 500px;
+    display: flex;
+    flex-direction: column;
+    padding: 0 !important;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--border-color);
+    background-color: var(--bg-secondary);
+}
+
+.modal-body {
+    padding: 20px;
+    flex: 1;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 15px 20px;
+    border-top: 1px solid var(--border-color);
+    background-color: var(--bg-secondary);
 }
 
 </style>
