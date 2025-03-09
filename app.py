@@ -30,7 +30,7 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # API endpoints
-API_BASE_URL = "https://doc-smart-api-rodrigocastromo.replit.app/api"
+API_BASE_URL = "http://127.0.0.1:8000/api"
 LOGIN_URL = f"{API_BASE_URL}/auth/login"
 LOGOUT_URL = f"{API_BASE_URL}/auth/logout"
 REFRESH_URL = f"{API_BASE_URL}/auth/refresh"
@@ -337,10 +337,9 @@ def document_type_documents(document_type_id):
         return jsonify({'error': 'Company ID not found in session'}), 400
 
     try:
-        response = requests.get(
-            f"{DOCUMENT_TYPES_URL}/user/{document_type_id}",
-            headers=headers,
-            timeout=REQUEST_TIMEOUT)
+        response = requests.get(f"{DOCUMENT_TYPES_URL}/user/{document_type_id}",
+                                headers=headers,
+                                timeout=REQUEST_TIMEOUT)
 
         if not response.ok:
             logger.error(
@@ -349,7 +348,7 @@ def document_type_documents(document_type_id):
             return redirect(url_for('document_types'))
 
         document_type = response.json()
-
+        
         categories_response = requests.get(
             f"{CATEGORIES_URL}/user/{document_type.get('category_id')}",
             headers=headers,
@@ -363,6 +362,7 @@ def document_type_documents(document_type_id):
 
         category = categories_response.json()
 
+        
         return render_template('document_types_documents.html',
                                document_type=document_type,
                                category=category)
@@ -391,7 +391,7 @@ def documents_api():
         params = {
             'page': request.args.get('page', 1),
             'per_page': request.args.get('per_page', 9),
-            'document_type_id': request.args.get('document_type_id'),
+            'document_type_id' : request.args.get('document_type_id'),
         }
 
         # Remove None values
@@ -539,13 +539,15 @@ def document_types_api():
             'company_id': session.get('company_id')
         }
 
-        response = requests.get(f"{DOCUMENT_TYPES_URL}/public-or-allowed",
-                                headers=headers,
-                                params=params,
-                                timeout=REQUEST_TIMEOUT)
+        response = requests.get(
+            f"{DOCUMENT_TYPES_URL}/public-or-allowed",
+            headers=headers,
+            params=params,
+            timeout=REQUEST_TIMEOUT)
         return handle_api_response(
             response, error_message='Failed to fetch document types')
 
+    
 
 if __name__ == "__main__":
     # Ensure upload folder exists
