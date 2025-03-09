@@ -1753,6 +1753,15 @@ document.addEventListener('DOMContentLoaded', () => {
     padding: 0 !important;
 }
 
+/* Garante que o modal simples fique sobre o modal de visualização */
+#simpleModal {
+    z-index: 3000; /* Valor mais alto que o z-index do previewModal (2000) */
+}
+
+#previewModal {
+    z-index: 2000;
+}
+
 .modal-header {
     display: flex;
     justify-content: space-between;
