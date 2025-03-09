@@ -81,6 +81,9 @@
                     <button class="action-btn" onclick="adjustZoom(0.2)">
                         <i data-feather="zoom-in"></i>
                     </button>
+                    <button id="openSimpleModalBtn" class="action-btn primary" onclick="showSimpleModal()" style="margin-left: 10px;">
+                        <i data-feather="file-text"></i> Abrir Modal
+                    </button>
                 </div>
             </div>
             <button class="action-btn" onclick="hideModal('previewModal')">
@@ -790,17 +793,12 @@ async function previewDocument(url, filename) {
             iframeElement.src = url;
             docContainer.appendChild(iframeElement);
             
-            // Adicionar botão para abrir modal simples apenas para PDFs
-            if (fileType === 'pdf') {
-                const pdfActionButton = document.createElement('button');
-                pdfActionButton.className = 'action-btn primary pdf-action-button';
-                pdfActionButton.innerHTML = '<i data-feather="file-text"></i> Abrir modal simples';
-                pdfActionButton.onclick = function() {
-                    showSimpleModal();
-                };
-                previewContainer.appendChild(pdfActionButton);
-                feather.replace();
+            // Mostrar ou esconder o botão de modal simples baseado no tipo de arquivo
+            const openSimpleModalBtn = document.getElementById('openSimpleModalBtn');
+            if (openSimpleModalBtn) {
+                openSimpleModalBtn.style.display = fileType === 'pdf' ? 'flex' : 'none';
             }
+            feather.replace();
         }
 
         showModal('previewModal');
