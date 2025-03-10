@@ -171,16 +171,19 @@
 <style>
 /* Estilos específicos para o preview de fonte */
 #fontPreview {
-    font-size: 48px;
+    font-size: 60px;
     padding: 20px;
     border: 1px solid var(--border-color);
     border-radius: 4px;
     background-color: white;
     color: black;
-    min-height: 120px;
+    min-height: 150px;
     display: flex;
     align-items: center;
     justify-content: center;
+    word-break: break-word;
+    text-align: center;
+    line-height: 1.2;
     margin-top: 15px;
 }
 
@@ -203,9 +206,11 @@
 
 /* Garantir que o campo de entrada de texto também use a fonte selecionada */
 #signatureText {
-    font-size: 28px;
+    font-size: 36px;
     padding: 15px;
     height: auto;
+    line-height: 1.2;
+    text-align: center;
 }
 
 /* Estilos para os botões de fonte */
