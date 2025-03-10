@@ -149,6 +149,7 @@ function initFontPreview() {
     const fontPreview = document.getElementById('fontPreview');
     const signatureText = document.getElementById('signatureText');
     const fontFamily = document.getElementById('fontFamily');
+    const fontButtons = document.querySelectorAll('.font-btn');
     
     if (!fontPreview || !signatureText || !fontFamily) return;
     
@@ -159,14 +160,51 @@ function initFontPreview() {
         fontPreview.style.fontFamily = selectedFont;
         fontPreview.textContent = previewText;
         signatureText.style.fontFamily = selectedFont;
+        
+        // Atualizar botões selecionados
+        fontButtons.forEach(btn => {
+            if (btn.dataset.font === selectedFont) {
+                btn.classList.add('selected');
+            } else {
+                btn.classList.remove('selected');
+            }
+        });
     }
+    
+    // Configurar os botões de fonte
+    fontButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const font = btn.dataset.font;
+            fontFamily.value = font;
+            updateFontPreview();
+        });
+    });
     
     // Executar uma vez para inicializar
     updateFontPreview();
     
-    // Adicionar event listeners
-    fontFamily.addEventListener('change', updateFontPreview);
+    // Adicionar event listener para o campo de texto
     signatureText.addEventListener('input', updateFontPreview);
     
-    console.log("Font preview initialized");
+    // Selecionar o primeiro botão por padrão
+    if (fontButtons.length > 0) {
+        fontButtons[0].classList.add('selected');
+    }
+    
+    console.log("Font preview initialized with buttons");
+}
+
+// Função para alternar entre abas
+function switchTab(tabId) {
+    // Remover classe active de todas as abas
+    document.querySelectorAll('.tab-pane').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Adicionar classe active à aba selecionada
+    document.getElementById(tabId).classList.add('active');
+    document.querySelector(`.tab-btn[onclick="switchTab('${tabId}')"]`).classList.add('active');
 }
