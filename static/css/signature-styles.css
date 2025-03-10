@@ -1,0 +1,35 @@
+
+/* Estilos para as assinaturas aplicadas ao documento */
+#signatures-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+    pointer-events: none;
+}
+
+.signature-element {
+    max-width: 300px;
+    max-height: 150px;
+    border: 2px solid transparent;
+    transition: border-color 0.2s;
+}
+
+.signature-element:hover {
+    border-color: #4CAF50;
+}
+
+/* Estilos para as áreas de assinatura e ícones */
+.font-btn.selected {
+    border: 2px solid var(--accent-color);
+    background-color: rgba(var(--accent-color-rgb), 0.2);
+}
+
+/* Estilos para controles de assinatura */
+.signature-controls {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 15px;
+}

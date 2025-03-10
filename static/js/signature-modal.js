@@ -152,6 +152,133 @@ function loadSavedSignature() {
 // Aplicar a assinatura ou texto selecionado ao documento
 function applySignatureOrText() {
     const signatureText = document.getElementById('signatureText').value;
+    const fontFamily = document.getElementById('fontFamily').value;
+    
+    if (!signatureText) {
+        alert('Por favor, digite o texto da assinatura');
+        return;
+    }
+    
+    // Criar uma imagem a partir do preview
+    const fontPreview = document.getElementById('fontPreview');
+    
+    // Criar um canvas temporário para gerar a imagem
+    const tempCanvas = document.createElement('canvas');
+    const context = tempCanvas.getContext('2d');
+    
+    // Configurar o tamanho do canvas baseado no tamanho do texto
+    tempCanvas.width = fontPreview.offsetWidth;
+    tempCanvas.height = fontPreview.offsetHeight;
+    
+    // Configurar o estilo do canvas para corresponder ao preview
+    context.fillStyle = 'white';
+    context.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+    context.font = window.getComputedStyle(fontPreview).font;
+    context.fillStyle = 'black';
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    
+    // Desenhar o texto no canvas
+    context.fillText(signatureText, tempCanvas.width/2, tempCanvas.height/2);
+    
+    // Converter o canvas para uma imagem
+    const signatureImage = tempCanvas.toDataURL('image/png');
+    
+    // Adicionar a assinatura ao documento
+    addSignatureToDocument(signatureImage);
+    
+    // Fechar o modal
+    hideModal('simpleModal');
+}
+
+// Função para adicionar a assinatura ao documento
+function addSignatureToDocument(signatureImage) {
+    const signaturesContainer = document.getElementById('signatures-container');
+    
+    if (!signaturesContainer) {
+        console.error('Container de assinaturas não encontrado');
+        return;
+    }
+    
+    // Criar um elemento de imagem para a assinatura
+    const signatureElement = document.createElement('img');
+    signatureElement.src = signatureImage;
+    signatureElement.className = 'signature-element';
+    signatureElement.style.position = 'absolute';
+    
+    // Posicionamento padrão - no centro do container
+    signatureElement.style.top = '50%';
+    signatureElement.style.left = '50%';
+    signatureElement.style.transform = 'translate(-50%, -50%)';
+    signatureElement.style.maxWidth = '30%';
+    signatureElement.style.zIndex = '100';
+    signatureElement.style.pointerEvents = 'auto';
+    signatureElement.style.cursor = 'move';
+    
+    // Adicionar a assinatura ao container
+    signaturesContainer.appendChild(signatureElement);
+    
+    // Tornar a assinatura arrastável
+    makeElementDraggable(signatureElement);
+    
+    // Armazenar a assinatura para processamento posterior
+    storeSignatureData(signatureElement);
+}
+
+// Função para tornar um elemento arrastável
+function makeElementDraggable(element) {
+    let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+    
+    element.onmousedown = dragMouseDown;
+    
+    function dragMouseDown(e) {
+        e = e || window.event;
+        e.preventDefault();
+        // Obter a posição do cursor no início
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        document.onmouseup = closeDragElement;
+        // Chamar a função sempre que o cursor se mover
+        document.onmousemove = elementDrag;
+    }
+    
+    function elementDrag(e) {
+        e = e || window.event;
+        e.preventDefault();
+        // Calcular a nova posição do cursor
+        pos1 = pos3 - e.clientX;
+        pos2 = pos4 - e.clientY;
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        // Definir a nova posição do elemento
+        element.style.top = (element.offsetTop - pos2) + "px";
+        element.style.left = (element.offsetLeft - pos1) + "px";
+        // Remover o transform que poderia interferir
+        element.style.transform = 'none';
+    }
+    
+    function closeDragElement() {
+        // Parar de mover quando o mouse for solto
+        document.onmouseup = null;
+        document.onmousemove = null;
+        // Atualizar os dados da assinatura
+        storeSignatureData(element);
+    }
+}
+
+// Função para armazenar os dados da assinatura para processamento posterior
+function storeSignatureData(signatureElement) {
+    // Aqui você pode implementar a lógica para armazenar a posição e outros dados da assinatura
+    // para processar posteriormente (enviar para o servidor, aplicar ao PDF, etc.)
+    console.log('Assinatura posicionada em:', {
+        x: signatureElement.offsetLeft,
+        y: signatureElement.offsetTop,
+        width: signatureElement.offsetWidth,
+        height: signatureElement.offsetHeight
+    });
+}nado ao documento
+function applySignatureOrText() {
+    const signatureText = document.getElementById('signatureText').value;
     if (!signatureText) {
         alert('Por favor, digite o texto da assinatura');
         return;
