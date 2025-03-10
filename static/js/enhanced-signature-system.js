@@ -384,6 +384,16 @@ function renderSignatureAreas(pageNum) {
         <span>Clique para assinar</span>
       </div>
     `;
+    
+    // Melhorar a estilização da área de assinatura
+    signatureBox.style.border = '2px dashed #2196F3';
+    signatureBox.style.backgroundColor = 'rgba(33, 150, 243, 0.1)';
+    signatureBox.style.borderRadius = '4px';
+    signatureBox.style.display = 'flex';
+    signatureBox.style.alignItems = 'center';
+    signatureBox.style.justifyContent = 'center';
+    signatureBox.style.cursor = 'pointer';
+    signatureBox.style.transition = 'all 0.2s ease';
 
     // Adicionar evento para abrir o modal de assinatura
     signatureBox.addEventListener('click', () => openSignatureModal(pageNum, index));
@@ -808,15 +818,31 @@ function updateSignatureAreasPosition() {
     const signaturesContainer = document.getElementById('signatures-container');
     if (!signaturesContainer) return;
 
+    const previewContainer = document.querySelector('.preview-container');
+    if (!previewContainer) return;
+    
+    // Atualizar fator de escala baseado no nível de zoom atual
+    currentScale = zoomLevel;
+    
     const areas = signatureAreas;
     areas.forEach((area, index) => {
         const signatureBox = document.getElementById(`signature-area-${area.pageNum}-${index}`);
         if (signatureBox) {
-            const scale = currentScale;
-            signatureBox.style.left = `${area.x * scale}px`;
-            signatureBox.style.top = `${area.y * scale}px`;
-            signatureBox.style.width = `${area.width * scale}px`;
-            signatureBox.style.height = `${area.height * scale}px`;
+            // Usar zoomLevel para ajustar o posicionamento
+            signatureBox.style.left = `${area.x * currentScale}px`;
+            signatureBox.style.top = `${area.y * currentScale}px`;
+            signatureBox.style.width = `${area.width * currentScale}px`;
+            signatureBox.style.height = `${area.height * currentScale}px`;
+            
+            // Ajustar o tamanho do texto e ícones conforme o zoom
+            const signaturePrompt = signatureBox.querySelector('.signature-prompt');
+            if (signaturePrompt) {
+                signaturePrompt.style.fontSize = `${Math.max(10, 14 * currentScale)}px`;
+                const icon = signaturePrompt.querySelector('i');
+                if (icon) {
+                    icon.style.fontSize = `${Math.max(12, 16 * currentScale)}px`;
+                }
+            }
         }
     });
 }
@@ -866,3 +892,55 @@ async function adjustZoom(delta) {
         imageElement.style.transformOrigin = 'center center';
     }
 }
+// Adicionar estilos CSS para as áreas de assinatura
+function addSignatureStyles() {
+  const styleElement = document.createElement('style');
+  styleElement.textContent = `
+    .signature-area {
+      pointer-events: auto !important;
+      z-index: 100;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    
+    .signature-area:hover {
+      background-color: rgba(33, 150, 243, 0.2) !important;
+      border-color: #1976D2 !important;
+      transform: scale(1.02);
+    }
+    
+    .signature-prompt {
+      text-align: center;
+      color: #2196F3;
+      font-weight: 500;
+      font-size: 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      width: 100%;
+    }
+    
+    .signature-prompt i {
+      font-size: 16px;
+      margin-bottom: 5px;
+    }
+    
+    .signature-prompt span {
+      white-space: nowrap;
+    }
+    
+    @media (max-width: 768px) {
+      .signature-prompt span {
+        font-size: 12px;
+      }
+    }
+  `;
+  
+  document.head.appendChild(styleElement);
+}
+
+// Chamar função de estilos ao inicializar
+document.addEventListener('DOMContentLoaded', function() {
+  addSignatureStyles();
+});
