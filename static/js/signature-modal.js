@@ -202,3 +202,147 @@ document.addEventListener('DOMContentLoaded', function() {
     // Inicializar o preview
     updateSignaturePreview();
 });
+// Variables for signature text handling
+let currentFont = 'Dancing Script';
+let currentTextContent = '';
+let currentSignatureCanvas = null;
+let currentPdfPageElement = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize font buttons
+    const fontButtons = document.querySelectorAll('.font-btn');
+    fontButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const fontFamily = this.getAttribute('data-font');
+            document.getElementById('fontFamily').value = fontFamily;
+            
+            // Update selected button styling
+            fontButtons.forEach(b => b.classList.remove('selected'));
+            this.classList.add('selected');
+            
+            // Update preview
+            updateFontPreview();
+        });
+    });
+    
+    // Initialize text input
+    const signatureText = document.getElementById('signatureText');
+    if (signatureText) {
+        signatureText.addEventListener('input', updateFontPreview);
+    }
+    
+    // Select Dancing Script as default
+    const defaultFontBtn = document.querySelector('.font-btn[data-font="Dancing Script"]');
+    if (defaultFontBtn) {
+        defaultFontBtn.classList.add('selected');
+    }
+});
+
+function updateFontPreview() {
+    const fontFamily = document.getElementById('fontFamily').value;
+    const signatureText = document.getElementById('signatureText').value || 'Prévia da Fonte';
+    const fontPreview = document.getElementById('fontPreview');
+    
+    if (fontPreview) {
+        fontPreview.style.fontFamily = fontFamily;
+        fontPreview.textContent = signatureText;
+    }
+    
+    // Also update the input style
+    document.getElementById('signatureText').style.fontFamily = fontFamily;
+    
+    // Store current values
+    currentFont = fontFamily;
+    currentTextContent = signatureText;
+}
+
+function applySignatureOrText() {
+    const signatureText = document.getElementById('signatureText').value;
+    const fontFamily = document.getElementById('fontFamily').value;
+    
+    if (!signatureText) {
+        showNotification('Por favor, digite o texto da assinatura', 'warning');
+        return;
+    }
+    
+    // Create the signature image
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    // Set canvas size
+    canvas.width = 400;
+    canvas.height = 150;
+    
+    // Set background
+    ctx.fillStyle = 'rgba(255, 255, 255, 0)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Configure text style
+    ctx.fillStyle = 'black';
+    ctx.font = `bold 40px ${fontFamily}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    
+    // Add text to canvas
+    ctx.fillText(signatureText, canvas.width / 2, canvas.height / 2);
+    
+    // Convert canvas to image data URL
+    const signatureDataUrl = canvas.toDataURL('image/png');
+    
+    // Find the clicked signature field
+    const field = signatureFields.find(field => field.selected);
+    
+    if (field) {
+        // Get the PDF canvas
+        const pdfCanvas = document.querySelector('.pdf-page-canvas');
+        
+        if (pdfCanvas) {
+            const ctx = pdfCanvas.getContext('2d');
+            
+            // Clear the field area
+            ctx.clearRect(field.x, field.y, field.width, field.height);
+            
+            // Create an image element with the signature
+            const img = new Image();
+            img.onload = function() {
+                // Calculate dimensions to fit in the field
+                const aspectRatio = img.width / img.height;
+                const height = Math.min(field.height * 0.8, field.width / aspectRatio);
+                const width = height * aspectRatio;
+                
+                // Position in the center of the field
+                const x = field.x + (field.width - width) / 2;
+                const y = field.y + (field.height - height) / 2;
+                
+                // Draw signature on the canvas
+                ctx.drawImage(img, x, y, width, height);
+                
+                // Mark field as signed
+                field.signed = true;
+                field.selected = false;
+            };
+            img.src = signatureDataUrl;
+        }
+    }
+    
+    // Hide the modal
+    hideModal('simpleModal');
+    
+    // Show notification
+    if (typeof showNotification === 'function') {
+        showNotification('Assinatura aplicada com sucesso!', 'success');
+    }
+}
+
+function showSimpleModal() {
+    // Find the clicked signature field
+    const field = signatureFields.find(field => !field.signed);
+    
+    if (field) {
+        field.selected = true;
+        document.getElementById('simpleModal').style.display = 'block';
+        feather.replace();
+    } else {
+        showNotification('Não há campos disponíveis para assinatura', 'warning');
+    }
+}
