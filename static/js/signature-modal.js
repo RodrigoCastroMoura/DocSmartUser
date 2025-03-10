@@ -1,11 +1,10 @@
 // Arquivo signature-modal.js
 
-// Verificar se já existe um canvas de assinatura modal e inicializá-lo
-let modalSignatureCanvas;
-let modalSignatureContext;
-let currentSelectedFont = 'Dancing Script';
+// Variáveis globais
+let currentFont = 'Dancing Script';
+let fontPreview = null;
 
-// Estilos de assinatura predefinidos
+// Estilos de assinatura predefinidos (mantidos para compatibilidade, embora não usados na nova implementação)
 const signatureStyles = {
     cursive: {
         fontFamily: 'Dancing Script',
@@ -27,7 +26,7 @@ const signatureStyles = {
     }
 };
 
-// Função para alternar entre as abas
+// Função para alternar entre as abas (mantida sem alterações)
 function switchTab(tabId) {
     // Esconder todas as abas
     document.querySelectorAll('.tab-pane').forEach(tab => {
@@ -46,96 +45,8 @@ function switchTab(tabId) {
     event.currentTarget.classList.add('active');
 }
 
-// Função para gerar SVG de assinatura
-function generateSignatureSVG(name, style) {
-    const signatureStyle = signatureStyles[style] || signatureStyles.cursive;
-    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
 
-    // Calculate width based on text length
-    const width = Math.max(300, name.length * 25);
-    const height = 100;
-
-    svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
-    svg.setAttribute("width", "100%");
-    svg.setAttribute("height", "100%");
-
-    // Create text element for signature
-    const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-    text.setAttribute("x", width/2);
-    text.setAttribute("y", height/2);
-    text.setAttribute("text-anchor", "middle");
-    text.setAttribute("fill", signatureStyle.color);
-    text.setAttribute("style", `
-        font-family: ${signatureStyle.fontFamily};
-        font-size: ${signatureStyle.fontSize};
-        transform: skewX(${signatureStyle.skewAngle}deg);
-    `);
-    text.textContent = name;
-
-    svg.appendChild(text);
-    return svg;
-}
-
-// Função para gerar assinatura baseada em texto com fonte específica
-function generateTextSignature(text, font) {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-
-    // Ajustar o tamanho do canvas com base no tamanho do texto
-    const baseWidth = 400;
-    const textLength = text.length;
-    canvas.width = Math.max(baseWidth, textLength * 30);
-    canvas.height = 150;
-
-    // Limpar o canvas
-    ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // Configurações de fonte
-    let fontSize = 60;
-    if (textLength > 15) {
-        fontSize = Math.max(36, 60 - (textLength - 15) * 1.5);
-    }
-
-    ctx.font = `${fontSize}px "${font}"`;
-    ctx.fillStyle = '#000';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-
-    // Desenhar o texto
-    ctx.fillText(text, canvas.width/2, canvas.height/2);
-
-    // Retornar a imagem como URL de dados
-    return canvas.toDataURL('image/png');
-}
-
-// Atualizar preview de assinatura baseado no texto e fonte
-function updateSignaturePreview() {
-    const signatureText = document.getElementById('signatureText').value || 'Prévia da Fonte';
-    const fontFamily = document.getElementById('fontFamily').value;
-    const fontPreview = document.getElementById('fontPreview');
-
-    // Definir a fonte selecionada
-    fontPreview.style.fontFamily = fontFamily;
-    fontPreview.textContent = signatureText;
-
-    // Atualizar o tamanho da fonte dinamicamente com base no tamanho do texto
-    const baseSize = 60; // Tamanho base da fonte
-    const textLength = signatureText.length;
-    let fontSize = baseSize;
-
-    // Ajuste de tamanho baseado na quantidade de caracteres
-    if (textLength > 15) {
-        fontSize = baseSize - (textLength - 15) * 1.5;
-        fontSize = Math.max(fontSize, 36); // Não deixar menor que 36px
-    }
-
-    fontPreview.style.fontSize = `${fontSize}px`;
-
-    // Também atualiza o campo de entrada
-    document.getElementById('signatureText').style.fontFamily = fontFamily;
-}
-
+// Função para limpar o canvas modal (mantida sem alterações)
 function clearModalCanvas(canvasId) {
     const canvas = document.getElementById(canvasId);
     const context = canvas.getContext('2d');
@@ -143,130 +54,168 @@ function clearModalCanvas(canvasId) {
     context.fillRect(0, 0, canvas.width, canvas.height);
 }
 
-// Carregar assinatura salva
+// Carregar assinatura salva (mantida sem alterações)
 function loadSavedSignature() {
     // Implementar a lógica para carregar uma assinatura salva
     console.log("Load saved signature functionality to be implemented");
 }
 
-// Aplicar a assinatura ou texto selecionado ao documento
-function applySignatureOrText() {
-    const signatureText = document.getElementById('signatureText').value;
-    const fontFamily = document.getElementById('fontFamily').value;
-    
-    if (!signatureText) {
-        alert('Por favor, digite o texto da assinatura');
-        return;
+// Inicializar quando o documento estiver pronto
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar previsualizador de fonte
+    initFontPreview();
+
+    // Adicionar listeners aos botões de fonte
+    initFontButtons();
+});
+
+// Inicializar a área de prévia de fonte
+function initFontPreview() {
+    fontPreview = document.getElementById('fontPreview');
+    if (fontPreview) {
+        // Define a fonte inicial
+        fontPreview.style.fontFamily = currentFont;
+        fontPreview.textContent = "Sua assinatura";
     }
-    
-    // Criar uma imagem a partir do preview
-    const fontPreview = document.getElementById('fontPreview');
-    
-    // Criar um canvas temporário para gerar a imagem
-    const tempCanvas = document.createElement('canvas');
-    const context = tempCanvas.getContext('2d');
-    
-    // Configurar o tamanho do canvas baseado no tamanho do texto
-    tempCanvas.width = fontPreview.offsetWidth;
-    tempCanvas.height = fontPreview.offsetHeight;
-    
-    // Configurar o estilo do canvas para corresponder ao preview
-    context.fillStyle = 'white';
-    context.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-    context.font = window.getComputedStyle(fontPreview).font;
-    context.fillStyle = 'black';
-    context.textAlign = 'center';
-    context.textBaseline = 'middle';
-    
-    // Desenhar o texto no canvas
-    context.fillText(signatureText, tempCanvas.width/2, tempCanvas.height/2);
-    
-    // Converter o canvas para uma imagem
-    const signatureImage = tempCanvas.toDataURL('image/png');
-    
-    // Adicionar a assinatura ao documento
-    addSignatureToDocument(signatureImage);
-    
-    // Fechar o modal
-    hideModal('simpleModal');
 }
 
-// Função para adicionar a assinatura ao documento
-function addSignatureToDocument(signatureImage) {
+// Inicializar os botões de fontes
+function initFontButtons() {
+    document.querySelectorAll('.font-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            // Remover seleção anterior
+            document.querySelectorAll('.font-btn').forEach(el => {
+                el.classList.remove('selected');
+            });
+
+            // Adicionar seleção ao botão clicado
+            this.classList.add('selected');
+
+            // Atualizar fonte selecionada
+            const selectedFont = this.getAttribute('data-font');
+            document.getElementById('fontFamily').value = selectedFont;
+            currentFont = selectedFont;
+
+            // Atualizar preview
+            if (fontPreview) {
+                fontPreview.style.fontFamily = selectedFont;
+            }
+        });
+    });
+
+    // Selecionar o primeiro botão por padrão
+    const firstButton = document.querySelector('.font-btn');
+    if (firstButton) {
+        firstButton.classList.add('selected');
+    }
+}
+
+// Função para aplicar a assinatura ao documento
+function applySignatureOrText() {
+    // Obter o container de assinaturas
     const signaturesContainer = document.getElementById('signatures-container');
-    
     if (!signaturesContainer) {
         console.error('Container de assinaturas não encontrado');
         return;
     }
-    
-    // Criar um elemento de imagem para a assinatura
-    const signatureElement = document.createElement('img');
-    signatureElement.src = signatureImage;
+
+    // Obter a pré-visualização do PDF
+    const pdfCanvas = document.getElementById('pdfCanvas');
+    if (!pdfCanvas) {
+        console.error('Canvas do PDF não encontrado');
+        return;
+    }
+
+    // Criar elemento para assinatura
+    const signatureElement = document.createElement('div');
     signatureElement.className = 'signature-element';
     signatureElement.style.position = 'absolute';
-    
-    // Posicionamento padrão - no centro do container
-    signatureElement.style.top = '50%';
-    signatureElement.style.left = '50%';
-    signatureElement.style.transform = 'translate(-50%, -50%)';
-    signatureElement.style.maxWidth = '30%';
-    signatureElement.style.zIndex = '100';
+
+    // Obter a fonte selecionada
+    const fontFamily = document.getElementById('fontFamily').value;
+
+    // Criar a imagem de assinatura baseada no texto e fonte
+    const signatureText = document.getElementById('fontPreview').textContent;
+
+    // Configurar o estilo da assinatura
+    signatureElement.style.fontFamily = fontFamily;
+    signatureElement.style.fontSize = '36px';
+    signatureElement.style.color = 'black';
+    signatureElement.style.background = 'transparent';
+    signatureElement.style.padding = '10px';
+    signatureElement.style.zIndex = '20';
     signatureElement.style.pointerEvents = 'auto';
     signatureElement.style.cursor = 'move';
-    
+    signatureElement.style.userSelect = 'none';
+    signatureElement.textContent = signatureText;
+
+    // Posicionar no meio da tela inicialmente
+    const pdfRect = pdfCanvas.getBoundingClientRect();
+    signatureElement.style.left = (pdfRect.width / 2 - 150) + 'px';
+    signatureElement.style.top = (pdfRect.height / 2 - 50) + 'px';
+
     // Adicionar a assinatura ao container
     signaturesContainer.appendChild(signatureElement);
-    
+
     // Tornar a assinatura arrastável
     makeElementDraggable(signatureElement);
-    
-    // Armazenar a assinatura para processamento posterior
-    storeSignatureData(signatureElement);
+
+    // Fechar o modal
+    hideModal('simpleModal');
 }
+
 
 // Função para tornar um elemento arrastável
 function makeElementDraggable(element) {
     let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-    
+
     element.onmousedown = dragMouseDown;
-    
+
     function dragMouseDown(e) {
         e = e || window.event;
         e.preventDefault();
-        // Obter a posição do cursor no início
+        // Obter posição inicial do cursor
         pos3 = e.clientX;
         pos4 = e.clientY;
         document.onmouseup = closeDragElement;
-        // Chamar a função sempre que o cursor se mover
+        // Chamar função sempre que o cursor se mover
         document.onmousemove = elementDrag;
     }
-    
+
     function elementDrag(e) {
         e = e || window.event;
         e.preventDefault();
-        // Calcular a nova posição do cursor
+        // Calcular nova posição
         pos1 = pos3 - e.clientX;
         pos2 = pos4 - e.clientY;
         pos3 = e.clientX;
         pos4 = e.clientY;
-        // Definir a nova posição do elemento
+        // Definir nova posição do elemento
         element.style.top = (element.offsetTop - pos2) + "px";
         element.style.left = (element.offsetLeft - pos1) + "px";
-        // Remover o transform que poderia interferir
-        element.style.transform = 'none';
     }
-    
+
     function closeDragElement() {
-        // Parar de mover quando o mouse for solto
+        // Parar de mover quando soltar o mouse
         document.onmouseup = null;
         document.onmousemove = null;
-        // Atualizar os dados da assinatura
-        storeSignatureData(element);
     }
 }
 
-// Função para armazenar os dados da assinatura para processamento posterior
+// Função para abrir modal simples
+function showSimpleModal() {
+    document.getElementById('simpleModal').style.display = 'block';
+    fontPreview = document.getElementById('fontPreview');
+    if (fontPreview) {
+        fontPreview.style.fontFamily = currentFont;
+    }
+    initFontButtons();
+}
+
+// Função para adicionar a assinatura ao documento (removida pois a lógica está integrada em applySignatureOrText)
+//function addSignatureToDocument(signatureImage) { ... }
+
+// Função para armazenar os dados da assinatura (mantida sem alterações)
 function storeSignatureData(signatureElement) {
     // Aqui você pode implementar a lógica para armazenar a posição e outros dados da assinatura
     // para processar posteriormente (enviar para o servidor, aplicar ao PDF, etc.)
@@ -276,58 +225,9 @@ function storeSignatureData(signatureElement) {
         width: signatureElement.offsetWidth,
         height: signatureElement.offsetHeight
     });
-}nado ao documento
-function applySignatureOrText() {
-    const signatureText = document.getElementById('signatureText').value;
-    if (!signatureText) {
-        alert('Por favor, digite o texto da assinatura');
-        return;
-    }
-
-    // Gerar a assinatura como imagem
-    const signatureImg = generateTextSignature(signatureText, currentSelectedFont);
-
-    // Aqui você pode implementar a lógica para adicionar a assinatura ao PDF
-    console.log('Assinatura aplicada:', signatureImg);
-
-    // Fechar o modal
-    hideModal('simpleModal');
 }
 
-// Iniciar eventos quando o DOM estiver carregado
-document.addEventListener('DOMContentLoaded', function() {
-    // Adicionar evento para os botões de fonte
-    document.querySelectorAll('.font-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            // Remover seleção anterior
-            document.querySelectorAll('.font-btn').forEach(b => b.classList.remove('selected'));
-
-            // Selecionar a nova fonte
-            this.classList.add('selected');
-
-            // Atualizar a fonte atual
-            currentSelectedFont = this.dataset.font;
-            document.getElementById('fontFamily').value = currentSelectedFont;
-
-            // Atualizar o preview
-            updateSignaturePreview();
-        });
-    });
-
-    // Adicionar evento para o campo de texto
-    const signatureText = document.getElementById('signatureText');
-    if (signatureText) {
-        signatureText.addEventListener('input', updateSignaturePreview);
-    }
-
-    // Inicializar com a primeira fonte selecionada
-    const firstFontBtn = document.querySelector('.font-btn');
-    if (firstFontBtn) {
-        firstFontBtn.classList.add('selected');
-        currentSelectedFont = firstFontBtn.dataset.font;
-        document.getElementById('fontFamily').value = currentSelectedFont;
-    }
-
-    // Inicializar o preview
-    updateSignaturePreview();
-});
+// Função para esconder o modal (assumida como existente em outro arquivo)
+function hideModal(modalId) {
+    document.getElementById(modalId).style.display = 'none';
+}

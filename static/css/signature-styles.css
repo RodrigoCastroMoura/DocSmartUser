@@ -11,14 +11,23 @@
 }
 
 .signature-element {
-    max-width: 300px;
-    max-height: 150px;
+    position: absolute;
+    background-color: rgba(255, 255, 255, 0.8);
     border: 2px solid transparent;
-    transition: border-color 0.2s;
+    transition: all 0.2s;
+    padding: 10px;
+    max-width: 300px;
+    text-align: center;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    cursor: move;
+    z-index: 20;
+    pointer-events: auto;
+    user-select: none;
 }
 
 .signature-element:hover {
     border-color: #4CAF50;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 /* Estilos para as áreas de assinatura e ícones */
