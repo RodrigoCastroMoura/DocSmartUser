@@ -14,8 +14,6 @@ let signatureAreas = [];
 let currentUser = null;
 let userSignature = null;
 let currentScale = 1.0;
-let zoomLevel = 1.0; // Add zoomLevel variable
-
 
 // Inicialização da biblioteca Tesseract para OCR
 const { createWorker } = Tesseract;
@@ -44,7 +42,7 @@ async function loadCurrentUser() {
       name: document.getElementById('name-user')?.value || '',
       cpf: document.getElementById('user_cpf')?.value || ''
     };
-
+    
     currentUser = userInfo;
     console.log("Usuário atual carregado:", currentUser);
     return currentUser;
@@ -60,22 +58,20 @@ async function processDocumentForSignature(pdfUrl) {
     // Carregar o documento PDF
     const loadingTask = pdfjsLib.getDocument(pdfUrl);
     pdfDoc = await loadingTask.promise;
-    // Usar a variável currentPdf global já definida no escopo da página
-    window.currentPdf = pdfDoc;
-
+    
     signatureAreas = [];
     const user = await loadCurrentUser();
-
+    
     if (!user || !user.name) {
       throw new Error("Informações do usuário não disponíveis. Por favor, faça login.");
     }
-
+    
     // Procurar por áreas de assinatura em cada página
     for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
       const page = await pdfDoc.getPage(pageNum);
       await findSignatureAreas(page, pageNum, user);
     }
-
+    
     return {
       success: true,
       totalSignatureAreas: signatureAreas.length,
@@ -111,15 +107,15 @@ async function findSignatureAreas(page, pageNum, user) {
 
     // Primeiro método: buscar por padrões de texto que indiquem áreas de assinatura
     let foundByText = await findSignatureAreasByText(textContent, pageNum, user, viewport);
-
+    
     // Segundo método: usar OCR para verificar áreas que possam conter indicações de assinatura
     if (foundByText.length === 0) {
       foundByText = await findSignatureAreasByOCR(canvas, pageNum, user, viewport);
     }
-
+    
     // Adicionar as áreas encontradas ao array global
     signatureAreas.push(...foundByText);
-
+    
   } catch (error) {
     console.error(`Erro ao analisar a página ${pageNum}:`, error);
   }
@@ -131,7 +127,7 @@ async function findSignatureAreasByText(textContent, pageNum, user, viewport) {
     'assinar', 'assinatura', 'assinado', 'firma', 'certificado',
     'sign', 'signature', 'signed', 'assinante', 'contratante'
   ];
-
+  
   // Expressões que podem indicar uma área de assinatura com o nome do usuário
   const userNameRegexPatterns = [
     new RegExp(`${user.name}\\s*(:|assinatura|assinar|assinado)`, 'i'),
@@ -140,18 +136,18 @@ async function findSignatureAreasByText(textContent, pageNum, user, viewport) {
     // Nome sem acentos para melhorar a detecção
     new RegExp(`${removeAccents(user.name)}\\s*(:|assinatura|assinar|assinado)`, 'i')
   ];
-
+  
   const foundAreas = [];
   const items = textContent.items;
-
+  
   for (let i = 0; i < items.length; i++) {
     const item = items[i];
     const text = item.str.toLowerCase();
-
+    
     // Verificar se o texto corresponde a um dos padrões de assinatura
     const isSignatureArea = signatureKeywords.some(keyword => text.includes(keyword.toLowerCase())) ||
       userNameRegexPatterns.some(pattern => pattern.test(item.str));
-
+    
     if (isSignatureArea) {
       // Encontramos uma possível área de assinatura
       const area = {
@@ -163,20 +159,20 @@ async function findSignatureAreasByText(textContent, pageNum, user, viewport) {
         text: item.str,
         type: 'text'
       };
-
+      
       // Ajustar coordenadas para que a assinatura fique próxima, mas não sobreposta ao texto
       area.y -= 10; // Mover um pouco para cima para não cobrir o texto
-
+      
       foundAreas.push(area);
       console.log(`Área de assinatura encontrada na página ${pageNum}:`, area);
     }
   }
-
+  
   // Se não encontramos áreas específicas, vamos buscar por linhas que possam ser para assinatura
   if (foundAreas.length === 0) {
     return findSignatureLinesByText(textContent, pageNum, user, viewport);
   }
-
+  
   return foundAreas;
 }
 
@@ -187,16 +183,16 @@ function findSignatureLinesByText(textContent, pageNum, user, viewport) {
     /\-{5,}/,             // Linha de hífen (-------)
     /assinatura.{0,20}$/i // Palavra "assinatura" no final de uma linha
   ];
-
+  
   const foundAreas = [];
   const items = textContent.items;
-
+  
   for (let i = 0; i < items.length; i++) {
     const item = items[i];
-
+    
     // Verificar se o texto corresponde a um dos padrões de linha para assinatura
     const isSignatureLine = signatureLinePatterns.some(pattern => pattern.test(item.str));
-
+    
     if (isSignatureLine) {
       // Encontramos uma possível linha para assinatura
       const area = {
@@ -208,12 +204,12 @@ function findSignatureLinesByText(textContent, pageNum, user, viewport) {
         text: item.str,
         type: 'line'
       };
-
+      
       foundAreas.push(area);
       console.log(`Linha de assinatura encontrada na página ${pageNum}:`, area);
     }
   }
-
+  
   return foundAreas;
 }
 
@@ -221,30 +217,30 @@ function findSignatureLinesByText(textContent, pageNum, user, viewport) {
 async function findSignatureAreasByOCR(canvas, pageNum, user, viewport) {
   try {
     const worker = await initTesseract();
-
+    
     // Usar OCR para extrair texto da imagem da página
     const { data } = await worker.recognize(canvas);
-
+    
     const signatureKeywords = [
       'assinar', 'assinatura', 'assinado', 'firma', 'certificado',
       'sign', 'signature', 'signed', 'assinante', 'contratante'
     ];
-
+    
     const foundAreas = [];
-
+    
     // Processar os blocos de texto reconhecidos pelo OCR
     for (const block of data.blocks) {
       for (const paragraph of block.paragraphs) {
         const text = paragraph.text.toLowerCase();
-
+        
         // Verificar se o texto contém palavras-chave de assinatura ou o nome do usuário
         const containsSignatureKeyword = signatureKeywords.some(keyword => text.includes(keyword.toLowerCase()));
         const containsUserName = user.name && text.includes(user.name.toLowerCase());
-
+        
         if (containsSignatureKeyword || containsUserName) {
           // Encontramos uma possível área de assinatura
           const { x0, y0, x1, y1 } = paragraph.bbox;
-
+          
           const area = {
             pageNum,
             x: x0,
@@ -254,20 +250,20 @@ async function findSignatureAreasByOCR(canvas, pageNum, user, viewport) {
             text: paragraph.text,
             type: 'ocr'
           };
-
+          
           // Ajustar coordenadas para que a assinatura fique abaixo do texto
           area.y -= 30; 
-
+          
           foundAreas.push(area);
           console.log(`Área de assinatura (OCR) encontrada na página ${pageNum}:`, area);
         }
       }
     }
-
+    
     // Se ainda não encontramos áreas, vamos verificar por linhas horizontais que podem ser para assinatura
     if (foundAreas.length === 0) {
       const lines = await detectHorizontalLines(canvas);
-
+      
       for (const line of lines) {
         const area = {
           pageNum,
@@ -278,15 +274,15 @@ async function findSignatureAreasByOCR(canvas, pageNum, user, viewport) {
           text: 'Linha detectada',
           type: 'line-detection'
         };
-
+        
         // Ajustar a posição da assinatura para ficar acima da linha
         area.y += 20;
-
+        
         foundAreas.push(area);
         console.log(`Linha horizontal para assinatura detectada na página ${pageNum}:`, area);
       }
     }
-
+    
     return foundAreas;
   } catch (error) {
     console.error(`Erro no OCR na página ${pageNum}:`, error);
@@ -301,25 +297,25 @@ async function detectHorizontalLines(canvas) {
   const data = imageData.data;
   const width = canvas.width;
   const height = canvas.height;
-
+  
   const lines = [];
   const minLineLength = width * 0.2; // A linha deve ser pelo menos 20% da largura da página
-
+  
   // Percorrer cada linha da imagem
   for (let y = 0; y < height; y++) {
     let currentLineStart = -1;
     let currentLineLength = 0;
-
+    
     // Percorrer cada pixel na linha horizontal
     for (let x = 0; x < width; x++) {
       const idx = (y * width + x) * 4;
       const r = data[idx];
       const g = data[idx + 1];
       const b = data[idx + 2];
-
+      
       // Verificar se o pixel é escuro (possível linha)
       const isDark = r < 100 && g < 100 && b < 100;
-
+      
       if (isDark) {
         if (currentLineStart === -1) {
           currentLineStart = x;
@@ -339,7 +335,7 @@ async function detectHorizontalLines(canvas) {
         currentLineLength = 0;
       }
     }
-
+    
     // Verificar se a linha termina no final da página
     if (currentLineStart !== -1 && currentLineLength >= minLineLength) {
       lines.push({
@@ -350,51 +346,37 @@ async function detectHorizontalLines(canvas) {
       });
     }
   }
-
+  
   return lines;
 }
 
 // Renderizar as áreas de assinatura no documento
 function renderSignatureAreas(pageNum) {
-  // Filtrar apenas áreas para a página atual
-  const areasForPage = signatureAreas.filter(area => area.pageNum === pageNum);
   const signaturesContainer = document.getElementById('signatures-container');
-
-  if (!signaturesContainer) {
-    console.error('Container de assinaturas não encontrado');
-    return;
-  }
-
-  // Limpar áreas existentes da página atual
-  const existingAreas = signaturesContainer.querySelectorAll(`[data-page="${pageNum}"]`);
-  existingAreas.forEach(area => area.remove());
-
-  // Obter a escala atual
-  const scale = zoomLevel || 1;
-
-  // Encontrar o canvas da página atual
-  const canvas = document.querySelector(`.pdf-page-wrapper[data-page-number="${pageNum}"] .pdf-page-canvas`);
-  if (!canvas) {
-    console.error(`Canvas para página ${pageNum} não encontrado`);
-    return;
-  }
-
-  const rect = canvas.getBoundingClientRect();
-
-  // Renderizar cada área de assinatura
-  areasForPage.forEach((area, index) => {
+  if (!signaturesContainer) return;
+  
+  // Limpar áreas existentes
+  signaturesContainer.innerHTML = '';
+  
+  // Filtrar áreas para a página atual
+  const areas = signatureAreas.filter(area => area.pageNum === pageNum);
+  
+  // Adicionar novas áreas
+  areas.forEach((area, index) => {
     const signatureBox = document.createElement('div');
     signatureBox.className = 'signature-area';
-    signatureBox.dataset.page = pageNum;
+    signatureBox.id = `signature-area-${pageNum}-${index}`;
+    signatureBox.dataset.pageNum = pageNum;
     signatureBox.dataset.index = index;
-
-    // Posicionar a área de assinatura relativamente ao canvas
+    
+    // Aplicar posicionamento baseado nas coordenadas do PDF
+    const scale = currentScale;
     signatureBox.style.position = 'absolute';
-    signatureBox.style.left = `${rect.left + (area.x * scale)}px`;
-    signatureBox.style.top = `${rect.top + (area.y * scale)}px`;
+    signatureBox.style.left = `${area.x * scale}px`;
+    signatureBox.style.top = `${area.y * scale}px`;
     signatureBox.style.width = `${area.width * scale}px`;
     signatureBox.style.height = `${area.height * scale}px`;
-
+    
     // Estilizar a área de assinatura
     signatureBox.innerHTML = `
       <div class="signature-prompt">
@@ -402,12 +384,10 @@ function renderSignatureAreas(pageNum) {
         <span>Clique para assinar</span>
       </div>
     `;
-
-    // Estilização já incluída no CSS injetado
-
+    
     // Adicionar evento para abrir o modal de assinatura
     signatureBox.addEventListener('click', () => openSignatureModal(pageNum, index));
-
+    
     signaturesContainer.appendChild(signatureBox);
   });
 }
@@ -416,29 +396,29 @@ function renderSignatureAreas(pageNum) {
 function openSignatureModal(pageNum, areaIndex) {
   const modal = document.getElementById('signatureModal');
   if (!modal) return;
-
+  
   // Configurar o modal
   const currentArea = signatureAreas.find(
     area => area.pageNum === pageNum && signatureAreas.indexOf(area) === areaIndex
   );
-
+  
   if (!currentArea) {
     console.error('Área de assinatura não encontrada');
     return;
   }
-
+  
   // Preencher informações no modal
   document.getElementById('signatureCurrentPage').textContent = pageNum;
   document.getElementById('signatureCurrentIndex').textContent = areaIndex;
-
+  
   // Limpar o canvas de assinatura
   const canvas = document.getElementById('signatureCanvas');
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-
+  
   // Exibir o modal
   modal.style.display = 'block';
-
+  
   // Inicializar o canvas de assinatura
   initSignatureCanvas();
 }
@@ -450,39 +430,39 @@ function initSignatureCanvas() {
   let isDrawing = false;
   let lastX = 0;
   let lastY = 0;
-
+  
   // Configurar estilos
   ctx.lineWidth = 3;
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
   ctx.strokeStyle = '#000000';
-
+  
   // Funções de desenho
   function startDrawing(e) {
     isDrawing = true;
     [lastX, lastY] = getCoordinates(e);
   }
-
+  
   function draw(e) {
     if (!isDrawing) return;
-
+    
     ctx.beginPath();
     ctx.moveTo(lastX, lastY);
-
+    
     const [currentX, currentY] = getCoordinates(e);
     ctx.lineTo(currentX, currentY);
     ctx.stroke();
-
+    
     [lastX, lastY] = [currentX, currentY];
   }
-
+  
   function stopDrawing() {
     isDrawing = false;
   }
-
+  
   function getCoordinates(e) {
     const rect = canvas.getBoundingClientRect();
-
+    
     if (e.type.includes('touch')) {
       return [
         e.touches[0].clientX - rect.left,
@@ -495,13 +475,13 @@ function initSignatureCanvas() {
       ];
     }
   }
-
+  
   // Adicionar eventos
   canvas.addEventListener('mousedown', startDrawing);
   canvas.addEventListener('mousemove', draw);
   canvas.addEventListener('mouseup', stopDrawing);
   canvas.addEventListener('mouseout', stopDrawing);
-
+  
   // Suporte para touch
   canvas.addEventListener('touchstart', startDrawing);
   canvas.addEventListener('touchmove', draw);
@@ -513,35 +493,35 @@ function applySignature() {
   const canvas = document.getElementById('signatureCanvas');
   const signaturePageNum = parseInt(document.getElementById('signatureCurrentPage').textContent);
   const signatureAreaIndex = parseInt(document.getElementById('signatureCurrentIndex').textContent);
-
+  
   // Capturar a imagem da assinatura
   const signatureImage = canvas.toDataURL('image/png');
   userSignature = signatureImage;
-
+  
   // Encontrar a área de assinatura
   const area = signatureAreas.find(
     (a, index) => a.pageNum === signaturePageNum && index === signatureAreaIndex
   );
-
+  
   if (!area) {
     console.error('Área de assinatura não encontrada');
     return;
   }
-
+  
   // Atualizar visualmente a área de assinatura
   const signatureBox = document.getElementById(`signature-area-${signaturePageNum}-${signatureAreaIndex}`);
   if (signatureBox) {
     signatureBox.innerHTML = `<img src="${signatureImage}" alt="Assinatura" style="width: 100%; height: 100%; object-fit: contain;">`;
     signatureBox.classList.add('signed');
   }
-
+  
   // Fechar o modal
   document.getElementById('signatureModal').style.display = 'none';
-
+  
   // Adicionar a assinatura ao array
   area.signed = true;
   area.signatureImage = signatureImage;
-
+  
   // Verificar se todas as áreas foram assinadas
   const allSigned = signatureAreas.every(area => area.signed);
   if (allSigned) {
@@ -579,16 +559,16 @@ function loadSavedSignature() {
 async function saveSignedDocument() {
   try {
     showNotification('Salvando documento assinado...', 'info');
-
+    
     // Aqui você teria a lógica para combinar o PDF original com as assinaturas
     // Esta é uma funcionalidade mais avançada que exigiria uma biblioteca como pdf-lib
-
+    
     // Exemplo simples (simulado):
     setTimeout(() => {
       showNotification('Documento assinado com sucesso!', 'success');
       // Aqui você poderia redirecionar para a página de visualização do documento
     }, 2000);
-
+    
     // Na implementação real, você enviaria o documento assinado para o servidor
     // E realizaria o processamento necessário lá
   } catch (error) {
@@ -617,10 +597,10 @@ function removeAccents(str) {
 document.addEventListener('DOMContentLoaded', function() {
   // Injetar o CSS necessário
   injectSignatureStyles();
-
+  
   // Adicionar os elementos HTML necessários
   injectSignatureHTML();
-
+  
   // Verificar quando um documento é visualizado
   const previewButton = document.querySelectorAll('.document-actions .action-btn');
   previewButton.forEach(button => {
@@ -629,13 +609,13 @@ document.addEventListener('DOMContentLoaded', function() {
       button.onclick = async function(e) {
         // Chamar o comportamento original primeiro
         if (originalOnclick) originalOnclick.call(this, e);
-
+        
         // Depois, inicializar nosso sistema de assinatura
         setTimeout(async () => {
           // Obter a URL do documento
           const previewModalImg = document.querySelector('#imagePreview');
           const previewModalPdf = document.querySelector('#documentPreview');
-
+          
           if (previewModalPdf && previewModalPdf.src) {
             initSignatureSystem(previewModalPdf.src);
           } else if (previewModalImg && previewModalImg.src) {
@@ -652,13 +632,13 @@ async function initSignatureSystem(documentUrl) {
   try {
     // Processar o documento para encontrar áreas de assinatura
     const result = await processDocumentForSignature(documentUrl);
-
+    
     if (result.success && result.totalSignatureAreas > 0) {
       showNotification(result.message, 'success');
-
+      
       // Encontrar o container onde o PDF é renderizado
       const pdfContainer = document.querySelector('.preview-container');
-
+      
       if (pdfContainer) {
         // Criar um container para as áreas de assinatura
         let signaturesContainer = document.getElementById('signatures-container');
@@ -671,16 +651,16 @@ async function initSignatureSystem(documentUrl) {
           signaturesContainer.style.width = '100%';
           signaturesContainer.style.height = '100%';
           signaturesContainer.style.pointerEvents = 'none';
-
+          
           // As áreas de assinatura precisam ter pointer-events habilitado
           signaturesContainer.style.zIndex = '10';
-
+          
           pdfContainer.appendChild(signaturesContainer);
         }
-
+        
         // Renderizar as áreas de assinatura para a página atual
         renderSignatureAreas(1); // Começar com a página 1
-
+        
         // Adicionar botão para salvar o documento assinado
         addSignatureControls(pdfContainer);
       }
@@ -697,7 +677,7 @@ async function initSignatureSystem(documentUrl) {
 function addSignatureControls(container) {
   // Verificar se os controles já existem
   if (document.getElementById('signature-controls')) return;
-
+  
   const controls = document.createElement('div');
   controls.id = 'signature-controls';
   controls.className = 'signature-controls';
@@ -706,7 +686,7 @@ function addSignatureControls(container) {
       <i class="fa fa-save"></i> Salvar Documento Assinado
     </button>
   `;
-
+  
   // Adicionar ao container apropriado
   const previewControls = document.querySelector('.preview-controls');
   if (previewControls) {
@@ -714,7 +694,7 @@ function addSignatureControls(container) {
   } else {
     container.appendChild(controls);
   }
-
+  
   // Adicionar evento ao botão
   document.getElementById('saveSignedDocumentBtn').addEventListener('click', saveSignedDocument);
 }
@@ -733,17 +713,17 @@ function injectSignatureStyles() {
       pointer-events: auto;
       transition: all 0.2s ease;
     }
-
+    
     .signature-area:hover {
       background-color: rgba(59, 130, 246, 0.2);
       border-color: #2563eb;
     }
-
+    
     .signature-area.signed {
       border: 2px solid #22c55e;
       background-color: rgba(34, 197, 94, 0.1);
     }
-
+    
     .signature-prompt {
       display: flex;
       flex-direction: column;
@@ -752,27 +732,27 @@ function injectSignatureStyles() {
       color: #3b82f6;
       font-size: 0.875rem;
     }
-
+    
     .signature-prompt i {
       font-size: 1.25rem;
       margin-bottom: 0.25rem;
     }
-
+    
     .signature-controls {
       display: flex;
       gap: 1rem;
       margin-top: 1rem;
     }
-
+    
     #signatureModal {
       z-index: 2000;
     }
-
+    
     .signature-modal-content {
       max-width: 600px;
       width: 90%;
     }
-
+    
     #signatureCanvas {
       width: 100%;
       height: 200px;
@@ -780,14 +760,14 @@ function injectSignatureStyles() {
       background-color: white;
       margin-bottom: 1rem;
     }
-
+    
     .signature-actions {
       display: flex;
       justify-content: space-between;
       margin-top: 1rem;
     }
   `;
-
+  
   document.head.appendChild(styleElement);
 }
 
@@ -800,9 +780,9 @@ function injectSignatureHTML() {
     <div class="modal-content signature-modal-content">
       <h3>Assinatura Digital</h3>
       <p>Desenhe sua assinatura no campo abaixo:</p>
-
+      
       <canvas id="signatureCanvas" width="600" height="200"></canvas>
-
+      
       <div class="signature-actions">
         <button type="button" class="action-btn" onclick="clearSignatureCanvas()">
           <i class="fa fa-eraser"></i> Limpar
@@ -814,165 +794,11 @@ function injectSignatureHTML() {
           <i class="fa fa-check"></i> Aplicar Assinatura
         </button>
       </div>
-
+      
       <input type="hidden" id="signatureCurrentPage" value="1">
       <input type="hidden" id="signatureCurrentIndex" value="0">
     </div>
   `;
-
+  
   document.body.appendChild(signatureModal);
 }
-
-//Função para atualizar a posição das áreas de assinatura
-function updateSignatureAreasPosition() {
-    // Atualizar posição das áreas de assinatura após zoom
-    const signaturesContainer = document.getElementById('signatures-container');
-    if (!signaturesContainer) return;
-
-    // Limpar áreas existentes
-    signaturesContainer.innerHTML = '';
-
-    // Encontrar todos os canvas de PDF na página
-    const pdfCanvases = document.querySelectorAll('.pdf-page-canvas');
-
-    // Para cada página, renderizar novamente as áreas de assinatura
-    pdfCanvases.forEach((canvas, pageIndex) => {
-      const pageNum = pageIndex + 1;
-      const scale = zoomLevel;
-
-      // Filtrar áreas para esta página
-      const areasForPage = signatureAreas.filter(area => area.pageNum === pageNum);
-
-      // Renderizar cada área ajustada ao zoom atual
-      areasForPage.forEach((area, index) => {
-        const rect = canvas.getBoundingClientRect();
-
-        // Criar elemento para área de assinatura
-        const signatureBox = document.createElement('div');
-        signatureBox.className = 'signature-area';
-        signatureBox.dataset.page = pageNum;
-        signatureBox.dataset.index = index;
-
-        // Posicionar área de assinatura
-        const x = (area.x * scale);
-        const y = (area.y * scale);
-
-        signatureBox.style.position = 'absolute';
-        signatureBox.style.left = `${rect.left + x}px`;
-        signatureBox.style.top = `${rect.top + y}px`;
-        signatureBox.style.width = `${area.width * scale}px`;
-        signatureBox.style.height = `${area.height * scale}px`;
-
-        // Conteúdo da área
-        signatureBox.innerHTML = `
-          <div class="signature-prompt">
-            <i class="fa fa-pen"></i>
-            <span>Clique para assinar</span>
-          </div>
-        `;
-
-        // Adicionar evento para abrir modal
-        signatureBox.addEventListener('click', () => openSignatureModal(pageNum, index));
-
-        signaturesContainer.appendChild(signatureBox);
-      });
-    });
-}
-
-
-async function adjustZoom(delta) {
-    const oldZoom = zoomLevel;
-    zoomLevel += delta;
-    zoomLevel = Math.max(0.2, Math.min(3, zoomLevel)); // Limit zoom level
-
-    // If zoom didn't actually change, exit early
-    if (oldZoom === zoomLevel) return;
-
-    // Update zoom display
-    const zoomLevelSpan = document.getElementById('zoomLevel');
-    zoomLevelSpan.textContent = `${(zoomLevel * 100).toFixed(0)}%`;
-
-    const previewContainer = document.querySelector('.preview-container');
-    const pdfContainer = document.querySelector('.pdf-viewer-container');
-    const imageElement = document.querySelector('.preview-image');
-
-    if (pdfContainer && currentPdf) {
-        // Remember scroll position
-        const scrollContainer = document.querySelector('.pdf-pages-container');
-        const scrollRatio = scrollContainer.scrollTop / scrollContainer.scrollHeight;
-
-        // First remove existing pages
-        const pagesContainer = document.querySelector('.pdf-pages-container');
-        if (pagesContainer) {
-            pdfContainer.removeChild(pagesContainer);
-        }
-
-        // Render pages with new zoom
-        await renderPdfPages(pdfContainer);
-
-        // Restore scroll position
-        const newScrollContainer = document.querySelector('.pdf-pages-container');
-        setTimeout(() => {
-            newScrollContainer.scrollTop = scrollRatio * newScrollContainer.scrollHeight;
-        }, 50);
-
-        // Atualizar posição das áreas de assinatura com o novo zoom
-        updateSignatureAreasPosition();
-    } else if (imageElement) {
-        // Handle image zoom
-        imageElement.style.transform = `scale(${zoomLevel})`;
-        imageElement.style.transformOrigin = 'center center';
-    }
-}
-// Adicionar estilos CSS para as áreas de assinatura
-function addSignatureStyles() {
-  const styleElement = document.createElement('style');
-  styleElement.textContent = `
-    .signature-area {
-      pointer-events: auto !important;
-      z-index: 100;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-
-    .signature-area:hover {
-      background-color: rgba(33, 150, 243, 0.2) !important;
-      border-color: #1976D2 !important;
-      transform: scale(1.02);
-    }
-
-    .signature-prompt {
-      text-align: center;
-      color: #2196F3;
-      font-weight: 500;
-      font-size: 14px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100%;
-      width: 100%;
-    }
-
-    .signature-prompt i {
-      font-size: 16px;
-      margin-bottom: 5px;
-    }
-
-    .signature-prompt span {
-      white-space: nowrap;
-    }
-
-    @media (max-width: 768px) {
-      .signature-prompt span {
-        font-size: 12px;
-      }
-    }
-  `;
-
-  document.head.appendChild(styleElement);
-}
-
-// Chamar função de estilos ao inicializar
-document.addEventListener('DOMContentLoaded', function() {
-  addSignatureStyles();
-});
