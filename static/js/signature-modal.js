@@ -137,7 +137,36 @@ document.addEventListener('DOMContentLoaded', () => {
             // Inicializar o canvas quando o modal for aberto
             setTimeout(() => {
                 initModalSignatureCanvas();
+                // Inicializa o preview de fonte
+                initFontPreview();
             }, 100);
         });
     }
 });
+
+// Preview da fonte em tempo real
+function initFontPreview() {
+    const fontPreview = document.getElementById('fontPreview');
+    const signatureText = document.getElementById('signatureText');
+    const fontFamily = document.getElementById('fontFamily');
+    
+    if (!fontPreview || !signatureText || !fontFamily) return;
+    
+    // Função para atualizar a prévia da fonte
+    function updateFontPreview() {
+        const selectedFont = fontFamily.value;
+        const previewText = signatureText.value || 'Prévia da Fonte';
+        fontPreview.style.fontFamily = selectedFont;
+        fontPreview.textContent = previewText;
+        signatureText.style.fontFamily = selectedFont;
+    }
+    
+    // Executar uma vez para inicializar
+    updateFontPreview();
+    
+    // Adicionar event listeners
+    fontFamily.addEventListener('change', updateFontPreview);
+    signatureText.addEventListener('input', updateFontPreview);
+    
+    console.log("Font preview initialized");
+}

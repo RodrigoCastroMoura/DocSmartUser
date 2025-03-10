@@ -163,6 +163,44 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <!-- Importação de fontes do Google para assinaturas -->
 <link href="https://fonts.googleapis.com/css2?family=Dancing+Script&family=Great+Vibes&family=Pacifico&family=Allura&family=Alex+Brush&family=Sacramento&family=Tangerine&family=Yellowtail&family=Homemade+Apple&family=Mr+De+Haviland&family=Rouge+Script&family=Pinyon+Script&family=Petit+Formal+Script&family=Playball&family=Lovers+Quarrel&family=Monsieur+La+Doulaise&family=Herr+Von+Muellerhoff&family=Miss+Fajardose&display=swap" rel="stylesheet">
+<style>
+/* Estilos específicos para o preview de fonte */
+#fontPreview {
+    font-size: 24px;
+    padding: 15px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: white;
+    color: black;
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 15px;
+}
+
+/* Aplicar fontes específicas aos elementos */
+.Dancing.Script { font-family: 'Dancing Script', cursive; }
+.Great.Vibes { font-family: 'Great Vibes', cursive; }
+.Pacifico { font-family: 'Pacifico', cursive; }
+.Allura { font-family: 'Allura', cursive; }
+.Alex.Brush { font-family: 'Alex Brush', cursive; }
+.Sacramento { font-family: 'Sacramento', cursive; }
+.Tangerine { font-family: 'Tangerine', cursive; }
+.Yellowtail { font-family: 'Yellowtail', cursive; }
+.Homemade.Apple { font-family: 'Homemade Apple', cursive; }
+.Mr.De.Haviland { font-family: 'Mr De Haviland', cursive; }
+.Rouge.Script { font-family: 'Rouge Script', cursive; }
+.Pinyon.Script { font-family: 'Pinyon Script', cursive; }
+.Petit.Formal.Script { font-family: 'Petit Formal Script', cursive; }
+.Playball { font-family: 'Playball', cursive; }
+.Lovers.Quarrel { font-family: 'Lovers Quarrel', cursive; }
+
+/* Garantir que o campo de entrada de texto também use a fonte selecionada */
+#signatureText {
+    font-size: 20px;
+}
+</style>
 <script src="{{ url_for('static', filename='js/enhanced-signature-system.js') }}"></script>
 <script src="{{ url_for('static', filename='js/signature-modal.js') }}"></script>
 <script>
