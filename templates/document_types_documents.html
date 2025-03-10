@@ -102,17 +102,58 @@
 <div id="simpleModal" class="modal">
     <div class="modal-content simple-modal">
         <div class="modal-header">
-            <h3>Cabeçalho do Modal</h3>
+            <h3>Área de Assinatura e Texto</h3>
             <button class="action-btn" onclick="hideModal('simpleModal')">
                 <i data-feather="x"></i>
             </button>
         </div>
         <div class="modal-body">
-            <p>Conteúdo do modal simples.</p>
+            <div class="tabs-container">
+                <div class="tab-buttons">
+                    <button class="tab-btn active" onclick="switchTab('signature-tab')">Assinatura</button>
+                    <button class="tab-btn" onclick="switchTab('text-tab')">Texto</button>
+                </div>
+                <div class="tab-content">
+                    <div id="signature-tab" class="tab-pane active">
+                        <p class="tab-description">Desenhe sua assinatura abaixo:</p>
+                        <canvas id="modalSignatureCanvas" width="600" height="200"></canvas>
+                        <div class="signature-controls">
+                            <button type="button" class="action-btn" onclick="clearModalCanvas('modalSignatureCanvas')">
+                                <i data-feather="trash-2"></i> Limpar
+                            </button>
+                            <button type="button" class="action-btn" onclick="loadSavedSignature()">
+                                <i data-feather="upload"></i> Carregar assinatura
+                            </button>
+                        </div>
+                    </div>
+                    <div id="text-tab" class="tab-pane">
+                        <div class="form-group">
+                            <label for="signatureText">Digite seu texto:</label>
+                            <input type="text" id="signatureText" class="form-control" placeholder="Digite seu nome completo">
+                        </div>
+                        <div class="form-group">
+                            <label for="fontFamily">Escolha a fonte:</label>
+                            <select id="fontFamily" class="form-control">
+                                <option value="Dancing Script">Dancing Script</option>
+                                <option value="Great Vibes">Great Vibes</option>
+                                <option value="Pacifico">Pacifico</option>
+                                <option value="Allura">Allura</option>
+                                <option value="Alex Brush">Alex Brush</option>
+                                <option value="Sacramento">Sacramento</option>
+                                <option value="Tangerine">Tangerine</option>
+                                <option value="Yellowtail">Yellowtail</option>
+                                <option value="Homemade Apple">Homemade Apple</option>
+                                <option value="Mr De Haviland">Mr De Haviland</option>
+                            </select>
+                        </div>
+                        <div id="fontPreview" class="font-preview">Prévia da Fonte</div>
+                    </div>
+                </div>
+            </div>
         </div>
         <div class="modal-footer">
             <button class="action-btn" onclick="hideModal('simpleModal')">Cancelar</button>
-            <button class="action-btn primary">Confirmar</button>
+            <button class="action-btn primary" onclick="applySignatureOrText()">Aplicar</button>
         </div>
     </div>
 </div>
@@ -121,6 +162,7 @@
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.0.3/dist/tesseract.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script src="{{ url_for('static', filename='js/enhanced-signature-system.js') }}"></script>
+<script src="{{ url_for('static', filename='js/signature-modal.js') }}"></script>
 <script>
 let currentPage = 1;
 const perPage = 9;
@@ -1747,7 +1789,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 /* Estilos para o modal simples */
 .simple-modal {
-    max-width: 500px;
+    max-width: 650px;
     display: flex;
     flex-direction: column;
     padding: 0 !important;
@@ -1783,6 +1825,99 @@ document.addEventListener('DOMContentLoaded', () => {
     padding: 15px 20px;
     border-top: 1px solid var(--border-color);
     background-color: var(--bg-secondary);
+}
+
+/* Tabs */
+.tabs-container {
+    width: 100%;
+}
+
+.tab-buttons {
+    display: flex;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 20px;
+}
+
+.tab-btn {
+    padding: 10px 20px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-secondary);
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.tab-btn.active {
+    color: var(--accent-color);
+    border-bottom: 2px solid var(--accent-color);
+}
+
+.tab-pane {
+    display: none;
+    padding: 10px 0;
+}
+
+.tab-pane.active {
+    display: block;
+}
+
+/* Canvas e controles de assinatura */
+#modalSignatureCanvas {
+    width: 100%;
+    height: 200px;
+    border: 1px solid var(--border-color);
+    background-color: white;
+    margin: 15px 0;
+    border-radius: 4px;
+    cursor: crosshair;
+}
+
+.signature-controls {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+/* Área de texto de assinatura */
+.form-control {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.font-preview {
+    padding: 20px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: white;
+    color: black;
+    min-height: 80px;
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 15px;
+}
+
+.tab-description {
+    margin-bottom: 10px;
+    color: var(--text-secondary);
 }
 
 </style>
