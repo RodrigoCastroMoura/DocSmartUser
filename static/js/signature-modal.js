@@ -152,11 +152,7 @@ function loadSavedSignature() {
 // Aplicar a assinatura ou texto selecionado ao documento
 function applySignatureOrText() {
     const signatureText = document.getElementById('signatureText').value;
-    if (!signatureText) {
-        alert('Por favor, digite o texto da assinatura');
-        return;
-    }
-
+   
     // Gerar a assinatura como imagem
     const signatureImg = generateTextSignature(signatureText, currentSelectedFont);
 
@@ -165,6 +161,8 @@ function applySignatureOrText() {
 
     // Fechar o modal
     hideModal('simpleModal');
+
+    addSignature(signatureImg);
 }
 
 // Iniciar eventos quando o DOM estiver carregado

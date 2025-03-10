@@ -113,7 +113,7 @@
                     <div id="text-tab" class="tab-pane active">
                         <div class="form-group">
                             <label for="signatureText">Sua assinatura:</label>
-                            <input type="text" id="signatureText" class="form-control" placeholder="Digite seu nome completo" style="display: none;">
+                            <input type="text" id="signatureText" class="form-control" placeholder="Digite seu nome completo">
                             <div id="fontPreview" class="font-preview">Prévia da Fonte</div>
                         </div>
                         <div class="form-group">
@@ -850,6 +850,9 @@ let currentPdf = null;
 let zoomLevel = 1.0;
 var margins = { top: 20, right: 20, bottom: 20, left: 20 };
 var signatureFields = [];
+var currentSignature = null;
+
+
 
 async function previewDocument(url, filename) {
     const previewTitle = document.getElementById('previewTitle');
@@ -995,7 +998,7 @@ async function renderPdfPage(pageNumber, canvas) {
 
          // Make the page interactive for signature placement
          canvas.addEventListener('click', (e) => {
-            if (this.currentSignature) {
+            if (currentSignature) {
                 const rect = canvas.getBoundingClientRect();
                 const x = e.clientX - rect.left;
                 const y = e.clientY - rect.top;
@@ -1008,11 +1011,7 @@ async function renderPdfPage(pageNumber, canvas) {
                     canvasRect: rect
                 });
 
-                alert({ 
-                    screen: {x, y}, 
-                    pdf: pdfPoint,
-                    canvasRect: rect
-                });
+                const field = this.findClickedField(x, y);
 
                 if (field) {
                     this.placeSignature(e, canvas, field);
@@ -1120,8 +1119,7 @@ async function findClickedField(x, y) {
     }
 
 async function addSignature(signatureData) {
-        this.currentSignature = signatureData;
-        this.container.style.cursor = 'pointer';
+        currentSignature = signatureData;
     }
 
 async function  placeSignature(event, canvas, field) {
@@ -1164,8 +1162,8 @@ async function  placeSignature(event, canvas, field) {
             });
         };
 
-        this.currentSignature = null;
-        this.container.style.cursor = 'default';
+        currentSignature = null;
+
     }
 
 async function   getSignaturePosition() {
