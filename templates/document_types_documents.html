@@ -112,8 +112,9 @@
                 <div class="tab-content">
                     <div id="text-tab" class="tab-pane active">
                         <div class="form-group">
-                            <label for="signatureText">Digite seu texto:</label>
-                            <input type="text" id="signatureText" class="form-control" placeholder="Digite seu nome completo">
+                            <label for="signatureText">Sua assinatura:</label>
+                            <input type="text" id="signatureText" class="form-control" placeholder="Digite seu nome completo" style="display: none;">
+                            <div id="fontPreview" class="font-preview">Prévia da Fonte</div>
                         </div>
                         <div class="form-group">
                             <label>Escolha a fonte:</label>
@@ -123,9 +124,6 @@
                                 </div>
                                 <div class="font-btn" data-font="Great Vibes">
                                     <span style="font-family: 'Great Vibes'">Great Vibes</span>
-                                </div>
-                                <div class="font-btn" data-font="Pacifico">
-                                    <span style="font-family: 'Pacifico'">Pacifico</span>
                                 </div>
                                 <div class="font-btn" data-font="Allura">
                                     <span style="font-family: 'Allura'">Allura</span>
@@ -142,16 +140,12 @@
                                 <div class="font-btn" data-font="Yellowtail">
                                     <span style="font-family: 'Yellowtail'">Yellowtail</span>
                                 </div>
-                                <div class="font-btn" data-font="Homemade Apple">
-                                    <span style="font-family: 'Homemade Apple'">Homemade Apple</span>
-                                </div>
                                 <div class="font-btn" data-font="Mr De Haviland">
                                     <span style="font-family: 'Mr De Haviland'">Mr De Haviland</span>
                                 </div>
                             </div>
                             <input type="hidden" id="fontFamily" value="Dancing Script">
                         </div>
-                        <div id="fontPreview" class="font-preview">Prévia da Fonte</div>
                     </div>
                 </div>
             </div>
@@ -171,7 +165,7 @@
 <style>
 /* Estilos específicos para o preview de fonte */
 #fontPreview {
-    font-size: 60px;
+    font-size: 36px;
     padding: 20px;
     border: 1px solid var(--border-color);
     border-radius: 4px;
