@@ -102,31 +102,15 @@
 <div id="simpleModal" class="modal">
     <div class="modal-content simple-modal">
         <div class="modal-header">
-            <h3>Área de Assinatura e Texto</h3>
+            <h3>Área de Texto para Assinatura</h3>
             <button class="action-btn" onclick="hideModal('simpleModal')">
                 <i data-feather="x"></i>
             </button>
         </div>
         <div class="modal-body">
             <div class="tabs-container">
-                <div class="tab-buttons">
-                    <button class="tab-btn active" onclick="switchTab('signature-tab')">Assinatura</button>
-                    <button class="tab-btn" onclick="switchTab('text-tab')">Texto</button>
-                </div>
                 <div class="tab-content">
-                    <div id="signature-tab" class="tab-pane active">
-                        <p class="tab-description">Desenhe sua assinatura abaixo:</p>
-                        <canvas id="modalSignatureCanvas" width="600" height="200"></canvas>
-                        <div class="signature-controls">
-                            <button type="button" class="action-btn" onclick="clearModalCanvas('modalSignatureCanvas')">
-                                <i data-feather="trash-2"></i> Limpar
-                            </button>
-                            <button type="button" class="action-btn" onclick="loadSavedSignature()">
-                                <i data-feather="upload"></i> Carregar assinatura
-                            </button>
-                        </div>
-                    </div>
-                    <div id="text-tab" class="tab-pane">
+                    <div id="text-tab" class="tab-pane active">
                         <div class="form-group">
                             <label for="signatureText">Digite seu texto:</label>
                             <input type="text" id="signatureText" class="form-control" placeholder="Digite seu nome completo">
@@ -187,13 +171,13 @@
 <style>
 /* Estilos específicos para o preview de fonte */
 #fontPreview {
-    font-size: 24px;
-    padding: 15px;
+    font-size: 36px;
+    padding: 20px;
     border: 1px solid var(--border-color);
     border-radius: 4px;
     background-color: white;
     color: black;
-    min-height: 60px;
+    min-height: 100px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -219,7 +203,9 @@
 
 /* Garantir que o campo de entrada de texto também use a fonte selecionada */
 #signatureText {
-    font-size: 20px;
+    font-size: 28px;
+    padding: 15px;
+    height: auto;
 }
 
 /* Estilos para os botões de fonte */
