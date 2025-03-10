@@ -15,7 +15,6 @@ let currentUser = null;
 let userSignature = null;
 let currentScale = 1.0;
 let zoomLevel = 1.0; // Add zoomLevel variable
-let currentPdf = null; // Add currentPdf variable
 
 
 // Inicialização da biblioteca Tesseract para OCR
@@ -61,7 +60,8 @@ async function processDocumentForSignature(pdfUrl) {
     // Carregar o documento PDF
     const loadingTask = pdfjsLib.getDocument(pdfUrl);
     pdfDoc = await loadingTask.promise;
-    currentPdf = pdfDoc; // Assign pdfDoc to currentPdf
+    // Usar a variável currentPdf global já definida no escopo da página
+    window.currentPdf = pdfDoc;
 
     signatureAreas = [];
     const user = await loadCurrentUser();
