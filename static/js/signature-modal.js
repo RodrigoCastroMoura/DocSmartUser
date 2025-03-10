@@ -1,0 +1,143 @@
+// Arquivo signature-modal.js
+
+// Verificar se já existe um canvas de assinatura modal e inicializá-lo
+let modalSignatureCanvas;
+let modalSignatureContext;
+
+// Função para alternar entre as abas
+function switchTab(tabId) {
+    // Esconder todas as abas
+    document.querySelectorAll('.tab-pane').forEach(tab => {
+        tab.classList.remove('active');
+    });
+
+    // Remover classe active de todos os botões de abas
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+
+    // Mostrar a aba selecionada
+    document.getElementById(tabId).classList.add('active');
+
+    // Adicionar classe active ao botão clicado
+    event.currentTarget.classList.add('active');
+
+    // Se a aba de assinatura estiver ativa, inicializar o canvas
+    if (tabId === 'signature-tab') {
+        setTimeout(() => {
+            initModalSignatureCanvas();
+        }, 100);
+    }
+}
+
+function initModalSignatureCanvas() {
+    modalSignatureCanvas = document.getElementById('modalSignatureCanvas');
+    if (modalSignatureCanvas) {
+        modalSignatureContext = modalSignatureCanvas.getContext('2d');
+        modalSignatureContext.lineWidth = 2;
+        modalSignatureContext.strokeStyle = "#000000";
+        modalSignatureContext.fillStyle = "#FFFFFF";
+        modalSignatureContext.fillRect(0, 0, modalSignatureCanvas.width, modalSignatureCanvas.height);
+
+        let isDrawing = false;
+        let lastX = 0;
+        let lastY = 0;
+
+        modalSignatureCanvas.addEventListener('mousedown', (e) => {
+            isDrawing = true;
+            const rect = modalSignatureCanvas.getBoundingClientRect();
+            lastX = e.clientX - rect.left;
+            lastY = e.clientY - rect.top;
+        });
+
+        modalSignatureCanvas.addEventListener('mousemove', (e) => {
+            if (!isDrawing) return;
+            const rect = modalSignatureCanvas.getBoundingClientRect();
+            const currentX = e.clientX - rect.left;
+            const currentY = e.clientY - rect.top;
+
+            modalSignatureContext.beginPath();
+            modalSignatureContext.moveTo(lastX, lastY);
+            modalSignatureContext.lineTo(currentX, currentY);
+            modalSignatureContext.stroke();
+
+            lastX = currentX;
+            lastY = currentY;
+        });
+
+        modalSignatureCanvas.addEventListener('mouseup', () => {
+            isDrawing = false;
+        });
+
+        modalSignatureCanvas.addEventListener('mouseout', () => {
+            isDrawing = false;
+        });
+
+        // Touch events for mobile devices
+        modalSignatureCanvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const rect = modalSignatureCanvas.getBoundingClientRect();
+            const touch = e.touches[0];
+            lastX = touch.clientX - rect.left;
+            lastY = touch.clientY - rect.top;
+            isDrawing = true;
+        });
+
+        modalSignatureCanvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            if (!isDrawing) return;
+            const rect = modalSignatureCanvas.getBoundingClientRect();
+            const touch = e.touches[0];
+            const currentX = touch.clientX - rect.left;
+            const currentY = touch.clientY - rect.top;
+
+            modalSignatureContext.beginPath();
+            modalSignatureContext.moveTo(lastX, lastY);
+            modalSignatureContext.lineTo(currentX, currentY);
+            modalSignatureContext.stroke();
+
+            lastX = currentX;
+            lastY = currentY;
+        });
+
+        modalSignatureCanvas.addEventListener('touchend', () => {
+            isDrawing = false;
+        });
+
+        console.log("Modal signature canvas initialized");
+    }
+}
+
+function clearModalCanvas(canvasId) {
+    const canvas = document.getElementById(canvasId);
+    const context = canvas.getContext('2d');
+    context.fillStyle = "#FFFFFF";
+    context.fillRect(0, 0, canvas.width, canvas.height);
+}
+
+// Carregar assinatura salva
+function loadSavedSignature() {
+    // Implementar a lógica para carregar uma assinatura salva
+    console.log("Load saved signature functionality to be implemented");
+}
+
+function applySignatureOrText() {
+    // Implementar a lógica para aplicar a assinatura ou texto no documento
+    console.log("Apply signature functionality to be implemented");
+
+    // Fechar o modal após aplicar
+    hideModal('simpleModal');
+}
+
+// Inicializar o canvas quando o modal for aberto
+document.addEventListener('DOMContentLoaded', () => {
+    const openSimpleModalBtn = document.getElementById('openSimpleModalBtn');
+    if (openSimpleModalBtn) {
+        openSimpleModalBtn.addEventListener('click', () => {
+            // Inicializar o canvas quando o modal for aberto
+            setTimeout(() => {
+                initModalSignatureCanvas();
+            }, 100);
+        });
+    }
+});
