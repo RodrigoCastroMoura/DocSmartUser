@@ -1,0 +1,84 @@
+/* Importação de fontes do Google para assinaturas */
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script&family=Great+Vibes&family=Pacifico&family=Allura&family=Alex+Brush&family=Sacramento&family=Tangerine&family=Yellowtail&family=Homemade+Apple&family=Mr+De+Haviland&family=Rouge+Script&family=Pinyon+Script&family=Petit+Formal+Script&family=Playball&family=Lovers+Quarrel&family=Monsieur+La+Doulaise&family=Herr+Von+Muellerhoff&family=Miss+Fajardose&display=swap');
+
+canvas {
+    border: 1px solid var(--bs-border-color);
+    background-color: var(--bs-body-bg);
+    cursor: crosshair;
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+    display: block;
+}
+
+.result-area img {
+    max-width: 100%;
+    border: 1px solid var(--bs-border-color);
+}
+
+.signature-option {
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    border: 2px solid transparent;
+}
+
+.signature-option:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    border-color: var(--bs-primary);
+}
+
+.signature-option .bi {
+    color: var(--bs-primary);
+}
+
+#result img {
+    max-width: 100%;
+    height: auto;
+    margin-bottom: 1rem;
+    border: 1px solid var(--bs-border-color);
+}
+
+.form-control-color {
+    height: 38px;
+}
+
+#download-container {
+    margin-top: 1rem;
+}
+
+#download-container a {
+    display: inline-block;
+    margin-top: 0.5rem;
+    text-decoration: none;
+}
+
+/* Animações para transições suaves */
+.signature-section {
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+}
+
+.signature-section.active {
+    opacity: 1;
+}
+
+/* Estilo para preview de fonte */
+#signatureText {
+    font-size: 24px;
+    text-align: center;
+    padding: 15px;
+}
+
+/* Estilos para as opções de fonte no select */
+#fontFamily option {
+    font-size: 16px;
+    padding: 5px;
+}
+
+/* Preview das fontes no select */
+.font-preview {
+    font-size: 24px;
+    margin-bottom: 10px;
+    text-align: center;
+}
