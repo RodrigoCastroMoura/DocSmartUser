@@ -852,11 +852,6 @@ var margins = { top: 20, right: 20, bottom: 20, left: 20 };
 var signatureFields = [];
 var currentSignature = null;
 
-// Initialize global variables for zoom and signature
-if (typeof window.signatureFields === 'undefined') {
-    window.signatureFields = [];
-}
-
 
 
 async function previewDocument(url, filename) {
@@ -1003,23 +998,24 @@ async function renderPdfPage(pageNumber, canvas) {
 
          // Make the page interactive for signature placement
          canvas.addEventListener('click', (e) => {
-            const rect = canvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
+            if (currentSignature) {
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
 
-            // Convert click coordinates to PDF coordinates
-            const pdfPoint = viewport.convertToPdfPoint(x, y);
-            console.log('Click coordinates:', { 
-                screen: {x, y}, 
-                pdf: pdfPoint,
-                canvasRect: rect
-            });
+                // Convert click coordinates to PDF coordinates
+                const pdfPoint = viewport.convertToPdfPoint(x, y);
+                console.log('Click coordinates:', { 
+                    screen: {x, y}, 
+                    pdf: pdfPoint,
+                    canvasRect: rect
+                });
 
-            const field = findClickedField(x, y);
+                const field = this.findClickedField(x, y);
 
-            if (field) {
-                field.selected = true;
-                showSimpleModal();
+                if (field) {
+                    this.placeSignature(e, canvas, field);
+                }
             }
         });
         
@@ -1047,11 +1043,6 @@ async function detectSignatureFields(textContent, page, canvas, viewport) {
         // Get the page dimensions
         const { width: pageWidth, height: pageHeight } = viewport;
 
-        // Initialize signatureFields if not already done
-        if (!window.signatureFields) {
-            window.signatureFields = [];
-        }
-
         for (const item of textContent.items) {
             const text = item.str.toLowerCase();
             if (keywords.some(keyword => text.includes(keyword))) {
@@ -1063,7 +1054,7 @@ async function detectSignatureFields(textContent, page, canvas, viewport) {
                 const [x, y] = viewport.convertToViewportPoint(pdfX, pdfY);
 
                 // Adjust y-coordinate for PDF coordinate system (origin at bottom-left)
-                const adjustedY = y;
+                const adjustedY = pageHeight - y;
 
                 console.log('Field detection:', {
                     text: item.str,
@@ -1076,21 +1067,19 @@ async function detectSignatureFields(textContent, page, canvas, viewport) {
 
                 // Create signature field indicator
                 const field = {
-                    x: x,
-                    y: adjustedY,
+                    x: x + margins.left,
+                    y: adjustedY + margins.top,
                     width: 200,
                     height: 50,
                     pdfX: pdfX,
-                    pdfY: pdfY,
-                    signed: false,
-                    selected: false
+                    pdfY: pdfY
                 };
 
                 // Ensure field is within page bounds
-                field.x = Math.max(margins.left, Math.min(field.x, pageWidth - field.width - margins.right));
-                field.y = Math.max(margins.top, Math.min(field.y, pageHeight - field.height - margins.bottom));
+                field.x = Math.max(this.margins.left, Math.min(field.x, pageWidth - field.width - this.margins.right));
+                field.y = Math.max(this.margins.top, Math.min(field.y, pageHeight - field.height - this.margins.bottom));
 
-                signatureFields.push(field);
+                this.signatureFields.push(field);
 
                 // Draw signature field indicator
                 ctx.save();
@@ -1116,14 +1105,14 @@ async function detectSignatureFields(textContent, page, canvas, viewport) {
 
                 console.log('Field dimensions:', {
                     final: field,
-                    margins: margins
+                    margins: this.margins
                 });
             }
         }
     }
 
-function findClickedField(x, y) {
-        return signatureFields.find(field => 
+async function findClickedField(x, y) {
+        return this.signatureFields.find(field => 
             x >= field.x && x <= field.x + field.width &&
             y >= field.y && y <= field.y + field.height
         );
