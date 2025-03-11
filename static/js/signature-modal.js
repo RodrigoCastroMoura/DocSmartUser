@@ -1,3 +1,44 @@
+
+// Função para atualizar a prévia da fonte
+function updateSignaturePreview() {
+    const signatureText = document.getElementById('signatureText').value || 'Prévia da Fonte';
+    const fontFamily = document.getElementById('fontFamily').value;
+    const fontPreview = document.getElementById('fontPreview');
+    
+    fontPreview.style.fontFamily = fontFamily;
+    fontPreview.textContent = signatureText;
+    
+    // Atualizar também o campo de entrada
+    document.getElementById('signatureText').style.fontFamily = fontFamily;
+}
+
+// Evento para quando uma fonte é selecionada
+document.addEventListener('DOMContentLoaded', function() {
+    // Atualizar prévia quando página carregar
+    updateSignaturePreview();
+    
+    // Configurar eventos para selecionar fontes
+    const fontButtons = document.querySelectorAll('.font-btn');
+    fontButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            // Remover classe selecionada de todos os botões
+            fontButtons.forEach(btn => btn.classList.remove('selected'));
+            // Adicionar classe selecionada ao botão clicado
+            this.classList.add('selected');
+            
+            // Atualizar o valor do campo de fonte oculto
+            const fontFamily = this.getAttribute('data-font');
+            document.getElementById('fontFamily').value = fontFamily;
+            
+            // Atualizar a prévia
+            updateSignaturePreview();
+        });
+    });
+    
+    // Atualizar prévia quando texto for digitado
+    document.getElementById('signatureText').addEventListener('input', updateSignaturePreview);
+});
+
 // Arquivo signature-modal.js
 
 // Verificar se já existe um canvas de assinatura modal e inicializá-lo
@@ -151,57 +192,39 @@ function loadSavedSignature() {
 
 // Aplicar a assinatura ou texto selecionado ao documento
 function applySignatureOrText() {
+    // Obter o texto digitado e a fonte selecionada
     const signatureText = document.getElementById('signatureText').value;
     const fontFamily = document.getElementById('fontFamily').value;
-
+    
     if (!signatureText.trim()) {
         alert('Por favor, digite seu nome para a assinatura.');
         return;
     }
-
-    // Criar elemento de assinatura
+    
+    // Criar elemento simples de assinatura
     const signatureElement = document.createElement('div');
-    signatureElement.className = 'signature-element';
     signatureElement.style.position = 'absolute';
     signatureElement.style.fontFamily = fontFamily;
     signatureElement.style.fontSize = '36px';
     signatureElement.style.color = 'black';
     signatureElement.style.zIndex = '15';
-    signatureElement.style.backgroundColor = 'transparent';
-    signatureElement.style.width = '200px';
-    signatureElement.style.textAlign = 'center';
     signatureElement.innerHTML = signatureText;
-
-    // Adicionar a assinatura ao container de assinaturas
+    
+    // Adicionar a assinatura ao container
     const signaturesContainer = document.getElementById('signatures-container');
     signaturesContainer.appendChild(signatureElement);
-
-    // Posicionar a assinatura - se não houver campo específico, colocar no centro do container
-    if (typeof currentField !== 'undefined' && currentField) {
-        // Usar o campo detectado se existir
-        signatureElement.style.left = currentField.x + 'px';
-        signatureElement.style.top = currentField.y + 'px';
+    
+    // Posicionar no centro da área visível
+    const pdfCanvas = document.querySelector('#pdfCanvas');
+    if (pdfCanvas) {
+        signatureElement.style.left = (pdfCanvas.offsetWidth / 2 - 100) + 'px';
+        signatureElement.style.top = (pdfCanvas.offsetHeight / 2 - 25) + 'px';
     } else {
-        // Caso contrário, posicionar no centro do container de visualização
-        const previewContainer = document.querySelector('.preview-container');
-        if (previewContainer) {
-            const pdfCanvas = document.querySelector('#pdfCanvas');
-            if (pdfCanvas) {
-                // Posicionar no centro do canvas PDF
-                signatureElement.style.left = (pdfCanvas.offsetWidth / 2 - 100) + 'px';
-                signatureElement.style.top = (pdfCanvas.offsetHeight / 2 - 25) + 'px';
-            } else {
-                // Fallback: centro do container
-                signatureElement.style.left = '50%';
-                signatureElement.style.top = '50%';
-                signatureElement.style.transform = 'translate(-50%, -50%)';
-            }
-        }
+        signatureElement.style.left = '50%';
+        signatureElement.style.top = '50%';
+        signatureElement.style.transform = 'translate(-50%, -50%)';
     }
-
-    // Permitir que o container receba eventos do mouse
-    signaturesContainer.style.pointerEvents = 'auto';
-
+    
     // Fechar o modal
     hideModal('simpleModal');
 }
