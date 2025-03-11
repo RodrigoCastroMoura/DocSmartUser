@@ -162,7 +162,6 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <!-- Importação de fontes do Google para assinaturas -->
 <link href="https://fonts.googleapis.com/css2?family=Dancing+Script&family=Great+Vibes&family=Pacifico&family=Allura&family=Alex+Brush&family=Sacramento&family=Tangerine&family=Yellowtail&family=Homemade+Apple&family=Mr+De+Haviland&family=Rouge+Script&family=Pinyon+Script&family=Petit+Formal+Script&family=Playball&family=Lovers+Quarrel&family=Monsieur+La+Doulaise&family=Herr+Von+Muellerhoff&family=Miss+Fajardose&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/signature-styles.css') }}">
 <style>
 /* Estilos específicos para o preview de fonte */
 #fontPreview {
@@ -254,8 +253,6 @@ let currentPage = 1;
 const perPage = 9;
 let totalPages = 1;
 let itemToDelete = null;
-// A variável currentSelectedFont é definida no signature-modal.js
-
 
 async function loadFilterOptions() {
     const contentDiv = document.getElementById('documentsContent');
@@ -282,7 +279,7 @@ async function loadFilterOptions() {
         }
         populateFilterSelect('filterDepartment', departments);
         populateFilterSelect('documentDepartment', departments);
-
+        
         // Load users
         const userResponse = await fetch('/api/users');
         if (!userResponse.ok) {
@@ -305,7 +302,7 @@ async function loadFilterOptions() {
     } catch (error) {
         console.error('Error loading filter options:', error);
         showNotification(error.message || 'Failed to load filter options. Please try again.', 'error');
-
+        
         // Reset all filters to a safe state with error indication
         const filterIds = {
             'filterDepartment': 'Departments',
@@ -329,10 +326,10 @@ async function loadFilterOptions() {
 function populateFilterSelect(selectId, items) {
     const select = document.getElementById(selectId);
     if (!select || !Array.isArray(items)) return;
-
+    
     const currentValue = select.value;
     select.innerHTML = '';
-
+    
     // Add default option
     const defaultOption = document.createElement('option');
     defaultOption.value = '';
@@ -342,14 +339,14 @@ function populateFilterSelect(selectId, items) {
                                       selectId.includes('Category') ? 'Categories' : 
                                       'Types');
     select.appendChild(defaultOption);
-
+    
     items.forEach(item => {
         const option = document.createElement('option');
         option.value = item.id;
         option.textContent = item.name;
         select.appendChild(option);
     });
-
+    
     if (currentValue) select.value = currentValue;
 }
 
@@ -358,15 +355,15 @@ async function applyFilters() {
         document_type_id: '{{document_type.id}}',
         user_cpf: document.getElementById('user-cpf-filter').value
     };
-
+    
     // Ensure document_type_id is never empty
     if (!filters.document_type_id) {
         filters.document_type_id = '{{document_type.id}}';
     }
-
+    
     // Store filters in URL params
     const params = new URLSearchParams(filters);
-
+       
     // Reload documents with filters
     await loadDocuments(1, filters);
 }
@@ -374,7 +371,7 @@ async function applyFilters() {
 async function applyFiltersDepartment(departmentId) {
     const categorySelect = document.getElementById('filterCategory');
     const typeSelect = document.getElementById('filterDocumentType');
-
+    
     categorySelect.innerHTML = '<option value="">Loading categories...</option>';
     categorySelect.disabled = true;
     typeSelect.innerHTML = '<option value="">Types</option>';
@@ -394,7 +391,7 @@ async function applyFiltersDepartment(departmentId) {
             throw new Error(errorData.error || 'Failed to load categories');
         }
         const data = await response.json();
-
+        
         if (!data.categories || !Array.isArray(data.categories)) {
             throw new Error('Invalid categories data format');
         }
@@ -432,7 +429,7 @@ async function applyFiltersCategory(categoryId) {
             throw new Error(errorData.error || 'Failed to load document types');
         }
         const data = await response.json();
-
+        
         if (!Array.isArray(data)) {
             throw new Error('Invalid document types data format');
         }
@@ -453,7 +450,7 @@ async function applyFiltersCategory(categoryId) {
 
 function getFileIcon(filename) {
     if (!filename) return 'file';
-
+    
     const ext = filename.split('.').pop().toLowerCase();
     switch (ext) {
         case 'pdf': return 'file-text';
@@ -499,11 +496,11 @@ async function loadDocumentTypes(categoryId) {
             throw new Error(errorData.error || 'Failed to load document types');
         }
         const data = await response.json();
-
+        
         if (!Array.isArray(data)) {
             throw new Error('Invalid document types data format');
         }
-
+        
         typeSelect.innerHTML = `
             <option value="">Select Document Type</option>
             ${data.map(type => 
@@ -521,7 +518,7 @@ async function loadDocumentTypes(categoryId) {
 async function loadDepartmentCategories(departmentId) {
     const categorySelect = document.getElementById('documentCategory');
     const typeSelect = document.getElementById('documentType');
-
+    
     categorySelect.innerHTML = '<option value="">Loading categories...</option>';
     categorySelect.disabled = true;
     typeSelect.innerHTML = '<option value="">Select Document Type</option>';
@@ -539,11 +536,11 @@ async function loadDepartmentCategories(departmentId) {
             throw new Error(errorData.error || 'Failed to load categories');
         }
         const data = await response.json();
-
+        
         if (!data.categories || !Array.isArray(data.categories)) {
             throw new Error('Invalid categories data format');
         }
-
+        
         categorySelect.innerHTML = `
             <option value="">Select Category</option>
             ${data.categories.map(cat => `
@@ -563,12 +560,12 @@ async function createDocument(event) {
     event.preventDefault();
     const form = event.target;
     const submitButton = form.querySelector('button[type="submit"]');
-
+    
     if (!validateForm(form)) {
         return;
     }
 
-
+   
     showLoading(submitButton);
     const formData = new FormData(form);
 
@@ -607,7 +604,7 @@ function showDeleteConfirmation(id) {
 
 async function confirmDelete() {
     if (!itemToDelete) return;
-
+    
     const id = itemToDelete;
     hideModal('deleteConfirmModal');
     const card = document.querySelector(`.document-card[data-id="${id}"]`);
@@ -640,19 +637,19 @@ async function confirmDelete() {
 async function loadDocuments(page = 1, filters = {}) {
     const contentDiv = document.getElementById('documentsContent');
     showLoading(contentDiv);
-
+    
     try {
         // Always include document_type_id in filters if not already present
         if (!filters.document_type_id) {
             filters.document_type_id = '{{document_type.id}}';
         }
-
+        
         const params = new URLSearchParams({
             page: page,
             per_page: perPage,
             ...filters
         });
-
+        
         const response = await fetch(`/api/documents?${params}`);
         if (!response.ok) {
             const errorData = await response.json();
@@ -663,10 +660,10 @@ async function loadDocuments(page = 1, filters = {}) {
         if (!data || !Array.isArray(data.documents)) {
             throw new Error('Invalid response format');
         }
-
+        
         currentPage = page;
         totalPages = data.total_pages || 1;
-
+        
         const gridHTML = data.documents.length === 0 ? `
             <div class="documents-grid">
                 <div class="no-data">
@@ -723,7 +720,7 @@ async function loadDocuments(page = 1, filters = {}) {
                     Next <i data-feather="chevron-right"></i>
                 </button>
             </div>`;
-
+        
         feather.replace();
         updatePaginationControls();
     } catch (error) {
@@ -744,7 +741,7 @@ async function loadDocuments(page = 1, filters = {}) {
 
 async function searchUser() {
     try {
-
+        
         openPopup();
         if(document.getElementById(`user_cpf`).value == ''){
             closePopup();
@@ -755,7 +752,7 @@ async function searchUser() {
         const params = new URLSearchParams({
             cpf: document.getElementById(`user_cpf`).value,
         });
-
+        
         const response = await fetch(`/api/users?${params}`);
         if (!response.ok) {
             closePopup();
@@ -781,7 +778,7 @@ async function searchUser() {
     } catch (error) {
         console.error('Error loading documents:', error);
         showNotification(error.message || 'Failed to load users', 'error');
-
+       
     } finally {
         closePopup();
     }
@@ -800,16 +797,16 @@ function changePage(newPage) {
             department_id: urlParams.get('department_id') || '',
             category_id: urlParams.get('category_id') || '',
             document_type_id: '{{document_type.id}}', // Always use the current document_type_id
-
+          
         };
-
+        
         // Clean empty filters
         Object.keys(filters).forEach(key => {
             if (filters[key] === '') {
                 delete filters[key];
             }
         });
-
+        
         loadDocuments(newPage, filters);
     }
 }
@@ -820,11 +817,6 @@ function showModal(modalId) {
 
 function hideModal(modalId) {
     document.getElementById(modalId).style.display = 'none';
-
-    // If this was the preview modal, clean up
-    if (modalId === 'previewModal') {
-        currentPdf = null;
-    }
 }
 
 function showAddDocumentModal() {
@@ -841,7 +833,7 @@ async function downloadDocument(url) {
         showNotification('Document URL is not available', 'error');
         return;
     }
-
+    
     try {
         window.open(url, '_blank');
     } catch (error) {
@@ -856,7 +848,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs
 
 let currentPdf = null;
 let zoomLevel = 1.0;
-// A variável margins já é definida no arquivo signature-modal.js
+var margins = { top: 20, right: 20, bottom: 20, left: 20 };
 var signatureFields = [];
 var currentSignature = null;
 
@@ -866,12 +858,7 @@ async function previewDocument(url, filename) {
     const previewTitle = document.getElementById('previewTitle');
     const previewContainer = document.querySelector('.preview-container');
     const zoomLevelSpan = document.getElementById('zoomLevel');
-
-    // Limpar os campos de assinatura anteriores
-    signatureFields = [];
-    activeSignatureField = null;
-    currentSignature = null;
-
+    
     // Reset zoom level
     zoomLevel = 1.8;
     zoomLevelSpan.textContent = `${(zoomLevel * 100).toFixed(0)}%`;
@@ -880,7 +867,7 @@ async function previewDocument(url, filename) {
     while (previewContainer.firstChild) {
         previewContainer.removeChild(previewContainer.firstChild);
     }
-
+    
     previewTitle.textContent = filename;
     const fileType = filename.split('.').pop().toLowerCase();
 
@@ -890,59 +877,52 @@ async function previewDocument(url, filename) {
             const pdfViewerContainer = document.createElement('div');
             pdfViewerContainer.className = 'pdf-viewer-container';
             previewContainer.appendChild(pdfViewerContainer);
-
+            
             // Show loading indicator
             const loadingIndicator = document.createElement('div');
             loadingIndicator.className = 'pdf-loading';
-            loadingIndicator.innerHTML = '<div class="loading-spinner"></div><p>Carregando PDF...</p>';
+            loadingIndicator.innerHTML = '<div class="loading-spinner"></div><p>Loading PDF...</p>';
             pdfViewerContainer.appendChild(loadingIndicator);
-
+            
             // Load the PDF
             const proxyUrl = `/proxy/storage/${url.replace('https://storage.googleapis.com/', '')}`;
             const loadingTask = pdfjsLib.getDocument(proxyUrl);
             currentPdf = await loadingTask.promise;
-
+            
             // Remove loading indicator
             pdfViewerContainer.removeChild(loadingIndicator);
-
+            
             // Render all pages in the viewer
             await renderPdfPages(pdfViewerContainer);
-
-            // Habilitar botão de assinatura
-            const openSimpleModalBtn = document.getElementById('openSimpleModalBtn');
-            if (openSimpleModalBtn) {
-                openSimpleModalBtn.style.display = 'inline-flex';
-                openSimpleModalBtn.title = 'Adicionar assinatura ao documento';
-            }
-
+            
         } else if (['jpg', 'jpeg', 'png', 'gif'].includes(fileType)) {
             // Create image container
             const imgContainer = document.createElement('div');
             imgContainer.className = 'image-container';
             previewContainer.appendChild(imgContainer);
-
+            
             // Create the image element
             const imageElement = document.createElement('img');
             imageElement.className = 'preview-image';
             imageElement.alt = 'Image Preview';
             imageElement.src = url;
             imgContainer.appendChild(imageElement);
-
+            
             // Add zoom support for images
             imageElement.style.transform = `scale(${zoomLevel})`;
             imageElement.style.transformOrigin = 'center center';
-
+            
         } else {
             // Handle other document types
             const docContainer = document.createElement('div');
             docContainer.className = 'document-container';
             previewContainer.appendChild(docContainer);
-
+            
             const iframeElement = document.createElement('iframe');
             iframeElement.className = 'document-iframe';
             iframeElement.src = url;
             docContainer.appendChild(iframeElement);
-
+            
             // Mostrar ou esconder o botão de modal simples baseado no tipo de arquivo
             const openSimpleModalBtn = document.getElementById('openSimpleModalBtn');
             if (openSimpleModalBtn) {
@@ -961,14 +941,14 @@ async function previewDocument(url, filename) {
 // FUNÇÃO QUE ESTAVA FALTANDO
 async function renderPdfPages(container) {
     if (!currentPdf) return;
-
+    
     const totalPages = currentPdf.numPages;
-
+    
     // Create main pages container
     const pagesContainer = document.createElement('div');
     pagesContainer.className = 'pdf-pages-container';
     container.appendChild(pagesContainer);
-
+    
     // Render each page
     for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
         // Create container for this page
@@ -976,12 +956,12 @@ async function renderPdfPages(container) {
         pageContainer.className = 'pdf-page-wrapper';
         pageContainer.dataset.pageNumber = pageNum;
         pagesContainer.appendChild(pageContainer);
-
+        
         // Create canvas for the page
         const pageCanvas = document.createElement('canvas');
         pageCanvas.className = 'pdf-page-canvas';
         pageContainer.appendChild(pageCanvas);
-
+        
         // Render the page content
         await renderPdfPage(pageNum, pageCanvas);
     }
@@ -991,54 +971,54 @@ async function renderPdfPage(pageNumber, canvas) {
     try {
         const page = await currentPdf.getPage(pageNumber);
         const context = canvas.getContext('2d');
-
+        
         // Calculate viewport based on zoom level
         const viewport = page.getViewport({ scale: zoomLevel });
-
+        
         // Set canvas dimensions to match viewport
+        //canvas.height = viewport.height;
+        //canvas.width = viewport.width;
+        //canvas.style.width = `${viewport.width}px`;
+       // canvas.style.height = `${viewport.height}px`;
+
         canvas.height = viewport.height;
         canvas.width = viewport.width;
-
+        
         // Render PDF page into canvas context
         const renderContext = {
             canvasContext: context,
             viewport: viewport
         };
-
+        
         await page.render(renderContext).promise;
 
         // Extract text content to find potential signature fields
         const textContent = await page.getTextContent();
-        detectSignatureFields(textContent, page, canvas, viewport);
+        await this.detectSignatureFields(textContent, page, canvas, viewport);
 
-        // Make the page interactive for signature placement
-        canvas.addEventListener('click', (e) => {
-            const rect = canvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
+         // Make the page interactive for signature placement
+         canvas.addEventListener('click', (e) => {
+            if (currentSignature) {
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
 
-            // Convert click coordinates to PDF coordinates
-            const pdfPoint = viewport.convertToPdfPoint(x, y);
-            console.log('Click coordinates:', {
-                screen: { x, y },
-                pdf: pdfPoint,
-                canvasRect: rect
-            });
+                // Convert click coordinates to PDF coordinates
+                const pdfPoint = viewport.convertToPdfPoint(x, y);
+                console.log('Click coordinates:', { 
+                    screen: {x, y}, 
+                    pdf: pdfPoint,
+                    canvasRect: rect
+                });
 
-            const field = findClickedField(x, y);
+                const field = this.findClickedField(x, y);
 
-            if (field) {
-                // Configurar campo ativo e abrir modal
-                activeSignatureField = {
-                    event: e,
-                    canvas: canvas,
-                    field: field
-                };
-                
-                showSimpleModal();
+                if (field) {
+                    this.placeSignature(e, canvas, field);
+                }
             }
         });
-
+        
         // Add subtle page number indicator at the bottom
         if (currentPdf.numPages > 1) {
             const pageNumberIndicator = document.createElement('div');
@@ -1046,7 +1026,7 @@ async function renderPdfPage(pageNumber, canvas) {
             pageNumberIndicator.textContent = `${pageNumber} / ${currentPdf.numPages}`;
             canvas.parentNode.appendChild(pageNumberIndicator);
         }
-
+        
     } catch (error) {
         console.error(`Error rendering PDF page ${pageNumber}:`, error);
         const errorMsg = document.createElement('div');
@@ -1057,169 +1037,169 @@ async function renderPdfPage(pageNumber, canvas) {
 }
 
 async function detectSignatureFields(textContent, page, canvas, viewport) {
-    const ctx = canvas.getContext('2d');
-    const keywords = ['rodrigo', 'signature', 'sign', 'assinatura', 'assinar', 'assignature', 'firma', 'rubrica'];
+        const ctx = canvas.getContext('2d');
+        const keywords = ['rodrigo','signature', 'sign', 'assinatura', 'assinar', 'assignature', 'firma', 'rubrica'];
 
-    // Get the page dimensions
-    const { width: pageWidth, height: pageHeight } = viewport;
+        // Get the page dimensions
+        const { width: pageWidth, height: pageHeight } = viewport;
 
-    for (const item of textContent.items) {
-        const text = item.str.toLowerCase();
-        if (keywords.some(keyword => text.includes(keyword))) {
-            // Get original PDF coordinates
-            const pdfX = item.transform[4];
-            const pdfY = item.transform[5];
+        for (const item of textContent.items) {
+            const text = item.str.toLowerCase();
+            if (keywords.some(keyword => text.includes(keyword))) {
+                // Get original PDF coordinates
+                const pdfX = item.transform[4];
+                const pdfY = item.transform[5];
 
-            // Convert PDF coordinates to canvas coordinates
-            const [x, y] = viewport.convertToViewportPoint(pdfX, pdfY);
+                // Convert PDF coordinates to canvas coordinates
+                const [x, y] = viewport.convertToViewportPoint(pdfX, pdfY);
 
-            // Adjust y-coordinate for PDF coordinate system (origin at bottom-left)
-            const adjustedY = pageHeight - y;
+                // Adjust y-coordinate for PDF coordinate system (origin at bottom-left)
+                const adjustedY = pageHeight - y;
 
-            console.log('Field detection:', {
-                text: item.str,
-                pdfCoords: { x: pdfX, y: pdfY },
-                viewportCoords: { x, y },
-                adjustedViewportCoords: { x, y: adjustedY },
-                transform: item.transform,
-                pageDimensions: { width: pageWidth, height: pageHeight }
-            });
+                console.log('Field detection:', {
+                    text: item.str,
+                    pdfCoords: {x: pdfX, y: pdfY},
+                    viewportCoords: {x, y},
+                    adjustedViewportCoords: {x, y: adjustedY},
+                    transform: item.transform,
+                    pageDimensions: {width: pageWidth, height: pageHeight}
+                });
 
-            // Create signature field indicator
-            const field = {
-                x: x + margins.left,
-                y: adjustedY + margins.top,
-                width: 200,
-                height: 50,
-                pdfX: pdfX,
-                pdfY: pdfY
-            };
+                // Create signature field indicator
+                const field = {
+                    x: x + margins.left,
+                    y: adjustedY + margins.top,
+                    width: 200,
+                    height: 50,
+                    pdfX: pdfX,
+                    pdfY: pdfY
+                };
 
-            // Ensure field is within page bounds
-            field.x = Math.max(this.margins.left, Math.min(field.x, pageWidth - field.width - this.margins.right));
-            field.y = Math.max(this.margins.top, Math.min(field.y, pageHeight - field.height - this.margins.bottom));
+                // Ensure field is within page bounds
+                field.x = Math.max(this.margins.left, Math.min(field.x, pageWidth - field.width - this.margins.right));
+                field.y = Math.max(this.margins.top, Math.min(field.y, pageHeight - field.height - this.margins.bottom));
 
-            this.signatureFields.push(field);
+                this.signatureFields.push(field);
 
-            // Draw signature field indicator
-            ctx.save();
-            ctx.strokeStyle = '#2196F3';
-            ctx.fillStyle = 'rgba(33, 150, 243, 0.1)';
-            ctx.lineWidth = 2;
-            ctx.setLineDash([5, 3]);
+                // Draw signature field indicator
+                ctx.save();
+                ctx.strokeStyle = '#2196F3';
+                ctx.fillStyle = 'rgba(33, 150, 243, 0.1)';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([5, 3]);
 
-            // Draw rectangle with adjusted position
-            ctx.strokeRect(field.x, field.y, field.width, field.height);
-            ctx.fillRect(field.x, field.y, field.width, field.height);
+                // Draw rectangle with adjusted position
+                ctx.strokeRect(field.x, field.y, field.width, field.height);
+                ctx.fillRect(field.x, field.y, field.width, field.height);
 
-            // Add signature icon and text
-            ctx.fillStyle = '#2196F3';
-            ctx.font = '24px Arial';
-            ctx.fillText('✒️', field.x + 10, field.y + 35);
+                // Add signature icon and text
+                ctx.fillStyle = '#2196F3';
+                ctx.font = '24px Arial';
+                ctx.fillText('✒️', field.x + 10, field.y + 35);
 
-            ctx.font = '14px Arial';
-            ctx.fillStyle = '#666';
-            ctx.fillText('Clique para assinar', field.x + 40, field.y + 35);
+                ctx.font = '14px Arial';
+                ctx.fillStyle = '#666';
+                ctx.fillText('Clique para assinar', field.x + 40, field.y + 35);
 
-            ctx.restore();
+                ctx.restore();
 
-            console.log('Field dimensions:', {
-                final: field,
-                margins: this.margins
-            });
+                console.log('Field dimensions:', {
+                    final: field,
+                    margins: this.margins
+                });
+            }
         }
     }
-}
 
 async function findClickedField(x, y) {
-    return this.signatureFields.find(field =>
-        x >= field.x && x <= field.x + field.width &&
-        y >= field.y && y <= field.y + field.height
-    );
-}
+        return this.signatureFields.find(field => 
+            x >= field.x && x <= field.x + field.width &&
+            y >= field.y && y <= field.y + field.height
+        );
+    }
 
 async function addSignature(signatureData) {
-    currentSignature = signatureData;
-}
+        currentSignature = signatureData;
+    }
 
-async function placeSignature(event, canvas, field) {
-    const img = new Image();
-    img.src = this.currentSignature;
-    img.onload = () => {
-        const ctx = canvas.getContext('2d');
+async function  placeSignature(event, canvas, field) {
+        const img = new Image();
+        img.src = this.currentSignature;
+        img.onload = () => {
+            const ctx = canvas.getContext('2d');
 
-        // Clear the field area
-        ctx.clearRect(field.x, field.y, field.width, field.height);
+            // Clear the field area
+            ctx.clearRect(field.x, field.y, field.width, field.height);
 
-        // Draw signature
-        const aspectRatio = img.width / img.height;
-        const height = Math.min(field.height * 0.8, field.width / aspectRatio);
-        const width = height * aspectRatio;
+            // Draw signature
+            const aspectRatio = img.width / img.height;
+            const height = Math.min(field.height * 0.8, field.width / aspectRatio);
+            const width = height * aspectRatio;
 
-        ctx.drawImage(img,
-            field.x + (field.width - width) / 2,
-            field.y + (field.height - height) / 2,
-            width,
-            height
-        );
+            ctx.drawImage(img, 
+                field.x + (field.width - width) / 2,
+                field.y + (field.height - height) / 2,
+                width,
+                height
+            );
 
-        // Store position in PDF coordinates
-        this.signaturePosition = {
-            page: this.pageNum - 1,
-            x: field.pdfX,
-            y: field.pdfY
+            // Store position in PDF coordinates
+            this.signaturePosition = {
+                page: this.pageNum - 1,
+                x: field.pdfX,
+                y: field.pdfY
+            };
+
+            console.log('Signature placement:', {
+                canvas: {
+                    x: field.x,
+                    y: field.y,
+                    width: width,
+                    height: height
+                },
+                pdf: this.signaturePosition,
+                field: field
+            });
         };
 
-        console.log('Signature placement:', {
-            canvas: {
-                x: field.x,
-                y: field.y,
-                width: width,
-                height: height
-            },
-            pdf: this.signaturePosition,
-            field: field
-        });
-    };
+        currentSignature = null;
 
-    currentSignature = null;
+    }
 
-}
-
-async function getSignaturePosition() {
-    return this.signaturePosition;
-}
+async function   getSignaturePosition() {
+        return this.signaturePosition;
+    }
 
 async function adjustZoom(delta) {
     const oldZoom = zoomLevel;
     zoomLevel += delta;
     zoomLevel = Math.max(0.2, Math.min(3, zoomLevel)); // Limit zoom level
-
+    
     // If zoom didn't actually change, exit early
     if (oldZoom === zoomLevel) return;
-
+    
     // Update zoom display
     const zoomLevelSpan = document.getElementById('zoomLevel');
     zoomLevelSpan.textContent = `${(zoomLevel * 100).toFixed(0)}%`;
-
+    
     const previewContainer = document.querySelector('.preview-container');
     const pdfContainer = document.querySelector('.pdf-viewer-container');
     const imageElement = document.querySelector('.preview-image');
-
+    
     if (pdfContainer && currentPdf) {
         // Remember scroll position
         const scrollContainer = document.querySelector('.pdf-pages-container');
         const scrollRatio = scrollContainer.scrollTop / scrollContainer.scrollHeight;
-
+        
         // First remove existing pages
         const pagesContainer = document.querySelector('.pdf-pages-container');
         if (pagesContainer) {
             pdfContainer.removeChild(pagesContainer);
         }
-
+        
         // Render pages with new zoom
         await renderPdfPages(pdfContainer);
-
+        
         // Restore scroll position
         const newScrollContainer = document.querySelector('.pdf-pages-container');
         setTimeout(() => {
@@ -1246,7 +1226,7 @@ document.addEventListener('DOMContentLoaded', () => {
             width: 100%;
             height: calc(100vh - 120px);
         }
-
+        
         /* PDF viewer styling */
         .pdf-viewer-container {
             width: 100%;
@@ -1255,7 +1235,7 @@ document.addEventListener('DOMContentLoaded', () => {
             flex-direction: column;
             overflow: hidden;
         }
-
+        
         .pdf-pages-container {
             width: 100%;
             height: 100%;
@@ -1266,7 +1246,7 @@ document.addEventListener('DOMContentLoaded', () => {
             align-items: center;
             padding: 20px 0;
         }
-
+        
         .pdf-page-wrapper {
             margin-bottom: 20px;
             background-color: white;
@@ -1275,11 +1255,11 @@ document.addEventListener('DOMContentLoaded', () => {
             display: flex;
             justify-content: center;
         }
-
+        
         .pdf-page-canvas {
             display: block;
         }
-
+        
         .pdf-page-number {
             position: absolute;
             bottom: -20px;
@@ -1292,7 +1272,7 @@ document.addEventListener('DOMContentLoaded', () => {
             font-size: 12px;
             opacity: 0.7;
         }
-
+        
         .pdf-page-error {
             padding: 20px;
             background-color: #ffeeee;
@@ -1301,7 +1281,7 @@ document.addEventListener('DOMContentLoaded', () => {
             border: 1px solid #cc0000;
             margin: 20px;
         }
-
+        
         /* Loading indicator */
         .pdf-loading {
             display: flex;
@@ -1311,7 +1291,7 @@ document.addEventListener('DOMContentLoaded', () => {
             height: 100%;
             width: 100%;
         }
-
+        
         .loading-spinner {
             border: 4px solid #f3f3f3;
             border-top: 4px solid var(--accent-color);
@@ -1321,12 +1301,12 @@ document.addEventListener('DOMContentLoaded', () => {
             animation: spin 1s linear infinite;
             margin-bottom: 15px;
         }
-
+        
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-
+        
         /* Image container */
         .image-container {
             display: flex;
@@ -1337,7 +1317,7 @@ document.addEventListener('DOMContentLoaded', () => {
             height: 100%;
             background-color: var(--bg-primary);
         }
-
+        
         .preview-image {
             max-width: 90%;
             max-height: 90%;
@@ -1345,21 +1325,21 @@ document.addEventListener('DOMContentLoaded', () => {
             transition: transform 0.2s ease;
             transform-origin: center center;
         }
-
+        
         /* Document container */
         .document-container {
             width: 100%;
             height: 100%;
             overflow: auto;
         }
-
+        
         .document-iframe {
             width: 100%;
             height: 100%;
             border: none;
         }
     `;
-
+    
     document.head.appendChild(styleElement);
 });
 
@@ -1367,7 +1347,7 @@ document.addEventListener('DOMContentLoaded', () => {
 function updatePreviewModalStructure() {
     const previewModal = document.getElementById('previewModal');
     if (!previewModal) return;
-
+    
     const previewContainer = previewModal.querySelector('.preview-container');
     if (!previewContainer) return;
 }
@@ -1375,7 +1355,7 @@ function updatePreviewModalStructure() {
 // Cleanup when closing the modal
 function hideModal(modalId) {
     document.getElementById(modalId).style.display = 'none';
-
+    
     // If this was the preview modal, clean up
     if (modalId === 'previewModal') {
         currentPdf = null;
@@ -1387,62 +1367,9 @@ function showSimpleModal() {
     feather.replace();
 }
 
-function applySignatureOrText() {
-    const signatureText = document.getElementById('signatureText').value;
-    const fontFamily = document.getElementById('fontFamily').value;
-
-    if (!signatureText) {
-        showNotification('Please enter your signature', 'error');
-        return;
-    }
-
-    //Simulate Signature Image for demonstration. Replace with your actual signature generation logic
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    ctx.font = `48px ${fontFamily}`; // Adjust font size as needed
-    ctx.fillText(signatureText, 0, 50); // Adjust position as needed
-    currentSignature = canvas.toDataURL();
-
-    hideModal('simpleModal');
-    addSignature(currentSignature);
-}
-
-function updateSignaturePreview() {
-    const signatureText = document.getElementById('signatureText').value;
-    const fontFamily = document.getElementById('fontFamily').value;
-    const fontPreview = document.getElementById('fontPreview');
-    fontPreview.textContent = signatureText;
-    fontPreview.style.fontFamily = fontFamily;
-}
-
-
-// Inicializar preview
 document.addEventListener('DOMContentLoaded', () => {
     loadDocuments();
 
-    // Inicializar eventos para seleção de fonte
-    document.querySelectorAll('.font-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            // Remover seleção anterior
-            document.querySelectorAll('.font-btn').forEach(b => b.classList.remove('selected'));
-
-            // Selecionar a nova fonte
-            this.classList.add('selected');
-
-            // Atualizar a fonte atual
-            currentSelectedFont = this.dataset.font;
-            document.getElementById('fontFamily').value = currentSelectedFont;
-
-            // Atualizar o preview
-            updateSignaturePreview();
-        });
-    });
-
-    // Atualizar preview ao digitar
-    const signatureTextInput = document.getElementById('signatureText');
-    if (signatureTextInput) {
-        signatureTextInput.addEventListener('input', updateSignaturePreview);
-    }
 });
 
 
@@ -1741,78 +1668,78 @@ document.addEventListener('DOMContentLoaded', () => {
 }
 
 .modal-content {
-    position: relative;
-    background-color: var(--bg-secondary);
-    margin: 5% auto;
-}
+        position: relative;
+        background-color: var(--bg-secondary);
+        margin: 5% auto;
+    }
 
-.preview-modal {
-    max-width: 100% !important;
-    width: 100%;
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    margin: 0 !important;
-    padding: 1rem !important;
-    border-radius: 0;
-}
+    .preview-modal {
+        max-width: 100% !important;
+        width: 100%;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        margin: 0 !important;
+        padding: 1rem !important;
+        border-radius: 0;
+    }
 
-.preview-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding-bottom: 0.5rem;
-    border-bottom: 1px solid var(--border-color);
-}
+    .preview-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid var(--border-color);
+    }
 
-.preview-title {
-    display: flex;
-    align-items: center;
-    gap: 2rem;
-}
+    .preview-title {
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+    }
 
-.zoom-controls {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
+    .zoom-controls {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
 
-.preview-container {
-    flex: 1;
-    overflow: auto;
-    padding: 1rem;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background: var(--bg-tertiary);
-    min-height: 85vh;
-}
+    .preview-container {
+        flex: 1;
+        overflow: auto;
+        padding: 1rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: var(--bg-tertiary);
+        min-height: 85vh;
+    }
 
-#pdfCanvas {
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-    background: white;
-    margin: auto;
-}
+    #pdfCanvas {
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        background: white;
+        margin: auto;
+    }
 
-.preview-controls {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 1rem;
-    padding-top: 1rem;
-    border-top: 1px solid var(--border-color);
-}
+    .preview-controls {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border-color);
+    }
 
-#pdfCanvas {
-    max-width: 100%;
-    height: auto;
-}
+    #pdfCanvas {
+        max-width: 100%;
+        height: auto;
+    }
 
-#imagePreview {
-    max-width: 100%;
-    height: auto;
-    transition: transform 0.2s ease;
-}
+    #imagePreview {
+        max-width: 100%;
+        height: auto;
+        transition: transform 0.2s ease;
+    }
 
 .form-group {
     display: flex;
