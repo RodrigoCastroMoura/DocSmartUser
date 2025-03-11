@@ -162,6 +162,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <!-- Importação de fontes do Google para assinaturas -->
 <link href="https://fonts.googleapis.com/css2?family=Dancing+Script&family=Great+Vibes&family=Pacifico&family=Allura&family=Alex+Brush&family=Sacramento&family=Tangerine&family=Yellowtail&family=Homemade+Apple&family=Mr+De+Haviland&family=Rouge+Script&family=Pinyon+Script&family=Petit+Formal+Script&family=Playball&family=Lovers+Quarrel&family=Monsieur+La+Doulaise&family=Herr+Von+Muellerhoff&family=Miss+Fajardose&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/signature-styles.css') }}">
 <style>
 /* Estilos específicos para o preview de fonte */
 #fontPreview {
@@ -866,6 +867,11 @@ async function previewDocument(url, filename) {
     const previewContainer = document.querySelector('.preview-container');
     const zoomLevelSpan = document.getElementById('zoomLevel');
 
+    // Limpar os campos de assinatura anteriores
+    signatureFields = [];
+    activeSignatureField = null;
+    currentSignature = null;
+
     // Reset zoom level
     zoomLevel = 1.8;
     zoomLevelSpan.textContent = `${(zoomLevel * 100).toFixed(0)}%`;
@@ -888,7 +894,7 @@ async function previewDocument(url, filename) {
             // Show loading indicator
             const loadingIndicator = document.createElement('div');
             loadingIndicator.className = 'pdf-loading';
-            loadingIndicator.innerHTML = '<div class="loading-spinner"></div><p>Loading PDF...</p>';
+            loadingIndicator.innerHTML = '<div class="loading-spinner"></div><p>Carregando PDF...</p>';
             pdfViewerContainer.appendChild(loadingIndicator);
 
             // Load the PDF
@@ -901,6 +907,13 @@ async function previewDocument(url, filename) {
 
             // Render all pages in the viewer
             await renderPdfPages(pdfViewerContainer);
+
+            // Habilitar botão de assinatura
+            const openSimpleModalBtn = document.getElementById('openSimpleModalBtn');
+            if (openSimpleModalBtn) {
+                openSimpleModalBtn.style.display = 'inline-flex';
+                openSimpleModalBtn.title = 'Adicionar assinatura ao documento';
+            }
 
         } else if (['jpg', 'jpeg', 'png', 'gif'].includes(fileType)) {
             // Create image container
@@ -996,28 +1009,33 @@ async function renderPdfPage(pageNumber, canvas) {
 
         // Extract text content to find potential signature fields
         const textContent = await page.getTextContent();
-        await this.detectSignatureFields(textContent, page, canvas, viewport);
+        detectSignatureFields(textContent, page, canvas, viewport);
 
         // Make the page interactive for signature placement
         canvas.addEventListener('click', (e) => {
-            if (currentSignature) {
-                const rect = canvas.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
 
-                // Convert click coordinates to PDF coordinates
-                const pdfPoint = viewport.convertToPdfPoint(x, y);
-                console.log('Click coordinates:', {
-                    screen: { x, y },
-                    pdf: pdfPoint,
-                    canvasRect: rect
-                });
+            // Convert click coordinates to PDF coordinates
+            const pdfPoint = viewport.convertToPdfPoint(x, y);
+            console.log('Click coordinates:', {
+                screen: { x, y },
+                pdf: pdfPoint,
+                canvasRect: rect
+            });
 
-                const field = this.findClickedField(x, y);
+            const field = findClickedField(x, y);
 
-                if (field) {
-                    this.placeSignature(e, canvas, field);
-                }
+            if (field) {
+                // Configurar campo ativo e abrir modal
+                activeSignatureField = {
+                    event: e,
+                    canvas: canvas,
+                    field: field
+                };
+                
+                showSimpleModal();
             }
         });
 
