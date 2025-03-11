@@ -153,26 +153,29 @@ function loadSavedSignature() {
 function applySignatureOrText() {
     const signatureText = document.getElementById('signatureText').value;
     const fontFamily = document.getElementById('fontFamily').value;
-    
-    if (!signatureText) {
-        alert("Por favor, digite sua assinatura.");
+
+    if (!signatureText.trim()) {
+        alert('Por favor, digite seu nome para a assinatura.');
         return;
     }
-    
+
     // Criar elemento de assinatura
     const signatureElement = document.createElement('div');
+    signatureElement.className = 'signature-element';
     signatureElement.style.position = 'absolute';
     signatureElement.style.fontFamily = fontFamily;
     signatureElement.style.fontSize = '36px';
-    signatureElement.style.color = '#000';
-    signatureElement.style.padding = '10px';
-    signatureElement.style.pointerEvents = 'none';
+    signatureElement.style.color = 'black';
+    signatureElement.style.zIndex = '15';
+    signatureElement.style.backgroundColor = 'transparent';
+    signatureElement.style.width = '200px';
+    signatureElement.style.textAlign = 'center';
     signatureElement.innerHTML = signatureText;
-    
+
     // Adicionar a assinatura ao container de assinaturas
     const signaturesContainer = document.getElementById('signatures-container');
     signaturesContainer.appendChild(signatureElement);
-    
+
     // Posicionar a assinatura - se não houver campo específico, colocar no centro do container
     if (typeof currentField !== 'undefined' && currentField) {
         // Usar o campo detectado se existir
@@ -195,10 +198,10 @@ function applySignatureOrText() {
             }
         }
     }
-    
+
     // Permitir que o container receba eventos do mouse
     signaturesContainer.style.pointerEvents = 'auto';
-    
+
     // Fechar o modal
     hideModal('simpleModal');
 }
