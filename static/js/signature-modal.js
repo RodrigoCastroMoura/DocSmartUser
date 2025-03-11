@@ -3,7 +3,9 @@
 // Verificar se já existe um canvas de assinatura modal e inicializá-lo
 let modalSignatureCanvas;
 let modalSignatureContext;
-let currentSelectedFont = 'Dancing Script';
+
+// Variável para controlar a fonte selecionada
+let currentSelectedFont = 'Dancing Script'; // Fonte selecionada por padrão
 
 // Estilos de assinatura predefinidos
 const signatureStyles = {
@@ -109,7 +111,7 @@ function generateTextSignature(text, font) {
     return canvas.toDataURL('image/png');
 }
 
-// Atualizar preview de assinatura baseado no texto e fonte
+// Função para atualizar o preview de texto e fonte
 function updateSignaturePreview() {
     const signatureText = document.getElementById('signatureText').value || 'Prévia da Fonte';
     const fontFamily = document.getElementById('fontFamily').value;
@@ -149,46 +151,47 @@ function loadSavedSignature() {
     console.log("Load saved signature functionality to be implemented");
 }
 
-// Aplicar a assinatura ou texto selecionado ao documento
+// Aplicar a assinatura ou texto selecionado
 function applySignatureOrText() {
     const signatureText = document.getElementById('signatureText').value;
     const fontFamily = document.getElementById('fontFamily').value;
-    
+
     if (!signatureText) {
-        alert("Por favor, digite seu nome para a assinatura");
+        showNotification('Por favor, digite sua assinatura', 'error');
         return;
     }
-    
-    // Criar um canvas temporário para gerar a imagem da assinatura
-    const tempCanvas = document.createElement('canvas');
-    const ctx = tempCanvas.getContext('2d');
-    
-    // Configurar o tamanho do canvas baseado no texto
-    const fontSize = 48;
-    ctx.font = `${fontSize}px "${fontFamily}"`;
-    const textWidth = ctx.measureText(signatureText).width;
-    
-    tempCanvas.width = textWidth + 40;
-    tempCanvas.height = fontSize * 2;
-    
-    // Limpar o canvas
-    ctx.fillStyle = 'transparent';
-    ctx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
-    
-    // Desenhar o texto
-    ctx.font = `${fontSize}px "${fontFamily}"`;
-    ctx.fillStyle = '#000000';
+
+    // Criar uma imagem temporária a partir do texto com a fonte selecionada
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+
+    // Configurar o canvas
+    canvas.width = 600;
+    canvas.height = 200;
+
+    // Fundo branco
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Configurar a fonte e estilo
+    ctx.font = `bold 72px ${fontFamily}`;
+    ctx.fillStyle = 'black';
+    ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(signatureText, 20, tempCanvas.height / 2);
-    
-    // Converter para uma imagem data URL
-    const signatureImg = tempCanvas.toDataURL('image/png');
-    
+
+    // Desenhar o texto
+    ctx.fillText(signatureText, canvas.width / 2, canvas.height / 2);
+
+    // Converter para imagem
+    const signatureImg = canvas.toDataURL();
+
+    // Aplicar a assinatura ao documento
+    currentSignature = signatureImg;
+
     // Fechar o modal
     hideModal('simpleModal');
-    
-    // Aplicar a assinatura no campo selecionado do PDF
-    addSignature(signatureImg);
+
+    console.log("Assinatura aplicada:", signatureImg);
 }
 
 // Iniciar eventos quando o DOM estiver carregado
