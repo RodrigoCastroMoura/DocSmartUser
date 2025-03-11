@@ -152,16 +152,42 @@ function loadSavedSignature() {
 // Aplicar a assinatura ou texto selecionado ao documento
 function applySignatureOrText() {
     const signatureText = document.getElementById('signatureText').value;
-   
-    // Gerar a assinatura como imagem
-    const signatureImg = generateTextSignature(signatureText, currentSelectedFont);
-
-    // Aqui você pode implementar a lógica para adicionar a assinatura ao PDF
-    console.log('Assinatura aplicada:', signatureImg);
-
+    const fontFamily = document.getElementById('fontFamily').value;
+    
+    if (!signatureText) {
+        alert("Por favor, digite seu nome para a assinatura");
+        return;
+    }
+    
+    // Criar um canvas temporário para gerar a imagem da assinatura
+    const tempCanvas = document.createElement('canvas');
+    const ctx = tempCanvas.getContext('2d');
+    
+    // Configurar o tamanho do canvas baseado no texto
+    const fontSize = 48;
+    ctx.font = `${fontSize}px "${fontFamily}"`;
+    const textWidth = ctx.measureText(signatureText).width;
+    
+    tempCanvas.width = textWidth + 40;
+    tempCanvas.height = fontSize * 2;
+    
+    // Limpar o canvas
+    ctx.fillStyle = 'transparent';
+    ctx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
+    
+    // Desenhar o texto
+    ctx.font = `${fontSize}px "${fontFamily}"`;
+    ctx.fillStyle = '#000000';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(signatureText, 20, tempCanvas.height / 2);
+    
+    // Converter para uma imagem data URL
+    const signatureImg = tempCanvas.toDataURL('image/png');
+    
     // Fechar o modal
     hideModal('simpleModal');
-
+    
+    // Aplicar a assinatura no campo selecionado do PDF
     addSignature(signatureImg);
 }
 
