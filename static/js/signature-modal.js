@@ -152,17 +152,38 @@ function loadSavedSignature() {
 // Aplicar a assinatura ou texto selecionado ao documento
 function applySignatureOrText() {
     const signatureText = document.getElementById('signatureText').value;
-   
-    // Gerar a assinatura como imagem
-    const signatureImg = generateTextSignature(signatureText, currentSelectedFont);
-
-    // Aqui você pode implementar a lógica para adicionar a assinatura ao PDF
-    console.log('Assinatura aplicada:', signatureImg);
-
+    const fontFamily = document.getElementById('fontFamily').value;
+    
+    if (!signatureText) {
+        alert("Por favor, digite sua assinatura.");
+        return;
+    }
+    
+    // Criar elemento de assinatura
+    const signatureElement = document.createElement('div');
+    signatureElement.style.position = 'absolute';
+    signatureElement.style.fontFamily = fontFamily;
+    signatureElement.style.fontSize = '36px';
+    signatureElement.style.color = '#000';
+    signatureElement.style.padding = '10px';
+    signatureElement.style.pointerEvents = 'none';
+    signatureElement.innerHTML = signatureText;
+    
+    // Adicionar a assinatura ao container de assinaturas
+    const signaturesContainer = document.getElementById('signatures-container');
+    signaturesContainer.appendChild(signatureElement);
+    
+    // Posicionar no centro da área detectada
+    if (currentField) {
+        signatureElement.style.left = currentField.x + 'px';
+        signatureElement.style.top = currentField.y + 'px';
+    }
+    
+    // Permitir que o container receba eventos do mouse
+    signaturesContainer.style.pointerEvents = 'auto';
+    
     // Fechar o modal
     hideModal('simpleModal');
-
-    addSignature(signatureImg);
 }
 
 // Iniciar eventos quando o DOM estiver carregado
@@ -185,7 +206,10 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Adicionar evento para o campo de texto
+    // Variável global para armazenar o campo atual de assinatura
+let currentField = null;
+
+// Adicionar evento para o campo de texto
     const signatureText = document.getElementById('signatureText');
     if (signatureText) {
         signatureText.addEventListener('input', updateSignaturePreview);
