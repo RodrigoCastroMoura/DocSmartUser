@@ -1,13 +1,12 @@
-
 // Função para atualizar a prévia da fonte
 function updateSignaturePreview() {
     const signatureText = document.getElementById('signatureText').value || 'Prévia da Fonte';
     const fontFamily = document.getElementById('fontFamily').value;
     const fontPreview = document.getElementById('fontPreview');
-    
+
     fontPreview.style.fontFamily = fontFamily;
     fontPreview.textContent = signatureText;
-    
+
     // Atualizar também o campo de entrada
     document.getElementById('signatureText').style.fontFamily = fontFamily;
 }
@@ -16,7 +15,7 @@ function updateSignaturePreview() {
 document.addEventListener('DOMContentLoaded', function() {
     // Atualizar prévia quando página carregar
     updateSignaturePreview();
-    
+
     // Configurar eventos para selecionar fontes
     const fontButtons = document.querySelectorAll('.font-btn');
     fontButtons.forEach(button => {
@@ -25,16 +24,16 @@ document.addEventListener('DOMContentLoaded', function() {
             fontButtons.forEach(btn => btn.classList.remove('selected'));
             // Adicionar classe selecionada ao botão clicado
             this.classList.add('selected');
-            
+
             // Atualizar o valor do campo de fonte oculto
             const fontFamily = this.getAttribute('data-font');
             document.getElementById('fontFamily').value = fontFamily;
-            
+
             // Atualizar a prévia
             updateSignaturePreview();
         });
     });
-    
+
     // Atualizar prévia quando texto for digitado
     document.getElementById('signatureText').addEventListener('input', updateSignaturePreview);
 });
@@ -195,12 +194,12 @@ function applySignatureOrText() {
     // Obter o texto digitado e a fonte selecionada
     const signatureText = document.getElementById('signatureText').value;
     const fontFamily = document.getElementById('fontFamily').value;
-    
+
     if (!signatureText.trim()) {
         alert('Por favor, digite seu nome para a assinatura.');
         return;
     }
-    
+
     // Criar elemento simples de assinatura
     const signatureElement = document.createElement('div');
     signatureElement.style.position = 'absolute';
@@ -209,24 +208,24 @@ function applySignatureOrText() {
     signatureElement.style.color = 'black';
     signatureElement.style.zIndex = '15';
     signatureElement.innerHTML = signatureText;
-    
+
     // Adicionar a assinatura ao container
     const signaturesContainer = document.getElementById('signatures-container');
     signaturesContainer.appendChild(signatureElement);
-    
+
     // Posicionar no centro da área visível
-    const pdfCanvas = document.querySelector('#pdfCanvas');
-    if (pdfCanvas) {
-        signatureElement.style.left = (pdfCanvas.offsetWidth / 2 - 100) + 'px';
-        signatureElement.style.top = (pdfCanvas.offsetHeight / 2 - 25) + 'px';
-    } else {
-        signatureElement.style.left = '50%';
-        signatureElement.style.top = '50%';
-        signatureElement.style.transform = 'translate(-50%, -50%)';
-    }
-    
+    signatureElement.style.left = '50%';
+    signatureElement.style.top = '50%';
+    signatureElement.style.transform = 'translate(-50%, -50%)';
+
     // Fechar o modal
     hideModal('simpleModal');
+}
+
+// Função auxiliar para esconder modais
+function hideModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) modal.style.display = 'none';
 }
 
 // Iniciar eventos quando o DOM estiver carregado
@@ -250,9 +249,9 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Variável global para armazenar o campo atual de assinatura
-let currentField = null;
+    let currentField = null;
 
-// Adicionar evento para o campo de texto
+    // Adicionar evento para o campo de texto
     const signatureText = document.getElementById('signatureText');
     if (signatureText) {
         signatureText.addEventListener('input', updateSignaturePreview);
