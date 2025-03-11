@@ -173,10 +173,27 @@ function applySignatureOrText() {
     const signaturesContainer = document.getElementById('signatures-container');
     signaturesContainer.appendChild(signatureElement);
     
-    // Posicionar no centro da área detectada
-    if (currentField) {
+    // Posicionar a assinatura - se não houver campo específico, colocar no centro do container
+    if (typeof currentField !== 'undefined' && currentField) {
+        // Usar o campo detectado se existir
         signatureElement.style.left = currentField.x + 'px';
         signatureElement.style.top = currentField.y + 'px';
+    } else {
+        // Caso contrário, posicionar no centro do container de visualização
+        const previewContainer = document.querySelector('.preview-container');
+        if (previewContainer) {
+            const pdfCanvas = document.querySelector('#pdfCanvas');
+            if (pdfCanvas) {
+                // Posicionar no centro do canvas PDF
+                signatureElement.style.left = (pdfCanvas.offsetWidth / 2 - 100) + 'px';
+                signatureElement.style.top = (pdfCanvas.offsetHeight / 2 - 25) + 'px';
+            } else {
+                // Fallback: centro do container
+                signatureElement.style.left = '50%';
+                signatureElement.style.top = '50%';
+                signatureElement.style.transform = 'translate(-50%, -50%)';
+            }
+        }
     }
     
     // Permitir que o container receba eventos do mouse
