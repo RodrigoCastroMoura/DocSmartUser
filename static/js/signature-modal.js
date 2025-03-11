@@ -1,43 +1,3 @@
-// Função para atualizar a prévia da fonte
-function updateSignaturePreview() {
-    const signatureText = document.getElementById('signatureText').value || 'Prévia da Fonte';
-    const fontFamily = document.getElementById('fontFamily').value;
-    const fontPreview = document.getElementById('fontPreview');
-
-    fontPreview.style.fontFamily = fontFamily;
-    fontPreview.textContent = signatureText;
-
-    // Atualizar também o campo de entrada
-    document.getElementById('signatureText').style.fontFamily = fontFamily;
-}
-
-// Evento para quando uma fonte é selecionada
-document.addEventListener('DOMContentLoaded', function() {
-    // Atualizar prévia quando página carregar
-    updateSignaturePreview();
-
-    // Configurar eventos para selecionar fontes
-    const fontButtons = document.querySelectorAll('.font-btn');
-    fontButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            // Remover classe selecionada de todos os botões
-            fontButtons.forEach(btn => btn.classList.remove('selected'));
-            // Adicionar classe selecionada ao botão clicado
-            this.classList.add('selected');
-
-            // Atualizar o valor do campo de fonte oculto
-            const fontFamily = this.getAttribute('data-font');
-            document.getElementById('fontFamily').value = fontFamily;
-
-            // Atualizar a prévia
-            updateSignaturePreview();
-        });
-    });
-
-    // Atualizar prévia quando texto for digitado
-    document.getElementById('signatureText').addEventListener('input', updateSignaturePreview);
-});
-
 // Arquivo signature-modal.js
 
 // Verificar se já existe um canvas de assinatura modal e inicializá-lo
@@ -191,41 +151,18 @@ function loadSavedSignature() {
 
 // Aplicar a assinatura ou texto selecionado ao documento
 function applySignatureOrText() {
-    // Obter o texto digitado e a fonte selecionada
     const signatureText = document.getElementById('signatureText').value;
-    const fontFamily = document.getElementById('fontFamily').value;
+   
+    // Gerar a assinatura como imagem
+    const signatureImg = generateTextSignature(signatureText, currentSelectedFont);
 
-    if (!signatureText.trim()) {
-        alert('Por favor, digite seu nome para a assinatura.');
-        return;
-    }
-
-    // Criar elemento simples de assinatura
-    const signatureElement = document.createElement('div');
-    signatureElement.style.position = 'absolute';
-    signatureElement.style.fontFamily = fontFamily;
-    signatureElement.style.fontSize = '36px';
-    signatureElement.style.color = 'black';
-    signatureElement.style.zIndex = '15';
-    signatureElement.innerHTML = signatureText;
-
-    // Adicionar a assinatura ao container
-    const signaturesContainer = document.getElementById('signatures-container');
-    signaturesContainer.appendChild(signatureElement);
-
-    // Posicionar no centro da área visível
-    signatureElement.style.left = '50%';
-    signatureElement.style.top = '50%';
-    signatureElement.style.transform = 'translate(-50%, -50%)';
+    // Aqui você pode implementar a lógica para adicionar a assinatura ao PDF
+    console.log('Assinatura aplicada:', signatureImg);
 
     // Fechar o modal
     hideModal('simpleModal');
-}
 
-// Função auxiliar para esconder modais
-function hideModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) modal.style.display = 'none';
+    addSignature(signatureImg);
 }
 
 // Iniciar eventos quando o DOM estiver carregado
@@ -247,9 +184,6 @@ document.addEventListener('DOMContentLoaded', function() {
             updateSignaturePreview();
         });
     });
-
-    // Variável global para armazenar o campo atual de assinatura
-    let currentField = null;
 
     // Adicionar evento para o campo de texto
     const signatureText = document.getElementById('signatureText');
