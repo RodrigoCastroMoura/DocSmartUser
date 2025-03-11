@@ -856,7 +856,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs
 
 let currentPdf = null;
 let zoomLevel = 1.0;
-// As variáveis margins, signatureFields e currentSignature já são definidas no arquivo signature-modal.js
+// A variável margins já é definida no arquivo signature-modal.js
 var signatureFields = [];
 var currentSignature = null;
 
@@ -1096,10 +1096,10 @@ async function detectSignatureFields(textContent, page, canvas, viewport) {
             };
 
             // Ensure field is within page bounds
-            field.x = Math.max(margins.left, Math.min(field.x, pageWidth - field.width - margins.right));
-            field.y = Math.max(margins.top, Math.min(field.y, pageHeight - field.height - margins.bottom));
+            field.x = Math.max(this.margins.left, Math.min(field.x, pageWidth - field.width - this.margins.right));
+            field.y = Math.max(this.margins.top, Math.min(field.y, pageHeight - field.height - this.margins.bottom));
 
-            signatureFields.push(field);
+            this.signatureFields.push(field);
 
             // Draw signature field indicator
             ctx.save();

@@ -1,4 +1,3 @@
-
 // Arquivo signature-modal.js para gerenciamento de assinaturas digitais
 
 // Variáveis globais do sistema
@@ -47,7 +46,7 @@ function showNotification(message, type) {
             </div>
         `;
         document.body.appendChild(notification);
-        
+
         // Remover após 3 segundos
         setTimeout(() => {
             notification.classList.add('fade-out');
@@ -60,7 +59,7 @@ function showNotification(message, type) {
 function updateSignaturePreview() {
     const signatureText = document.getElementById('signatureText').value || 'Sua assinatura';
     const fontPreview = document.getElementById('fontPreview');
-    
+
     if (fontPreview) {
         fontPreview.textContent = signatureText;
         fontPreview.style.fontFamily = currentSelectedFont;
@@ -75,7 +74,7 @@ function loadSavedSignature() {
 // Função para exibir o modal de assinatura
 function showSimpleModal() {
     document.getElementById('simpleModal').style.display = 'block';
-    
+
     // Inicializar a primeira fonte como selecionada se nenhuma estiver selecionada
     if (!document.querySelector('.font-btn.selected')) {
         const firstFontBtn = document.querySelector('.font-btn');
@@ -85,7 +84,7 @@ function showSimpleModal() {
             document.getElementById('fontFamily').value = currentSelectedFont;
         }
     }
-    
+
     updateSignaturePreview();
     feather.replace();
 }
@@ -146,7 +145,7 @@ function applySignatureToFirstField() {
     if (signatureFields.length > 0 && currentSignature) {
         const firstField = signatureFields[0];
         const canvas = document.querySelector('.pdf-page-canvas');
-        
+
         if (canvas) {
             placeSignature(null, canvas, firstField);
             showNotification('Assinatura aplicada no primeiro campo disponível', 'success');
@@ -185,7 +184,7 @@ function placeSignature(event, canvas, field) {
         );
 
         showNotification('Assinatura aplicada com sucesso!', 'success');
-        
+
         // Marcar o campo como assinado
         field.signed = true;
     };
@@ -312,14 +311,14 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.addEventListener('click', function() {
             // Remover seleção anterior
             document.querySelectorAll('.font-btn').forEach(b => b.classList.remove('selected'));
-            
+
             // Selecionar a nova fonte
             this.classList.add('selected');
-            
+
             // Atualizar a fonte atual
             currentSelectedFont = this.dataset.font;
             document.getElementById('fontFamily').value = currentSelectedFont;
-            
+
             // Atualizar o preview
             updateSignaturePreview();
         });
@@ -341,7 +340,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const rect = this.getBoundingClientRect();
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
-            
+
             const field = findClickedField(x, y);
             if (field) {
                 activeSignatureField = {
