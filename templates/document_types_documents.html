@@ -696,7 +696,7 @@ async function loadDocuments(page = 1, filters = {}) {
                             </div>
                         </div>
                         <div class="document-actions">
-                            <button class="action-btn" onclick="previewDocument('${doc.url}', '${doc.name}')">
+                            <button class="action-btn" onclick="previewDocument('${doc.url}', '${doc.name}','${doc.id}')">
                                 <i data-feather="eye"></i>
                             </button>
                             <button class="action-btn" onclick="downloadDocument('${doc.url}')">
@@ -851,10 +851,11 @@ let zoomLevel = 1.0;
 var margins = { top: 20, right: 20, bottom: 20, left: 20 };
 var signatureFields = [];
 var currentSignature = null;
+var findSignature = null
 
 
 
-async function previewDocument(url, filename) {
+async function previewDocument(url, filename, id) {
     const previewTitle = document.getElementById('previewTitle');
     const previewContainer = document.querySelector('.preview-container');
     const zoomLevelSpan = document.getElementById('zoomLevel');
@@ -893,7 +894,7 @@ async function previewDocument(url, filename) {
             pdfViewerContainer.removeChild(loadingIndicator);
             
             // Render all pages in the viewer
-            await renderPdfPages(pdfViewerContainer);
+            await renderPdfPages(pdfViewerContainer, id);
             
         } else if (['jpg', 'jpeg', 'png', 'gif'].includes(fileType)) {
             // Create image container
@@ -938,33 +939,41 @@ async function previewDocument(url, filename) {
     }
 }
 
-// FUNÇÃO QUE ESTAVA FALTANDO
-async function renderPdfPages(container) {
+
+async function renderPdfPages(container, id) {
     if (!currentPdf) return;
     
-    const totalPages = currentPdf.numPages;
-    
-    // Create main pages container
+    const totalPages = currentPdf.numPages;    
     const pagesContainer = document.createElement('div');
     pagesContainer.className = 'pdf-pages-container';
     container.appendChild(pagesContainer);
-    
-    // Render each page
+
+    try {
+        const response = await fetch(`/api/pdf-analyzer/${id}`, {
+            method: 'GET',
+        });
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to create document');
+        } 
+        findSignature = await response.json();      
+    } catch (error) {
+        console.error('Error creating document:', error);
+        showNotification(error.message, 'error');
+    } 
+
     for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
-        // Create container for this page
         const pageContainer = document.createElement('div');
         pageContainer.className = 'pdf-page-wrapper';
         pageContainer.dataset.pageNumber = pageNum;
         pagesContainer.appendChild(pageContainer);
-        
-        // Create canvas for the page
         const pageCanvas = document.createElement('canvas');
         pageCanvas.className = 'pdf-page-canvas';
         pageContainer.appendChild(pageCanvas);
         
-        // Render the page content
         await renderPdfPage(pageNum, pageCanvas);
     }
+
 }
 
 async function renderPdfPage(pageNumber, canvas) {
@@ -975,12 +984,6 @@ async function renderPdfPage(pageNumber, canvas) {
         // Calculate viewport based on zoom level
         const viewport = page.getViewport({ scale: zoomLevel });
         
-        // Set canvas dimensions to match viewport
-        //canvas.height = viewport.height;
-        //canvas.width = viewport.width;
-        //canvas.style.width = `${viewport.width}px`;
-       // canvas.style.height = `${viewport.height}px`;
-
         canvas.height = viewport.height;
         canvas.width = viewport.width;
         
@@ -992,9 +995,7 @@ async function renderPdfPage(pageNumber, canvas) {
         
         await page.render(renderContext).promise;
 
-        // Extract text content to find potential signature fields
-        const textContent = await page.getTextContent();
-        await this.detectSignatureFields(textContent, page, canvas, viewport);
+        await this.detectSignatureFields((pageNumber - 1), canvas, viewport);
 
          // Make the page interactive for signature placement
          canvas.addEventListener('click', (e) => {
@@ -1003,15 +1004,7 @@ async function renderPdfPage(pageNumber, canvas) {
                 const x = e.clientX - rect.left;
                 const y = e.clientY - rect.top;
 
-                // Convert click coordinates to PDF coordinates
-                const pdfPoint = viewport.convertToPdfPoint(x, y);
-                console.log('Click coordinates:', { 
-                    screen: {x, y}, 
-                    pdf: pdfPoint,
-                    canvasRect: rect
-                });
-
-                const field = this.findClickedField(x, y);
+                const field =  this.findClickedField(x, y);
 
                 if (field) {
                     this.placeSignature(e, canvas, field);
@@ -1036,41 +1029,29 @@ async function renderPdfPage(pageNumber, canvas) {
     }
 }
 
-async function detectSignatureFields(textContent, page, canvas, viewport) {
+async function detectSignatureFields(pageNumber, canvas, viewport) {
         const ctx = canvas.getContext('2d');
-        const keywords = ['rodrigo','signature', 'sign', 'assinatura', 'assinar', 'assignature', 'firma', 'rubrica'];
 
         // Get the page dimensions
         const { width: pageWidth, height: pageHeight } = viewport;
-
-        for (const item of textContent.items) {
-            const text = item.str.toLowerCase();
-            if (keywords.some(keyword => text.includes(keyword))) {
+  
+        if (findSignature != null) {
                 // Get original PDF coordinates
-                const pdfX = item.transform[4];
-                const pdfY = item.transform[5];
+                const pdfX = findSignature.resultados[pageNumber].rect.x0;
+                const pdfY = findSignature.resultados[pageNumber].rect.y0;
 
                 // Convert PDF coordinates to canvas coordinates
                 const [x, y] = viewport.convertToViewportPoint(pdfX, pdfY);
 
                 // Adjust y-coordinate for PDF coordinate system (origin at bottom-left)
                 const adjustedY = pageHeight - y;
-
-                console.log('Field detection:', {
-                    text: item.str,
-                    pdfCoords: {x: pdfX, y: pdfY},
-                    viewportCoords: {x, y},
-                    adjustedViewportCoords: {x, y: adjustedY},
-                    transform: item.transform,
-                    pageDimensions: {width: pageWidth, height: pageHeight}
-                });
-
+              
                 // Create signature field indicator
                 const field = {
-                    x: x + margins.left,
-                    y: adjustedY + margins.top,
-                    width: 200,
-                    height: 50,
+                    x: x ,
+                    y: y ,
+                    width: findSignature.resultados[pageNumber].rect.x1 + margins.right,
+                    height: 60,
                     pdfX: pdfX,
                     pdfY: pdfY
                 };
@@ -1095,11 +1076,11 @@ async function detectSignatureFields(textContent, page, canvas, viewport) {
                 // Add signature icon and text
                 ctx.fillStyle = '#2196F3';
                 ctx.font = '24px Arial';
-                ctx.fillText('✒️', field.x + 10, field.y + 35);
+                ctx.fillText('✒️', field.x + 70, field.y + 35);
 
                 ctx.font = '14px Arial';
                 ctx.fillStyle = '#666';
-                ctx.fillText('Clique para assinar', field.x + 40, field.y + 35);
+                ctx.fillText('Clique para assinar', field.x + 100, field.y + 35);
 
                 ctx.restore();
 
@@ -1108,10 +1089,10 @@ async function detectSignatureFields(textContent, page, canvas, viewport) {
                     margins: this.margins
                 });
             }
-        }
+        
     }
 
-async function findClickedField(x, y) {
+function findClickedField(x, y) {
         return this.signatureFields.find(field => 
             x >= field.x && x <= field.x + field.width &&
             y >= field.y && y <= field.y + field.height
@@ -1142,28 +1123,8 @@ async function  placeSignature(event, canvas, field) {
                 width,
                 height
             );
-
-            // Store position in PDF coordinates
-            this.signaturePosition = {
-                page: this.pageNum - 1,
-                x: field.pdfX,
-                y: field.pdfY
-            };
-
-            console.log('Signature placement:', {
-                canvas: {
-                    x: field.x,
-                    y: field.y,
-                    width: width,
-                    height: height
-                },
-                pdf: this.signaturePosition,
-                field: field
-            });
         };
-
         currentSignature = null;
-
     }
 
 async function   getSignaturePosition() {

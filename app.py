@@ -39,6 +39,7 @@ REFRESH_URL = f"{API_BASE_URL}/auth/refresh"
 CATEGORIES_URL = f"{API_BASE_URL}/categories"
 DOCUMENTS_URL = f"{API_BASE_URL}/documents"
 DOCUMENT_TYPES_URL = f"{API_BASE_URL}/document_types"
+PDFANALYSER_URL = f"{API_BASE_URL}/pdf-analyzer"
 
 # Request timeout in seconds
 REQUEST_TIMEOUT = 30  # Increased timeout for better reliability
@@ -547,7 +548,32 @@ def document_types_api():
         return handle_api_response(
             response, error_message='Failed to fetch document types')
 
+
+@app.route('/api/pdf-analyzer/<document_id>')
+@login_required
+def pdf_analyzer(document_id):
     
+    headers = get_multipart_headers()  # Use multipart headers for file uploads
+    company_id = session.get('company_id')
+
+    if not company_id:
+        return jsonify({'error': 'Company ID not found in session'}), 400
+
+    try:    
+        response = requests.get(
+            f'{PDFANALYSER_URL}/document/{document_id}',
+            headers=headers,
+            timeout=REQUEST_TIMEOUT * 2  # Double timeout for file upload
+        )
+        return handle_api_response(response,
+                                   error_message='Failed to create document')
+    except requests.Timeout:
+        return jsonify({'error': 'Request timed out'}), 504
+    except requests.ConnectionError:
+        return jsonify({'error': 'Failed to connect to server'}), 503
+    except Exception as e:
+        print(f"Error creating document: {e}")
+        return jsonify({'error': 'An unexpected error occurred'}), 500  
 
 if __name__ == "__main__":
     # Ensure upload folder exists
