@@ -1003,9 +1003,7 @@ async function renderPdfPage(pageNumber, canvas) {
                 const rect = canvas.getBoundingClientRect();
                 const x = e.clientX - rect.left;
                 const y = e.clientY - rect.top;
-
                 const field =  this.findClickedField(x, y);
-
                 if (field) {
                     this.placeSignature(e, canvas, field);
                 }
@@ -1036,6 +1034,10 @@ async function detectSignatureFields(pageNumber, canvas, viewport) {
         const { width: pageWidth, height: pageHeight } = viewport;
   
         if (findSignature != null) {
+
+            if(findSignature.resultados[pageNumber].has_signature == true){
+
+        
                 // Get original PDF coordinates
                 const pdfX = findSignature.resultados[pageNumber].rect.x0;
                 const pdfY = findSignature.resultados[pageNumber].rect.y0;
@@ -1048,12 +1050,13 @@ async function detectSignatureFields(pageNumber, canvas, viewport) {
               
                 // Create signature field indicator
                 const field = {
-                    x: x ,
-                    y: y ,
+                    x: pdfX ,
+                    y: pdfX ,
                     width: findSignature.resultados[pageNumber].rect.x1 + margins.right,
                     height: 60,
                     pdfX: pdfX,
-                    pdfY: pdfY
+                    pdfY: pdfY,
+                    pageNumber: pageNumber
                 };
 
                 // Ensure field is within page bounds
@@ -1088,8 +1091,11 @@ async function detectSignatureFields(pageNumber, canvas, viewport) {
                     final: field,
                     margins: this.margins
                 });
+            }else{
+
+                // esta parte para rubircar as paginas 
             }
-        
+        }
     }
 
 function findClickedField(x, y) {
@@ -1103,29 +1109,38 @@ async function addSignature(signatureData) {
         currentSignature = signatureData;
     }
 
-async function  placeSignature(event, canvas, field) {
-        const img = new Image();
-        img.src = this.currentSignature;
-        img.onload = () => {
-            const ctx = canvas.getContext('2d');
+async function placeSignature(event, canvas, field) {
+    const img = new Image();
+    img.src = this.currentSignature;
+    img.onload = () => {
+        const ctx = canvas.getContext('2d');
 
-            // Clear the field area
-            ctx.clearRect(field.x, field.y, field.width, field.height);
+        // Limpar a área do campo
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.strokeRect(field.x, field.y, field.width, field.height);
+        ctx.clearRect(field.x, field.y, field.width, field.height);
+        
 
-            // Draw signature
-            const aspectRatio = img.width / img.height;
-            const height = Math.min(field.height * 0.8, field.width / aspectRatio);
-            const width = height * aspectRatio;
+        // Calcular dimensões mantendo a proporção
+        const aspectRatio = img.width / img.height;
+        
+        // Ajustar para que a altura use mais do campo
+        const height = Math.min(field.height * 0.9, field.width / aspectRatio);
+        const width = height * aspectRatio;
 
-            ctx.drawImage(img, 
-                field.x + (field.width - width) / 2,
-                field.y + (field.height - height) / 2,
-                width,
-                height
-            );
-        };
-        currentSignature = null;
-    }
+        // Centralizar horizontalmente e alinhar verticalmente no topo com um pequeno espaçamento
+        const centerX = field.x + (field.width - width) / 2;
+        const topY = field.y + 16; // Um pequeno espaçamento do topo
+
+        ctx.drawImage(img, 
+            centerX,
+            topY,
+            width,
+            height
+        );
+    };
+    currentSignature = null;
+}
 
 async function   getSignaturePosition() {
         return this.signaturePosition;

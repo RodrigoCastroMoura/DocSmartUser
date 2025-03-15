@@ -91,10 +91,9 @@ function generateTextSignature(text, font) {
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Configurações de fonte
-    let fontSize = 60;
+    let fontSize = 80; // Alterado de 60 para 80
     if (textLength > 15) {
-        fontSize = Math.max(36, 60 - (textLength - 15) * 1.5);
+        fontSize = Math.max(48, 80 - (textLength - 15) * 0.4); // Também aumentei o valor mínimo
     }
 
     ctx.font = `${fontSize}px "${font}"`;
@@ -103,7 +102,7 @@ function generateTextSignature(text, font) {
     ctx.textBaseline = 'middle';
 
     // Desenhar o texto
-    ctx.fillText(text, canvas.width/2, canvas.height/2);
+    ctx.fillText(text, canvas.width/2, canvas.height -40);
 
     // Retornar a imagem como URL de dados
     return canvas.toDataURL('image/png');
