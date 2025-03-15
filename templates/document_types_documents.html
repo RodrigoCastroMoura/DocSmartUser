@@ -1028,19 +1028,48 @@ async function renderPdfPage(pageNumber, canvas) {
 }
 
 async function detectSignatureFields(pageNumber, canvas, viewport) {
-        const ctx = canvas.getContext('2d');
-
-        // Get the page dimensions
-        const { width: pageWidth, height: pageHeight } = viewport;
-  
-        if (findSignature != null) {
-
-            if(findSignature.resultados[pageNumber].has_signature == true){
-
+    const ctx = canvas.getContext('2d');
+    
+    if (findSignature != null && findSignature.resultados[pageNumber]) {
+        const result = findSignature.resultados[pageNumber];
         
-                // Get original PDF coordinates
-                const pdfX = findSignature.resultados[pageNumber].rect.x0;
-                const pdfY = findSignature.resultados[pageNumber].rect.y0;
+        if (result.has_signature) {
+            // Get PDF coordinates
+            const rect = result.rect;
+            
+            // Convert PDF coordinates to canvas coordinates
+            const scale = viewport.scale;
+            const field = {
+                x: rect.x0 * scale,
+                y: (viewport.height / scale - rect.y1) * scale, // Flip Y coordinate
+                width: (rect.x1 - rect.x0) * scale,
+                height: (rect.y1 - rect.y0) * scale
+            };
+            
+            // Store field for click detection
+            this.signatureFields = this.signatureFields || [];
+            this.signatureFields.push(field);
+            
+            // Draw signature field
+            ctx.save();
+            ctx.strokeStyle = '#2196F3';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            ctx.strokeRect(field.x, field.y, field.width, field.height);
+            
+            // Add signature prompt
+            ctx.fillStyle = '#2196F3';
+            ctx.font = '24px Arial';
+            ctx.fillText('✒️', field.x + 10, field.y + field.height / 2);
+            
+            ctx.font = '14px Arial';
+            ctx.fillStyle = '#666';
+            ctx.fillText('Clique para assinar', field.x + 40, field.y + field.height / 2);
+            
+            ctx.restore();
+        }
+    }
+}.rect.y0;
 
                 // Convert PDF coordinates to canvas coordinates
                 const [x, y] = viewport.convertToViewportPoint(pdfX, pdfY);
