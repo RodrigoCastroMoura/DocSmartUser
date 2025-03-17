@@ -556,22 +556,49 @@ function loadSavedSignature() {
 }
 
 // Salvar o documento com as assinaturas
-async function saveSignedDocument() {
-  try {
-    showNotification('Salvando documento assinado...', 'info');
-    
-    // Aqui você teria a lógica para combinar o PDF original com as assinaturas
-    // Esta é uma funcionalidade mais avançada que exigiria uma biblioteca como pdf-lib
-    
-    // Exemplo simples (simulado):
-    setTimeout(() => {
-      showNotification('Documento assinado com sucesso!', 'success');
-      // Aqui você poderia redirecionar para a página de visualização do documento
-    }, 2000);
-    
-    // Na implementação real, você enviaria o documento assinado para o servidor
-    // E realizaria o processamento necessário lá
-  } catch (error) {
+async function saveSignedDocument(documentId) {
+    try {
+        showNotification('Salvando documento assinado...', 'info');
+
+        // Get the canvas with the signed PDF
+        const canvas = document.querySelector('canvas');
+        const imageData = canvas.toDataURL('image/png');
+        
+        // Create the request body with the signed document data
+        const requestBody = {
+            document_id: documentId,
+            signatures: [{
+                page_num: 0,
+                signature_image: imageData,
+                x: rectignature.x0,
+                y: rectignature.y0,
+                width: rectignature.x1 - rectignature.x0,
+                height: rectignature.y1 - rectignature.y0
+            }]
+        };
+
+        // Send the signed document to the server
+        const response = await fetch('/api/document/apply-signatures', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestBody)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Erro ao salvar documento');
+        }
+
+        const result = await response.json();
+        showNotification('Documento assinado com sucesso!', 'success');
+        
+        // Fechar o modal e atualizar a lista de documentos
+        hideModal('previewModal');
+        await loadDocuments(currentPage);
+
+    } catch (error) {
     console.error('Erro ao salvar documento assinado:', error);
     showNotification('Erro ao salvar o documento assinado', 'error');
   }
