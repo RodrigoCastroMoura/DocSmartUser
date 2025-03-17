@@ -573,14 +573,8 @@ async function saveSignedDocument(documentId) {
         const formData = new FormData();
         formData.append('file', blob, 'signed_document.pdf');
 
-        // Get the access token from session
-        const token = await getAccessToken(); // Você precisa implementar esta função
-
         const response = await fetch(`/api/documents/${documentId}`, {
             method: 'PUT',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            },
             body: formData
         });
 
