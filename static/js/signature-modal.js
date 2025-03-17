@@ -82,16 +82,16 @@ function generateTextSignature(text, font) {
     const ctx = canvas.getContext('2d');
 
     // Ajustar o tamanho do canvas com base no tamanho do texto
-    const baseWidth = 400;
+    const baseWidth = 300;
     const textLength = text.length;
     canvas.width = Math.max(baseWidth, textLength * 30);
-    canvas.height = 150;
+    canvas.height = 90;
 
     // Limpar o canvas
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    let fontSize = 80; // Alterado de 60 para 80
+    let fontSize = 78; // Alterado de 60 para 80
     if (textLength > 15) {
         fontSize = Math.max(48, 80 - (textLength - 15) * 0.4); // Também aumentei o valor mínimo
     }

@@ -81,7 +81,7 @@
                     <button class="action-btn" onclick="adjustZoom(0.2)">
                         <i data-feather="zoom-in"></i>
                     </button>
-                    <button id="openSimpleModalBtn" class="action-btn" onclick="showSimpleModal()" style="margin-left: 10px;" title="Adicionar assinatura">
+                    <button id="openSimpleModalBtn" class="action-btn" onclick="showSimpleModal()" style="margin-left: 10px; display: none;" title="Adicionar assinatura">
                         <i data-feather="pen-tool"></i>
                     </button>
                 </div>
@@ -113,7 +113,7 @@
                     <div id="text-tab" class="tab-pane active">
                         <div class="form-group">
                             <label for="signatureText">Sua assinatura:</label>
-                            <input type="text" id="signatureText" class="form-control" placeholder="Digite seu nome completo">
+                            <input type="text" id="signatureText" class="form-control" style="display:none;" value="{{name}}">
                             <div id="fontPreview" class="font-preview">Prévia da Fonte</div>
                         </div>
                         <div class="form-group">
@@ -559,27 +559,21 @@
     async function createDocument(event) {
         event.preventDefault();
         const form = event.target;
-        const submitButton = form.querySelector('button[type="submit"]');
-        
+        const submitButton = form.querySelector('button[type="submit"]');       
         if (!validateForm(form)) {
             return;
         }
-
-    
         showLoading(submitButton);
         const formData = new FormData(form);
-
         try {
             const response = await fetch('/api/documents', {
                 method: 'POST',
                 body: formData
             });
-
             if (!response.ok) {
                 const errorData = await response.json();
                 throw new Error(errorData.error || 'Failed to create document');
             }
-
             hideModal('addDocumentModal');
             form.reset();
             document.getElementById('user_id').value =''
@@ -849,7 +843,7 @@
     let zoomLevel = 1.0;
     var margins = { top: 20, right: 20, bottom: 20, left: 20 };
     var signatureFields = [];
-    var currentSignature = null;
+    var currentSignature = "{{signature}}";
     var findSignature = null;
     var rectignature = null;
 
@@ -858,6 +852,7 @@
         const previewTitle = document.getElementById('previewTitle');
         const previewContainer = document.querySelector('.preview-container');
         const zoomLevelSpan = document.getElementById('zoomLevel');
+        currentPdf = null;
         findSignature = null
         rectignature = null;
         zoomLevel = 1.8;
@@ -881,6 +876,7 @@
                 currentPdf = await loadingTask.promise;
                 pdfViewerContainer.removeChild(loadingIndicator);
                 await renderPdfPages(pdfViewerContainer, id);
+                document.getElementById("openSimpleModalBtn").style.display = 'block';
             } else if (['jpg', 'jpeg', 'png', 'gif'].includes(fileType)) {
                 zoomLevel = 1.0;
                 const imgContainer = document.createElement('div');
@@ -892,7 +888,8 @@
                 imageElement.src = url;
                 imgContainer.appendChild(imageElement);
                 imageElement.style.transform = `scale(${zoomLevel})`;
-                imageElement.style.transformOrigin = 'center center';   
+                imageElement.style.transformOrigin = 'center center';  
+                document.getElementById("openSimpleModalBtn").style.display = 'none'; 
             } 
             showModal('previewModal');
         } catch (error) {
@@ -900,7 +897,8 @@
             showNotification('Failed to preview document', 'error');
         }
 
-        showSimpleModal();
+        if(!currentSignature)
+            showSimpleModal();
     }
 
     async function renderPdfPages(container, id) {
@@ -916,12 +914,11 @@
                 });
                 if (!response.ok) {
                     const errorData = await response.json();
-                    throw new Error(errorData.error || 'Failed to create document');
+                    throw new Error(errorData.error);
                 } 
                 findSignature = await response.json();  
             }    
         } catch (error) {
-            console.error('Error creating document:', error);
             showNotification(error.message, 'error');
         } 
         for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
@@ -1023,6 +1020,26 @@
 
     async function addSignature(signatureData) {
             currentSignature = signatureData;
+            try {
+                if(signatureData != null){
+                    const response = await fetch(`/api/signature`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            signature : currentSignature
+                        })
+                    });
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || 'Failed to create signature');
+                    } 
+                }    
+            } catch (error) {
+                console.error('Error creating signature:', error);
+                showNotification(error.message, 'error');
+            } 
         }
 
     async function placeSignature(event, canvas, field) {
@@ -1030,14 +1047,19 @@
         img.src = this.currentSignature;
         img.onload = () => {
             const ctx = canvas.getContext('2d');
-            ctx.strokeStyle = '#FFFFFF';
-            ctx.strokeRect(field.x, field.y, field.width, field.height);
             ctx.clearRect(field.x, field.y, field.width, field.height);
-            const aspectRatio = img.width / img.height;
-            const height = field.height
+            var height = field.height; // Reduzir altura para 80%
             const width = field.width
-            const centerX = field.x;
-            const topY = field.y; 
+            const centerX = field.x ; // Centralizar horizontalmente
+            const topY = field.y - 30// Centralizar verticalmente
+
+             // Definir parâmetros de qualidade para evitar distorção
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = "high";
+        const imgRatio = img.width / img.height;
+        const fieldRatio = field.width / field.height;   
+        height = (width / imgRatio);  
+        
             ctx.drawImage(img, 
                 centerX,
                 topY,

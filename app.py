@@ -40,6 +40,7 @@ CATEGORIES_URL = f"{API_BASE_URL}/categories"
 DOCUMENTS_URL = f"{API_BASE_URL}/documents"
 DOCUMENT_TYPES_URL = f"{API_BASE_URL}/document_types"
 PDFANALYSER_URL = f"{API_BASE_URL}/pdf-analyzer"
+USER_URL = f"{API_BASE_URL}/users"
 
 # Request timeout in seconds
 REQUEST_TIMEOUT = 30  # Increased timeout for better reliability
@@ -354,19 +355,36 @@ def document_type_documents(document_type_id):
             f"{CATEGORIES_URL}/user/{document_type.get('category_id')}",
             headers=headers,
             timeout=REQUEST_TIMEOUT)
-
+        
         if not categories_response.ok:
             logger.error(
                 f"Failed to fetch category: {categories_response.status_code}")
             flash('Category not found', 'error')
             return redirect(url_for('document_types'))
+        
+        user_response = requests.get(f"{USER_URL}/{session.get('user__id')}",
+                            headers=headers,
+                            timeout=REQUEST_TIMEOUT)
+        if not user_response.ok:
+            logger.error(
+                f"Failed to fetch user: {user_response.status_code}")
+            flash('User not found', 'error')
+            
+        user = user_response.json()
+        signature = None
+        if not user or 'signature' not in user:
+            signature = None
+        else:
+             signature= user['signature']
 
         category = categories_response.json()
-
+        name = ''.join(session.get('user', {}).get('name').split())
         
         return render_template('document_types_documents.html',
                                document_type=document_type,
-                               category=category)
+                               category=category,
+                               name = name,
+                               signature = signature)
     except requests.Timeout:
         logger.error("Request timed out while fetching department_types")
         flash('Request timed out', 'error')
@@ -387,15 +405,12 @@ def documents_api():
 
     if not company_id:
         return jsonify({'error': 'Company ID not found in session'}), 400
-
     try:
         params = {
             'page': request.args.get('page', 1),
             'per_page': request.args.get('per_page', 9),
             'document_type_id' : request.args.get('document_type_id'),
         }
-
-        # Remove None values
         params = {k: v for k, v in params.items() if v is not None}
 
         response = requests.get(f"{DOCUMENTS_URL}/user",
@@ -416,12 +431,10 @@ def documents_api():
 @app.route('/api/documents', methods=['POST'])
 @login_required
 def create_document():
-    headers = get_multipart_headers()  # Use multipart headers for file uploads
+    headers = get_multipart_headers() 
     company_id = session.get('company_id')
-
     if not company_id:
         return jsonify({'error': 'Company ID not found in session'}), 400
-
     try:
         if 'file' not in request.files:
             return jsonify({'error': 'No file uploaded'}), 400
@@ -429,8 +442,6 @@ def create_document():
         file = request.files['file']
         if not file.filename:
             return jsonify({'error': 'No file selected'}), 400
-
-        # Build form data
         form_data = {
             'company_id': company_id,
             'titulo': request.form.get('titulo'),
@@ -439,8 +450,6 @@ def create_document():
             'document_type_id': request.form.get('document_type_id'),
             'user_id': session.get('user__id')
         }
-
-        # Validate required fields
         required_fields = [
             'titulo', 'department_id', 'category_id', 'document_type_id',
             'user_id'
@@ -453,8 +462,6 @@ def create_document():
                 'error':
                 f'Missing required fields: {", ".join(missing_fields)}'
             }), 400
-
-        # Create files dictionary with proper file object
         files = {
             'file': (secure_filename(file.filename), file, file.content_type)
         }
@@ -466,7 +473,7 @@ def create_document():
             headers=headers,
             data=form_data,
             files=files,
-            timeout=REQUEST_TIMEOUT * 2  # Double timeout for file upload
+            timeout=REQUEST_TIMEOUT * 2
         )
         return handle_api_response(response,
                                    success_code=201,
@@ -549,6 +556,37 @@ def document_types_api():
             response, error_message='Failed to fetch document types')
 
 
+@app.route('/api/signature', methods=['POST'])
+@login_required
+def add_signature():
+    headers = get_multipart_headers()
+    company_id = session.get('company_id')
+    if not company_id:
+        return jsonify({'error': 'Company ID not found in session'}), 400
+    try:
+
+        data = request.get_json()
+        form_data = {
+            "signature" : data['signature']
+        }
+        response = requests.post(
+            f'{USER_URL}/{session.get('user__id')}/signature',
+            headers=headers,
+            json=form_data,
+            timeout=REQUEST_TIMEOUT * 2 
+        )
+        return handle_api_response(response,
+                                   success_code=201,
+                                   error_message='Failed to create signature')
+    except requests.Timeout:
+        return jsonify({'error': 'Request timed out'}), 504
+    except requests.ConnectionError:
+        return jsonify({'error': 'Failed to connect to server'}), 503
+    except Exception as e:
+        print(f"Error creating signature: {e}")
+        return jsonify({'error': 'An unexpected error occurred'}), 500
+
+
 @app.route('/api/pdf-analyzer/<document_id>')
 @login_required
 def pdf_analyzer(document_id):
@@ -576,8 +614,7 @@ def pdf_analyzer(document_id):
         return jsonify({'error': 'An unexpected error occurred'}), 500  
 
 if __name__ == "__main__":
-    # Ensure upload folder exists
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-    port = int(os.environ.get('PORT', 3000))  # Changed from 5000 to 3000
+    port = int(os.environ.get('PORT', 3000))
     app.run(host='0.0.0.0', port=5000, debug=True)
     init_signatures(app)
