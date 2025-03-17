@@ -566,29 +566,35 @@ async function saveSignedDocument(documentId) {
             throw new Error('Canvas not found');
         }
 
-        // Convert canvas to blob
-        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'application/pdf'));
-        const base64Pdf = await new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result.split(',')[1]);
-            reader.readAsDataURL(blob);
-        });
+        const imageData = canvas.toDataURL('image/png');
+        
+        // Create the request body with the signed document data
+        const requestBody = {
+            document_id: documentId,
+            signatures: [{
+                page_num: 0,
+                signature_image: imageData,
+                x: rectignature.x0,
+                y: rectignature.y0,
+                width: rectignature.x1 - rectignature.x0,
+                height: rectignature.y1 - rectignature.y0
+            }]
+        };
 
         const response = await fetch('/api/document/apply-signatures', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
+                'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                document_id: documentId,
-                signed_pdf: base64Pdf
-            })
+            body: JSON.stringify(requestBody)
         });
 
         if (!response.ok) {
-            throw new Error('Failed to save signed document');
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Erro ao salvar documento');
         }
 
+        await response.json();
         showNotification('Documento assinado salvo com sucesso!', 'success');
         hideModal('previewModal');
         loadDocuments(); // Reload the documents list
@@ -596,12 +602,6 @@ async function saveSignedDocument(documentId) {
         console.error('Erro ao salvar documento assinado:', error);
         showNotification('Erro ao salvar o documento assinado', 'error');
     }
-    try {
-        showNotification('Salvando documento assinado...', 'info');
-
-        // Get the canvas with the signed PDF
-        const canvas = document.querySelector('canvas');
-        const imageData = canvas.toDataURL('image/png');
         
         // Create the request body with the signed document data
         const requestBody = {
