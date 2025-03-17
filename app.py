@@ -556,28 +556,31 @@ def document_types_api():
             response, error_message='Failed to fetch document types')
 
 
-@app.route('/api/document/apply-signatures', methods=['POST'])
+@app.route('/api/documents/<document_id>', methods=['PUT'])
 @login_required
-def apply_signatures():
+def update_document(document_id):
     headers = get_multipart_headers()
     try:
-        data = request.get_json()
-        document_id = data.get('document_id')
-        signed_pdf_blob = data.get('signed_pdf')
-        
-        if not document_id or not signed_pdf_blob:
-            return jsonify({'error': 'Missing required fields'}), 400
+        if 'file' not in request.files:
+            return jsonify({'error': 'No file uploaded'}), 400
 
-        response = requests.post(
-            f'{DOCUMENTS_URL}/{document_id}/apply-signatures',
+        file = request.files['file']
+        if not file:
+            return jsonify({'error': 'Empty file'}), 400
+
+        files = {'file': (secure_filename(file.filename), file, file.content_type)}
+        
+        response = requests.put(
+            f'{DOCUMENTS_URL}/{document_id}',
             headers=headers,
-            json={'signed_pdf': signed_pdf_blob},
+            files=files,
             timeout=REQUEST_TIMEOUT * 2
         )
-        return handle_api_response(response, success_code=201)
+        
+        return handle_api_response(response)
     except Exception as e:
-        print(f"Error applying signatures:", e)
-        return jsonify({'error': 'Failed to apply signatures'}), 500
+        print(f"Error updating document:", e)
+        return jsonify({'error': 'Failed to update document'}), 500
 
 @app.route('/api/signature', methods=['POST'])
 @login_required

@@ -568,21 +568,20 @@ async function saveSignedDocument(documentId) {
 
         // Convert canvas to blob
         const blob = await new Promise(resolve => canvas.toBlob(resolve, 'application/pdf'));
-        const base64Pdf = await new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result.split(',')[1]);
-            reader.readAsDataURL(blob);
-        });
+        
+        // Create form data
+        const formData = new FormData();
+        formData.append('file', blob, 'signed_document.pdf');
 
-        const response = await fetch('/api/document/apply-signatures', {
-            method: 'POST',
+        // Get the access token from session
+        const token = await getAccessToken(); // Você precisa implementar esta função
+
+        const response = await fetch(`/api/documents/${documentId}`, {
+            method: 'PUT',
             headers: {
-                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
             },
-            body: JSON.stringify({
-                document_id: documentId,
-                signed_pdf: base64Pdf
-            })
+            body: formData
         });
 
         if (!response.ok) {
