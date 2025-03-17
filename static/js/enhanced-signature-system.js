@@ -559,6 +559,45 @@ function loadSavedSignature() {
 async function saveSignedDocument(documentId) {
     try {
         showNotification('Salvando documento assinado...', 'info');
+        
+        // Get the canvas with the signed PDF
+        const canvas = document.querySelector('.pdf-page-canvas');
+        if (!canvas) {
+            throw new Error('Canvas not found');
+        }
+
+        // Convert canvas to blob
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'application/pdf'));
+        const base64Pdf = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result.split(',')[1]);
+            reader.readAsDataURL(blob);
+        });
+
+        const response = await fetch('/api/document/apply-signatures', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                document_id: documentId,
+                signed_pdf: base64Pdf
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to save signed document');
+        }
+
+        showNotification('Documento assinado salvo com sucesso!', 'success');
+        hideModal('previewModal');
+        loadDocuments(); // Reload the documents list
+    } catch (error) {
+        console.error('Erro ao salvar documento assinado:', error);
+        showNotification('Erro ao salvar o documento assinado', 'error');
+    }
+    try {
+        showNotification('Salvando documento assinado...', 'info');
 
         // Get the canvas with the signed PDF
         const canvas = document.querySelector('canvas');
