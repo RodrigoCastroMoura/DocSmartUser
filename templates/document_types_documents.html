@@ -851,13 +851,16 @@
     var rectignature = null;
 
 
+    let currentDocumentId;
+    
     async function previewDocument(url, filename, id) {
         const previewTitle = document.getElementById('previewTitle');
         const previewContainer = document.querySelector('.preview-container');
         const zoomLevelSpan = document.getElementById('zoomLevel');
         currentPdf = null;
-        findSignature = null
+        findSignature = null;
         rectignature = null;
+        currentDocumentId = id;
         zoomLevel = 1.8;
         zoomLevelSpan.textContent = `${(zoomLevel * 100).toFixed(0)}%`;
         while (previewContainer.firstChild) {
