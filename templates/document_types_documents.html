@@ -1046,25 +1046,14 @@
         const img = new Image();
         img.src = this.currentSignature;
         img.onload = () => {
-            const ctx = canvas.getContext('2d');
-            ctx.clearRect(field.x, field.y, field.width, field.height);
-            var height = field.height; // Reduzir altura para 80%
-            const width = field.width
-            const centerX = field.x ; // Centralizar horizontalmente
-            const topY = field.y - 30// Centralizar verticalmente
-
              // Definir parâmetros de qualidade para evitar distorção
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = "high";
-        const imgRatio = img.width / img.height;
-        const fieldRatio = field.width / field.height;   
-        height = (width / imgRatio);  
-        
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = "high"; 
             ctx.drawImage(img, 
-                centerX,
-                topY,
-                width,
-                height
+                field.x,
+                field.y,
+                field.width,
+                field.height
             );
         };
     }
