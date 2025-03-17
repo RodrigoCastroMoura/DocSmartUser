@@ -1042,19 +1042,52 @@
             } 
         }
 
-    async function placeSignature(event, canvas, field) {
+        async function placeSignature(event, canvas, field) {
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(field.x, field.y, field.width, field.height);
         const img = new Image();
         img.src = this.currentSignature;
         img.onload = () => {
-             // Definir parâmetros de qualidade para evitar distorção
             ctx.imageSmoothingEnabled = true;
-            ctx.imageSmoothingQuality = "high"; 
-            ctx.drawImage(img, 
-                field.x,
-                field.y,
-                field.width,
-                field.height
-            );
+            ctx.imageSmoothingQuality = "high";
+            
+            // Calculate aspect ratio
+            const imgRatio = img.width / img.height;
+            
+            // Set maximum size relative to field
+            const maxWidth = field.width * 1.0; // 90% of field width
+            const maxHeight = field.height * 0.9; // 80% of field height
+            
+            let drawWidth, drawHeight;
+            
+            // Calculate dimensions while maintaining aspect ratio
+            if (imgRatio > 1) {
+                // Image is wider than tall
+                drawWidth = Math.min(maxWidth, field.width);
+                drawHeight = drawWidth / imgRatio;
+                
+                // If height is too large, scale down
+                if (drawHeight > maxHeight) {
+                    drawHeight = maxHeight;
+                    drawWidth = drawHeight * imgRatio;
+                }
+            } else {
+                // Image is taller than wide or square
+                drawHeight = Math.min(maxHeight, field.height);
+                drawWidth = drawHeight * imgRatio;
+                
+                // If width is too large, scale down
+                if (drawWidth > maxWidth) {
+                    drawWidth = maxWidth;
+                    drawHeight = drawWidth / imgRatio;
+                }
+            }
+            
+            // Center the image in the field
+            const offsetX = field.x + (field.width - drawWidth) / 2;
+            const offsetY = field.y + (field.height - drawHeight) / 2;
+            
+            ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
         };
     }
 
