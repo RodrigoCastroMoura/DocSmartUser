@@ -1,0 +1,35 @@
+documents:2020 
+            
+            
+           GET https://dec70412-fad7-4886-8f59-2ef562bcc1f1-00-n4xd6eglad75.worf.replit.dev/static/js/sidebar.js net::ERR_ABORTED 404 (Not Found)
+documents:1 [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) <input type=​"password" id=​"currentPassword" name=​"currentPassword" required>​
+documents:1 [DOM] Input elements should have autocomplete attributes (suggested: "new-password"): (More info: https://goo.gl/9p2vKq) <input type=​"password" id=​"newPassword" name=​"newPassword" required>​
+documents:1 [DOM] Input elements should have autocomplete attributes (suggested: "new-password"): (More info: https://goo.gl/9p2vKq) <input type=​"password" id=​"confirmPassword" name=​"confirmPassword" required>​
+documents:747 O Buscar terminou de carregar: GET "https://dec70412-fad7-4886-8f59-2ef562bcc1f1-00-n4xd6eglad75.worf.replit.dev/api/documents?page=1&per_page=9&document_type_id=67b776d40295ac12db39986a".
+loadDocuments @ documents:747
+(anônimo) @ documents:1380
+pdf.min.js:22 O Buscar terminou de carregar: GET "https://dec70412-fad7-4886-8f59-2ef562bcc1f1-00-n4xd6eglad75.worf.replit.dev/proxy/storage/docsmart-37bba.appspot.com/671958708d8d36c35e6c7c5e/67b38db40f9f28a4571cbf7d/Teste_com_marcacao.pdf".
+PDFFetchStreamReader @ pdf.min.js:22
+getFullReader @ pdf.min.js:22
+(anônimo) @ pdf.min.js:22
+(anônimo) @ pdf.min.js:22
+_createStreamSink @ pdf.min.js:22
+MessageHandler._onComObjOnMessage @ pdf.min.js:22
+documents:1015 O Buscar terminou de carregar: GET "https://dec70412-fad7-4886-8f59-2ef562bcc1f1-00-n4xd6eglad75.worf.replit.dev/api/pdf-analyzer/67d44f1cc7047f24907f0b05".
+renderPdfPages @ documents:1015
+previewDocument @ documents:981
+await in previewDocument
+onclick @ documents:1
+enhanced-signature-system.js:581 
+            
+            
+           POST https://dec70412-fad7-4886-8f59-2ef562bcc1f1-00-n4xd6eglad75.worf.replit.dev/api/document/apply-signatures 404 (Not Found)
+saveSignedDocument @ enhanced-signature-system.js:581
+onclick @ documents:184
+enhanced-signature-system.js:602 Erro ao salvar documento assinado: SyntaxError: Unexpected token '<', "<!doctype "... is not valid JSON
+saveSignedDocument @ enhanced-signature-system.js:602
+await in saveSignedDocument
+onclick @ documents:184
+enhanced-signature-system.js:581 Falha ao carregar Buscar: POST "https://dec70412-fad7-4886-8f59-2ef562bcc1f1-00-n4xd6eglad75.worf.replit.dev/api/document/apply-signatures".
+saveSignedDocument @ enhanced-signature-system.js:581
+onclick @ documents:184
