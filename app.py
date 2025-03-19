@@ -30,7 +30,7 @@ ALLOWED_EXTENSIONS = {
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # API endpoints
-API_BASE_URL = "http://127.0.0.1:8000/api"
+API_BASE_URL = "https://doc-smart-api-rodrigocastromo.replit.app/api"
 LOGIN_URL = f"{API_BASE_URL}/auth/login"
 LOGOUT_URL = f"{API_BASE_URL}/auth/logout"
 REFRESH_URL = f"{API_BASE_URL}/auth/refresh"
@@ -39,7 +39,7 @@ REFRESH_URL = f"{API_BASE_URL}/auth/refresh"
 CATEGORIES_URL = f"{API_BASE_URL}/categories"
 DOCUMENTS_URL = f"{API_BASE_URL}/documents"
 DOCUMENT_TYPES_URL = f"{API_BASE_URL}/document_types"
-PDF_ANALYSER_URL = f"{API_BASE_URL}/pdf-analyzer"
+PDFANALYSER_URL = f"{API_BASE_URL}/pdf-analyzer"
 USER_URL = f"{API_BASE_URL}/users"
 
 # Request timeout in seconds
@@ -378,9 +378,7 @@ def document_type_documents(document_type_id):
              signature= user['signature']
 
         category = categories_response.json()
-        #name = ''.join(session.get('user', {}).get('name').split())
-
-        name = session.get('user', {}).get('name')
+        name = ''.join(session.get('user', {}).get('name').split())
         
         return render_template('document_types_documents.html',
                                document_type=document_type,
@@ -558,15 +556,24 @@ def document_types_api():
             response, error_message='Failed to fetch document types')
 
 
-@app.route('/api/pdf-analyzer/<document_id>', methods=['POST'])
+@app.route('/api/documents/<document_id>', methods=['PUT'])
 @login_required
 def update_document(document_id):
     headers = get_multipart_headers()
     try:
+        if 'file' not in request.files:
+            return jsonify({'error': 'No file uploaded'}), 400
+
+        file = request.files['file']
+        if not file:
+            return jsonify({'error': 'Empty file'}), 400
+
+        files = {'file': (secure_filename(file.filename), file, file.content_type)}
         
-        response = requests.post(
-            f'{PDF_ANALYSER_URL}/document/{document_id}',
+        response = requests.put(
+            f'{DOCUMENTS_URL}/{document_id}',
             headers=headers,
+            files=files,
             timeout=REQUEST_TIMEOUT * 2
         )
         
@@ -618,7 +625,7 @@ def pdf_analyzer(document_id):
 
     try:    
         response = requests.get(
-            f'{PDF_ANALYSER_URL}/document/{document_id}',
+            f'{PDFANALYSER_URL}/document/{document_id}',
             headers=headers,
             timeout=REQUEST_TIMEOUT * 2  # Double timeout for file upload
         )
@@ -636,3 +643,4 @@ if __name__ == "__main__":
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
     port = int(os.environ.get('PORT', 3000))
     app.run(host='0.0.0.0', port=5000, debug=True)
+    init_signatures(app)
