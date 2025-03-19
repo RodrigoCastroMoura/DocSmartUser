@@ -84,7 +84,7 @@
                     <button id="openSimpleModalBtn" class="action-btn" onclick="showSimpleModal()" style="margin-left: 10px; display: none;" title="Adicionar assinatura">
                         <i data-feather="pen-tool"></i>
                     </button>
-                    <button id="saveSignedDocBtn" class="action-btn primary" onclick="saveSignedDocument(currentDocumentId)" style="margin-left: 10px;" title="Salvar documento assinado">
+                    <button id="saveSignedDocBtn" class="action-btn primary" onclick="saveSignedDocument(currentDocumentId)" style="margin-left: 10px;" title="Salvar documento assinado" disabled>
                         <i data-feather="save"></i> Salvar
                     </button>
                 </div>
@@ -249,7 +249,6 @@
     background-color: rgba(var(--accent-color-rgb), 0.2);
 }
 </style>
-<script src="{{ url_for('static', filename='js/enhanced-signature-system.js') }}"></script>
 <script src="{{ url_for('static', filename='js/signature-modal.js') }}"></script>
 <script>
     let currentPage = 1;
@@ -849,17 +848,19 @@
     var currentSignature = "{{signature}}";
     var findSignature = null;
     var rectignature = null;
-
+    var isIgnature = false;
 
     let currentDocumentId;
     
     async function previewDocument(url, filename, id) {
+        openPopup();
         const previewTitle = document.getElementById('previewTitle');
         const previewContainer = document.querySelector('.preview-container');
         const zoomLevelSpan = document.getElementById('zoomLevel');
         currentPdf = null;
         findSignature = null;
         rectignature = null;
+        isIgnature = false;
         currentDocumentId = id;
         zoomLevel = 1.8;
         zoomLevelSpan.textContent = `${(zoomLevel * 100).toFixed(0)}%`;
@@ -870,6 +871,9 @@
         const fileType = filename.split('.').pop().toLowerCase();
         try {
             if (fileType === 'pdf') {
+                document.getElementById('previewTitle').style.display = 'block';
+                document.getElementById('previewTitle').disabled = true;
+                document.getElementById('saveSignedDocBtn').disabled = true;
                 const pdfViewerContainer = document.createElement('div');
                 pdfViewerContainer.className = 'pdf-viewer-container';
                 previewContainer.appendChild(pdfViewerContainer);
@@ -884,6 +888,8 @@
                 await renderPdfPages(pdfViewerContainer, id);
                 document.getElementById("openSimpleModalBtn").style.display = 'block';
             } else if (['jpg', 'jpeg', 'png', 'gif'].includes(fileType)) {
+                document.getElementById('previewTitle').style.display = 'none';
+                document.getElementById('previewTitle').disabled = true;
                 zoomLevel = 1.0;
                 const imgContainer = document.createElement('div');
                 imgContainer.className = 'image-container';
@@ -897,6 +903,7 @@
                 imageElement.style.transformOrigin = 'center center';  
                 document.getElementById("openSimpleModalBtn").style.display = 'none'; 
             } 
+            closePopup();
             showModal('previewModal');
         } catch (error) {
             console.error('Error previewing document:', error);
@@ -913,6 +920,7 @@
         const pagesContainer = document.createElement('div');
         pagesContainer.className = 'pdf-pages-container';
         container.appendChild(pagesContainer);
+        signatureFields = []
         try {
             if(findSignature == null){
                 const response = await fetch(`/api/pdf-analyzer/${id}`, {
@@ -951,17 +959,35 @@
                 viewport: viewport
             };           
             await page.render(renderContext).promise;
-            await this.detectSignatureFields((pageNumber - 1), canvas, viewport);
+            if(!isIgnature){
+                await this.detectSignatureFields((pageNumber - 1), canvas, viewport);
+            }else{
+                rectignature = findSignature.resultados[pageNumber-1].rect;
+                const { width: pageWidth, height: pageHeight } = viewport;
+                const [x0, y0] = viewport.convertToViewportPoint(rectignature.x0, rectignature.y0);
+                const [x1, y1] = viewport.convertToViewportPoint(rectignature.x1, rectignature.y1);
+                const field = {
+                    x: x0,
+                    y: (viewport.height - y1) - 6 ,
+                    width: x1 - x0,
+                    height: (y1 - y0) - 10
+                };
+                field.x = Math.max(this.margins.left, Math.min(field.x, pageWidth - field.width - this.margins.right));
+                field.y = Math.max(this.margins.top, Math.min(field.y, pageHeight - field.height - this.margins.bottom));
+                this.signatureFields.push(field);
+                this.placeSignature(null, canvas, field);
+            }
             canvas.addEventListener('click', (e) => {
-                if (currentSignature) {
-                    const [x0, y0] = viewport.convertToViewportPoint(rectignature.x0, rectignature.y0);
-                    const [x1, y1] = viewport.convertToViewportPoint(rectignature.x1, rectignature.y1);
-                    const field =  this.findClickedField(x0, (viewport.height - y1) - 6);
-                    if (field) {
-                        this.placeSignature(e, canvas, field);
+                    if (currentSignature) {
+                        document.getElementById('saveSignedDocBtn').disabled = false;
+                        const [x0, y0] = viewport.convertToViewportPoint(rectignature.x0, rectignature.y0);
+                        const [x1, y1] = viewport.convertToViewportPoint(rectignature.x1, rectignature.y1);
+                        const field =  this.findClickedField(x0, (viewport.height - y1) - 6);
+                        if (field) {
+                            this.placeSignature(e, canvas, field);
+                        }
                     }
-                }
-            });
+                });
             if (currentPdf.numPages > 1) {
                 const pageNumberIndicator = document.createElement('div');
                 pageNumberIndicator.className = 'pdf-page-number';
@@ -1048,7 +1074,7 @@
             } 
         }
 
-        async function placeSignature(event, canvas, field) {
+    async function placeSignature(event, canvas, field) {
         const ctx = canvas.getContext('2d');
         ctx.clearRect(field.x, field.y, field.width, field.height);
         const img = new Image();
@@ -1094,6 +1120,7 @@
             const offsetY = field.y + (field.height - drawHeight) / 2;
             
             ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
+            isIgnature = true;
         };
     }
 
@@ -1127,6 +1154,45 @@
             imageElement.style.transform = `scale(${zoomLevel})`;
             imageElement.style.transformOrigin = 'center center';
         }
+    }
+
+    // Salvar o documento com as assinaturas
+    async function saveSignedDocument(documentId) {
+    try {
+        showNotification('Salvando documento assinado...', 'info');
+        openPopup();
+        // Get the canvas with the signed PDF
+        const canvas = document.querySelector('.pdf-page-canvas');
+        if (!canvas) {
+            throw new Error('Canvas not found');
+        }
+
+        // Convert canvas to blob
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'application/pdf'));
+        
+        // Create form data
+        const formData = new FormData();
+        formData.append('file', blob, 'signed_document.pdf');
+
+        // Send the signed document to the server using the correct endpoint
+        const response = await fetch(`/api/pdf-analyzer/${documentId}`, {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to save signed document');
+        }
+
+        showNotification('Documento assinado salvo com sucesso!', 'success');
+        closePopup();
+        hideModal('previewModal');
+        await loadDocuments(currentPage); // Reload the documents list
+        
+    } catch (error) {
+        console.error('Erro ao salvar documento assinado:', error);
+        showNotification('Erro ao salvar o documento assinado: ' + error.message, 'error');
+    }
     }
 
     document.addEventListener('DOMContentLoaded', () => {
