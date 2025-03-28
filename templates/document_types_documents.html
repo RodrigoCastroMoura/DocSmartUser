@@ -695,7 +695,7 @@
                                 <button class="action-btn" onclick="previewDocument('${doc.url}', '${doc.name}','${doc.id}')">
                                     <i data-feather="eye"></i>
                                 </button>
-                                <button class="action-btn" onclick="downloadDocument('${doc.url}')">
+                                <button class="action-btn" onclick="downloadDocument('${doc.url}', '${doc.id}')">
                                     <i data-feather="download"></i>
                                 </button>
                                 <button class="action-btn danger" onclick="deleteDocument('${doc.id}')">
@@ -824,13 +824,18 @@
         showDeleteConfirmation(id);
     }
 
-    async function downloadDocument(url) {
+    async function downloadDocument(url, id) {
         if (!url) {
             showNotification('Document URL is not available', 'error');
             return;
         }
         
         try {
+            // Track download count
+            await fetch(`/api/documents/${id}/download-count`, {
+                method: 'POST',
+                headers: get_auth_headers()
+            });
             window.open(url, '_blank');
         } catch (error) {
             console.error('Error downloading document:', error);
@@ -854,6 +859,16 @@
     
     async function previewDocument(url, filename, id) {
         openPopup();
+        // Track view count
+        try {
+            await fetch(`/api/documents/${id}/view-count`, {
+                method: 'POST',
+                headers: get_auth_headers()
+            });
+        } catch (error) {
+            console.error('Error tracking view count:', error);
+        }
+        
         const previewTitle = document.getElementById('previewTitle');
         const previewContainer = document.querySelector('.preview-container');
         const zoomLevelSpan = document.getElementById('zoomLevel');
