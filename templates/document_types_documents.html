@@ -857,6 +857,13 @@
 
     let currentDocumentId;
     
+    function get_auth_headers() {
+        return {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        };
+    }
+
     async function previewDocument(url, filename, id) {
         openPopup();
         // Track view count
