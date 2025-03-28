@@ -613,6 +613,40 @@ def add_signature():
         return jsonify({'error': 'An unexpected error occurred'}), 500
 
 
+@app.route('/api/documents/<document_id>/view-count', methods=['POST'])
+@login_required
+def track_document_view(document_id):
+    headers = get_auth_headers()
+    try:
+        response = requests.post(
+            f"{DOCUMENTS_URL}/{document_id}/view-count",
+            headers=headers,
+            timeout=REQUEST_TIMEOUT
+        )
+        return handle_api_response(response, 
+                                 success_code=200,
+                                 error_message='Failed to track document view')
+    except Exception as e:
+        print(f"Error tracking document view: {e}")
+        return jsonify({'error': 'Failed to track document view'}), 500
+
+@app.route('/api/documents/<document_id>/download-count', methods=['POST'])
+@login_required
+def track_document_download(document_id):
+    headers = get_auth_headers()
+    try:
+        response = requests.post(
+            f"{DOCUMENTS_URL}/{document_id}/download-count",
+            headers=headers,
+            timeout=REQUEST_TIMEOUT
+        )
+        return handle_api_response(response,
+                                 success_code=200,
+                                 error_message='Failed to track document download')
+    except Exception as e:
+        print(f"Error tracking document download: {e}")
+        return jsonify({'error': 'Failed to track document download'}), 500
+
 @app.route('/api/pdf-analyzer/<document_id>')
 @login_required
 def pdf_analyzer(document_id):
