@@ -613,12 +613,14 @@ def add_signature():
         return jsonify({'error': 'An unexpected error occurred'}), 500
 
 
-@app.route('/api/documents/<document_id>/view-count', methods=['POST'])
+@app.route('/api/documents/<document_id>/view-count', methods=['GET', 'POST'])
 @login_required
 def track_document_view(document_id):
     headers = get_auth_headers()
     try:
-        response = requests.post(
+        method = request.method
+        response = requests.request(
+            method,
             f"{DOCUMENTS_URL}/{document_id}/view-count",
             headers=headers,
             timeout=REQUEST_TIMEOUT
