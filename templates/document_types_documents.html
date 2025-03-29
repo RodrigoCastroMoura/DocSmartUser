@@ -3,26 +3,25 @@
 {% block content %}
 
 <div class="page-container">
-    <div class="header-container">
         <div class="header-title">
             <a href="/document_types" class="back-link">
                 <i data-feather="arrow-left"></i>
                 Back to Document types
             </a>
         </div>
-        <div class="header-actions" style="margin-top: 20px;">
-            <div class="actions-left">
-                <button class="action-btn secondary" style="background: none; border: none; padding-left: 0;">
-                    <i data-feather="file"></i>
-                </button>
-            </div>
-            <div class="actions-right">
+        <div class="filter-section">
+            <div class="filter-header">
+                <h2><i data-feather="file-text"></i> {{ document_type.name if document_type else 'Unknown Document type' }}</h2>
                 <button class="action-btn primary" onclick="showAddDocumentModal()">
                     <i data-feather="plus"></i> Add Document
                 </button>
             </div>
+            <div class="filter-grid">
+                <div class="filter-group">
+                    {{ document_type.titulo if document_type else 'Unknown Document titulo' }}
+                </div>
+            </div>
         </div>
-    </div>
         <div class="content-grid">
             <div id="documentsContent">
                 <div class="documents-grid">
@@ -31,13 +30,13 @@
                         <p>Loading documents...</p>
                     </div>
                 </div>
-                <div class="pagination-controls" style="margin-top: 10px; gap: 5px;">
-                    <button class="action-btn" onclick="changePage(currentPage - 1)" id="prevPage" disabled style="padding: 5px 10px;">
-                        <i data-feather="chevron-left" style="width: 18px; height: 18px;"></i>
+                <div class="pagination-controls">
+                    <button class="action-btn" onclick="changePage(currentPage - 1)" id="prevPage" disabled>
+                        <i data-feather="chevron-left"></i> Previous
                     </button>
-                    <span id="pageInfo" style="font-size: 14px;">Page 1 of 1</span>
-                    <button class="action-btn" onclick="changePage(currentPage + 1)" id="nextPage" disabled style="padding: 5px 10px;">
-                        <i data-feather="chevron-right" style="width: 18px; height: 18px;"></i>
+                    <span id="pageInfo">Page 1</span>
+                    <button class="action-btn" onclick="changePage(currentPage + 1)" id="nextPage" disabled>
+                        Next <i data-feather="chevron-right"></i>
                     </button>
                 </div>
             </div>
@@ -1385,45 +1384,15 @@
 }
 
 .document-card {
-    background-color: var(--bg, #F8F9FA);
+    background-color: var(--bg-tertiary);
     border-radius: 8px;
-    padding: 1rem;
-    transition: all 0.2s;
+    padding: 1.5rem;
+    transition: transform 0.2s;
     position: relative;
-    border: 1px solid var(--border-color, #E9ECEF);
 }
 
 .document-card:hover {
-    border-color: var(--accent-color);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.header-container {
-    background-color: var(--bg, #F8F9FA);
-    border-radius: 8px;
-    padding: 1rem;
-    margin-bottom: 1rem;
-    border: 1px solid var(--border-color, #E9ECEF);
-}
-
-.header-actions {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-}
-
-.back-link {
-    color: var(--text-primary);
-    text-decoration: none;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.9rem;
-}
-
-.back-link:hover {
-    color: var(--accent-color);
+    transform: translateY(-2px);
 }
 
 .document-header {
