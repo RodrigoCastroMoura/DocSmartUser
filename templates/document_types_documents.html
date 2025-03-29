@@ -838,7 +838,7 @@
             });
             window.open(url, '_blank');
         } catch (error) {
-            console.error('Error downloading document:', error);
+            consoleerror('Error downloading document:', error);
             showNotification('Failed to download document', 'error');
         }
     }
@@ -1699,7 +1699,8 @@
     .zoom-controls {
         display: flex;
         align-items: center;
-        gap: 0.5rem;
+        gap: 1.5rem;
+        margin-right: 1.5rem;
     }
 
     .preview-header button,
@@ -1844,8 +1845,7 @@
     align-items: center;
     padding: 1rem;
     background-color: var(--bg-secondary);
-    border-bottom: 1px solid var(--border-color);
-    z-index: 2001;
+    border-bottom: 1px solid var(--border-color);    z-index: 2001;
 }
     .preview-title {
         display: flex;
@@ -1856,7 +1856,8 @@
     .zoom-controls {
         display: flex;
         align-items: center;
-        gap: 0.5rem;
+        gap: 1.5rem;
+        margin-right: 1.5rem;
     }
 
     .preview-controls {
