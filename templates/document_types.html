@@ -1105,19 +1105,25 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 1rem;
+        gap: 2rem;
         margin: 2rem auto;
         width: 100%;
         padding: 1rem 0;
     }
 
     .pagination-controls button {
-        min-width: 100px;
+        min-width: 120px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
     }
 
     .pagination-controls span {
-        min-width: 120px;
+        min-width: 150px;
         text-align: center;
+        font-weight: 500;
+        color: var(--text-primary);
     }
 </style>
 {% endblock %}
