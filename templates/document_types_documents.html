@@ -30,13 +30,13 @@
                         <p>Loading documents...</p>
                     </div>
                 </div>
-                <div class="pagination-controls">
-                    <button class="action-btn" onclick="changePage(currentPage - 1)" id="prevPage" disabled>
-                        <i data-feather="chevron-left"></i> Previous
+                <div class="pagination-controls" style="margin-top: 10px; gap: 5px;">
+                    <button class="action-btn" onclick="changePage(currentPage - 1)" id="prevPage" disabled style="padding: 5px 10px;">
+                        <i data-feather="chevron-left" style="width: 18px; height: 18px;"></i>
                     </button>
-                    <span id="pageInfo">Page 1</span>
-                    <button class="action-btn" onclick="changePage(currentPage + 1)" id="nextPage" disabled>
-                        Next <i data-feather="chevron-right"></i>
+                    <span id="pageInfo" style="font-size: 14px;">Page 1 of 1</span>
+                    <button class="action-btn" onclick="changePage(currentPage + 1)" id="nextPage" disabled style="padding: 5px 10px;">
+                        <i data-feather="chevron-right" style="width: 18px; height: 18px;"></i>
                     </button>
                 </div>
             </div>
