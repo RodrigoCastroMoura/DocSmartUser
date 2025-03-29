@@ -3,161 +3,166 @@
 {% block content %}
 
 <div class="page-container">
-        <div class="header-title">
-            <a href="/document_types" class="back-link">
-                <i data-feather="arrow-left"></i>
-                Back to Document types
-            </a>
+    <div class="header-title">
+        <a href="/document_types" class="back-link">
+            <i data-feather="arrow-left"></i>
+            Back to Document types
+        </a>
+    </div>
+    <div class="filter-section">
+        <div class="filter-header">
+            <h2><i data-feather="file-text"></i> {{ document_type.name if document_type else 'Unknown Document type' }}</h2>
+            <button class="action-btn primary" onclick="showAddDocumentModal()">
+                <i data-feather="plus"></i> Add Document
+            </button>
         </div>
-        <div class="filter-section">
-            <div class="filter-header">
-                <h2><i data-feather="file-text"></i> {{ document_type.name if document_type else 'Unknown Document type' }}</h2>
-                <button class="action-btn primary" onclick="showAddDocumentModal()">
-                    <i data-feather="plus"></i> Add Document
-                </button>
-            </div>
-            <div class="filter-grid">
-                <div class="filter-group">
-                    {{ document_type.titulo if document_type else 'Unknown Document titulo' }}
-                </div>
-            </div>
-        </div>
-        <div class="content-grid">
-            <div id="documentsContent">
-                <div class="documents-grid">
-                    <div class="no-data">
-                        <i data-feather="inbox"></i>
-                        <p>Loading documents...</p>
-                    </div>
-                </div>
-                <div class="pagination-controls">
-                    <button class="action-btn" onclick="changePage(currentPage - 1)" id="prevPage" disabled>
-                        <i data-feather="chevron-left"></i> Previous
-                    </button>
-                    <span id="pageInfo">Page 1</span>
-                    <button class="action-btn" onclick="changePage(currentPage + 1)" id="nextPage" disabled>
-                        Next <i data-feather="chevron-right"></i>
-                    </button>
-                </div>
+        <div class="filter-grid">
+            <div class="filter-group">
+                {{ document_type.titulo if document_type else 'Unknown Document titulo' }}
             </div>
         </div>
     </div>
+    <div class="content-grid">
+        <div id="documentsContent">
+            <div class="documents-grid">
+                <div class="no-data">
+                    <i data-feather="inbox"></i>
+                    <p>Loading documents...</p>
+                </div>
+            </div>
+            <div class="pagination-controls">
+                <button class="action-btn" onclick="changePage(currentPage - 1)" id="prevPage" disabled>
+                    <i data-feather="chevron-left"></i> <span class="btn-text">Previous</span>
+                </button>
+                <span id="pageInfo">Page 1</span>
+                <button class="action-btn" onclick="changePage(currentPage + 1)" id="nextPage" disabled>
+                    <span class="btn-text">Next</span> <i data-feather="chevron-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 </div>
 <!-- Add Document Modal -->
 <div id="addDocumentModal" class="modal">
-    <div class="modal-content">
-        <h3>Add Document</h3>
-        <form id="addDocumentForm" onsubmit="createDocument(event)">
-            <div class="form-group">
-                <label for="documentTitle">Document Title</label>
-                <input type="text" id="documentTitle" name="titulo" >
-            </div>
-            <div class="form-group">
-                <label for="documentFile">Upload File</label>
-                <input type="file" id="documentFile" name="file" required>
-            </div>
-            <div class="modal-actions">
-                <button type="button" class="action-btn" onclick="hideModal('addDocumentModal')">Cancel</button>
-                <button type="submit" class="action-btn primary">Upload</button>
-                <input type="hidden" name="department_id" id="department_id" value="{{category.department_id}}">
-                <input type="hidden" name="category_id" id="category_id" value="{{category.id}}">
-                <input type="hidden" name="document_type_id" id="document_type_id" value="{{document_type.id}}">
-                <input type="hidden" name="user_id" id="user_id">
-            </div>
-        </form>
-    </div>
+<div class="modal-content">
+    <h3>Add Document</h3>
+    <form id="addDocumentForm" onsubmit="createDocument(event)">
+        <div class="form-group">
+            <label for="documentTitle">Document Title</label>
+            <input type="text" id="documentTitle" name="titulo" >
+        </div>
+        <div class="form-group">
+            <label for="documentFile">Upload File</label>
+            <input type="file" id="documentFile" name="file" required>
+        </div>
+        <div class="modal-actions">
+            <button type="button" class="action-btn" onclick="hideModal('addDocumentModal')">Cancel</button>
+            <button type="submit" class="action-btn primary">Upload</button>
+            <input type="hidden" name="department_id" id="department_id" value="{{category.department_id}}">
+            <input type="hidden" name="category_id" id="category_id" value="{{category.id}}">
+            <input type="hidden" name="document_type_id" id="document_type_id" value="{{document_type.id}}">
+            <input type="hidden" name="user_id" id="user_id">
+        </div>
+    </form>
+</div>
 </div>
 <!-- Preview Modal -->
 <div id="previewModal" class="modal">
-    <div class="modal-content preview-modal">
-        <div class="preview-header">
-            <div class="preview-title">
-                <h3 id="previewTitle">Document Preview</h3>
-                <div class="zoom-controls">
-                    <button class="action-btn" onclick="adjustZoom(-0.2)">
-                        <i data-feather="zoom-out"></i>
-                    </button>
-                    <span id="zoomLevel">100%</span>
-                    <button class="action-btn" onclick="adjustZoom(0.2)">
-                        <i data-feather="zoom-in"></i>
-                    </button>
-                    <button id="openSimpleModalBtn" class="action-btn" onclick="showSimpleModal()" style="margin-left: 10px; display: none;" title="Adicionar assinatura">
-                        <i data-feather="pen-tool"></i>
-                    </button>
-                    <button id="saveSignedDocBtn" class="action-btn primary" onclick="saveSignedDocument(currentDocumentId)" style="margin-left: 10px;" title="Salvar documento assinado" disabled>
-                        <i data-feather="save"></i> Salvar
-                    </button>
-                </div>
-            </div>
-            <button class="action-btn" onclick="hideModal('previewModal')">
-                <i data-feather="x"></i>
-            </button>
+<div class="modal-content preview-modal">
+    <div class="preview-header">
+        <div class="preview-title-container">
+            <h3 id="previewTitle">Document Preview</h3>
         </div>
-        <div class="preview-container">
-            <canvas id="pdfCanvas"></canvas>
-            <img id="imagePreview" alt="Image Preview">
-            <iframe id="documentPreview" style="width: 100%; height: 100%; border: none;"></iframe>
+        <div class="preview-controls-group">
+            <div class="zoom-controls">
+                <button class="action-btn" onclick="adjustZoom(-0.2)" title="Reduzir">
+                    <i data-feather="zoom-out"></i>
+                </button>
+                <span id="zoomLevel">100%</span>
+                <button class="action-btn" onclick="adjustZoom(0.2)" title="Ampliar">
+                    <i data-feather="zoom-in"></i>
+                </button>
+                <button class="action-btn" onclick="printDocument()" title="Imprimir">
+                    <i data-feather="printer"></i>
+                </button>
+                <button id="openSimpleModalBtn" class="action-btn" onclick="showSimpleModal()" style="display: none;" title="Assinar">
+                    <i data-feather="pen-tool"></i>
+                </button>
+                <button id="saveSignedDocBtn" class="action-btn primary" onclick="saveSignedDocument(currentDocumentId)" title="Salvar" disabled>
+                    <i data-feather="save"></i>
+                </button>
+                <button class="action-btn" onclick="hideModal('previewModal')" title="Fechar">
+                    <i data-feather="x"></i>
+                </button>
+            </div>
         </div>
     </div>
+    <div class="preview-container">
+        <canvas id="pdfCanvas"></canvas>
+        <img id="imagePreview" alt="Image Preview">
+        <iframe id="documentPreview" style="width: 100%; height: 100%; border: none;"></iframe>
+    </div>
+</div>
 </div>
 
 <!-- Modal Simples para PDF -->
 <div id="simpleModal" class="modal">
-    <div class="modal-content simple-modal">
-        <div class="modal-header">
-            <h3>Área de Texto para Assinatura</h3>
-            <button class="action-btn" onclick="hideModal('simpleModal')">
-                <i data-feather="x"></i>
-            </button>
-        </div>
-        <div class="modal-body">
-            <div class="tabs-container">
-                <div class="tab-content">
-                    <div id="text-tab" class="tab-pane active">
-                        <div class="form-group">
-                            <label for="signatureText">Sua assinatura:</label>
-                            <input type="text" id="signatureText" class="form-control" style="display:none;" value="{{name}}">
-                            <div id="fontPreview" class="font-preview">Prévia da Fonte</div>
-                        </div>
-                        <div class="form-group">
-                            <label>Escolha a fonte:</label>
-                            <div class="font-buttons-container">
-                                <div class="font-btn" data-font="Dancing Script">
-                                    <span style="font-family: 'Dancing Script'">Dancing Script</span>
-                                </div>
-                                <div class="font-btn" data-font="Great Vibes">
-                                    <span style="font-family: 'Great Vibes'">Great Vibes</span>
-                                </div>
-                                <div class="font-btn" data-font="Allura">
-                                    <span style="font-family: 'Allura'">Allura</span>
-                                </div>
-                                <div class="font-btn" data-font="Alex Brush">
-                                    <span style="font-family: 'Alex Brush'">Alex Brush</span>
-                                </div>
-                                <div class="font-btn" data-font="Sacramento">
-                                    <span style="font-family: 'Sacramento'">Sacramento</span>
-                                </div>
-                                <div class="font-btn" data-font="Tangerine">
-                                    <span style="font-family: 'Tangerine'">Tangerine</span>
-                                </div>
-                                <div class="font-btn" data-font="Yellowtail">
-                                    <span style="font-family: 'Yellowtail'">Yellowtail</span>
-                                </div>
-                                <div class="font-btn" data-font="Mr De Haviland">
-                                    <span style="font-family: 'Mr De Haviland'">Mr De Haviland</span>
-                                </div>
+<div class="modal-content simple-modal">
+    <div class="modal-header">
+        <h3>Área de Texto para Assinatura</h3>
+        <button class="action-btn" onclick="hideModal('simpleModal')">
+            <i data-feather="x"></i>
+        </button>
+    </div>
+    <div class="modal-body">
+        <div class="tabs-container">
+            <div class="tab-content">
+                <div id="text-tab" class="tab-pane active">
+                    <div class="form-group">
+                        <label for="signatureText">Sua assinatura:</label>
+                        <input type="text" id="signatureText" class="form-control" style="display:none;" value="{{name}}">
+                        <div id="fontPreview" class="font-preview">Prévia da Fonte</div>
+                    </div>
+                    <div class="form-group">
+                        <label>Escolha a fonte:</label>
+                        <div class="font-buttons-container">
+                            <div class="font-btn" data-font="Dancing Script">
+                                <span style="font-family: 'Dancing Script'">Dancing Script</span>
                             </div>
-                            <input type="hidden" id="fontFamily" value="Dancing Script">
+                            <div class="font-btn" data-font="Great Vibes">
+                                <span style="font-family: 'Great Vibes'">Great Vibes</span>
+                            </div>
+                            <div class="font-btn" data-font="Allura">
+                                <span style="font-family: 'Allura'">Allura</span>
+                            </div>
+                            <div class="font-btn" data-font="Alex Brush">
+                                <span style="font-family: 'Alex Brush'">Alex Brush</span>
+                            </div>
+                            <div class="font-btn" data-font="Sacramento">
+                                <span style="font-family: 'Sacramento'">Sacramento</span>
+                            </div>
+                            <div class="font-btn" data-font="Tangerine">
+                                <span style="font-family: 'Tangerine'">Tangerine</span>
+                            </div>
+                            <div class="font-btn" data-font="Yellowtail">
+                                <span style="font-family: 'Yellowtail'">Yellowtail</span>
+                            </div>
+                            <div class="font-btn" data-font="Mr De Haviland">
+                                <span style="font-family: 'Mr De Haviland'">Mr De Haviland</span>
+                            </div>
                         </div>
+                        <input type="hidden" id="fontFamily" value="Dancing Script">
                     </div>
                 </div>
             </div>
         </div>
-        <div class="modal-footer">
-            <button class="action-btn" onclick="hideModal('simpleModal')">Cancelar</button>
-            <button class="action-btn primary" onclick="applySignatureOrText()">Aplicar</button>
-        </div>
     </div>
+    <div class="modal-footer">
+        <button class="action-btn" onclick="hideModal('simpleModal')">Cancelar</button>
+        <button class="action-btn primary" onclick="applySignatureOrText()">Aplicar</button>
+    </div>
+</div>
 </div>
 <!-- No template document_types_documents.html, dentro do div com classe preview-container -->
 <div id="signatures-container" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; pointer-events: none;"></div>
@@ -168,20 +173,20 @@
 <style>
 /* Estilos específicos para o preview de fonte */
 #fontPreview {
-    font-size: 36px;
-    padding: 20px;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    background-color: white;
-    color: black;
-    min-height: 150px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    word-break: break-word;
-    text-align: center;
-    line-height: 1.2;
-    margin-top: 15px;
+font-size: 36px;
+padding: 20px;
+border: 1px solid var(--border-color);
+border-radius: 4px;
+background-color: white;
+color: black;
+min-height: 150px;
+display: flex;
+align-items: center;
+justify-content: center;
+word-break: break-word;
+text-align: center;
+line-height: 1.2;
+margin-top: 15px;
 }
 
 /* Aplicar fontes específicas aos elementos */
@@ -203,50 +208,906 @@
 
 /* Garantir que o campo de entrada de texto também use a fonte selecionada */
 #signatureText {
-    font-size: 36px;
-    padding: 15px;
-    height: auto;
-    line-height: 1.2;
-    text-align: center;
+font-size: 36px;
+padding: 15px;
+height: auto;
+line-height: 1.2;
+text-align: center;
 }
 
 /* Estilos para os botões de fonte */
 .font-buttons-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 10px;
-    margin-bottom: 15px;
-    max-height: 300px;
-    overflow-y: auto;
+display: grid;
+grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+gap: 10px;
+margin-bottom: 15px;
+max-height: 300px;
+overflow-y: auto;
 }
 
 .font-btn {
-    background-color: var(--bg-tertiary);
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    padding: 10px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 50px;
+background-color: var(--bg-tertiary);
+border: 1px solid var(--border-color);
+border-radius: 4px;
+padding: 10px;
+text-align: center;
+cursor: pointer;
+transition: all 0.2s ease;
+display: flex;
+align-items: center;
+justify-content: center;
+height: 50px;
 }
 
 .font-btn span {
-    font-size: 18px;
-    color: var(--text-primary);
+font-size: 18px;
+color: var(--text-primary);
 }
 
 .font-btn:hover {
-    border-color: var(--accent-color);
-    background-color: rgba(var(--accent-color-rgb), 0.1);
+border-color: var(--accent-color);
+background-color: rgba(var(--accent-color-rgb), 0.1);
 }
 
 .font-btn.selected {
-    border: 2px solid var(--accent-color);
-    background-color: rgba(var(--accent-color-rgb), 0.2);
+border: 2px solid var(--accent-color);
+background-color: rgba(var(--accent-color-rgb), 0.2);
+}
+
+/* Estilos para a página */
+.documents-grid {
+display: grid;
+grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+gap: 1.5rem;
+margin-bottom: 2rem;
+}
+
+.document-card {
+background-color: var(--bg-tertiary);
+border-radius: 8px;
+padding: 1.5rem;
+transition: transform 0.2s;
+position: relative;
+display: flex;
+flex-direction: column;
+height: auto;
+}
+
+.document-card:hover {
+transform: translateY(-2px);
+}
+
+.document-header {
+display: flex;
+align-items: flex-start;
+gap: 1rem;
+margin-bottom: 1rem;
+}
+
+.document-header i {
+padding: 0.75rem;
+background-color: var(--accent-color);
+border-radius: 6px;
+}
+
+.document-title {
+flex: 1;
+}
+
+.document-title h3 {
+margin: 0;
+margin-bottom: 0.25rem;
+}
+
+.document-subtitle {
+color: var(--text-secondary);
+font-size: 0.875rem;
+margin: 0;
+}
+
+.document-info {
+margin: 1rem 0;
+flex-grow: 1;
+}
+
+.user-info {
+display: flex;
+align-items: center;
+gap: 1rem;
+margin-bottom: 1rem;
+}
+
+.user-avatar {
+width: 40px;
+height: 40px;
+background-color: var(--accent-color);
+border-radius: 50%;
+display: flex;
+align-items: center;
+justify-content: center;
+}
+
+.user-details {
+flex: 1;
+}
+
+.user-name {
+margin: 0;
+font-weight: 500;
+}
+
+.user-cpf {
+margin: 0;
+font-size: 0.875rem;
+color: var(--text-secondary);
+}
+
+.document-meta {
+display: flex;
+flex-wrap: wrap;
+gap: 1rem;
+color: var(--text-secondary);
+font-size: 0.875rem;
+}
+
+.document-meta p {
+margin: 0;
+display: flex;
+align-items: center;
+gap: 0.5rem;
+}
+
+.document-actions {
+display: flex;
+justify-content: flex-end;
+gap: 0.5rem;
+margin-top: 1rem;
+}
+
+.filter-section {
+background-color: var(--bg-secondary);
+border-radius: 8px;
+padding: 1.5rem;
+margin-bottom: 1.5rem;
+}
+
+.filter-header {
+display: flex;
+justify-content: space-between;
+align-items: center;
+margin-bottom: 1rem;
+padding-bottom: 1rem;
+border-bottom: 1px solid var(--border-color);
+}
+
+.filter-header h3 {
+display: flex;
+align-items: center;
+gap: 0.5rem;
+margin: 0;
+font-size: 1.1rem;
+color: var(--text-primary);
+}
+
+.filter-grid {
+display: grid;
+grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+gap: 1rem;
+}
+
+.filter-group {
+display: flex;
+flex-direction: column;
+gap: 0.5rem;
+}
+
+.filter-input-wrapper {
+position: relative;
+width: 100%;
+}
+
+.filter-input-wrapper select {
+width: 100%;
+padding: 0.5rem 2rem 0.5rem 0.75rem;
+border: 1px solid var(--border-color);
+border-radius: 4px;
+background-color: var(--bg-primary);
+color: var(--text-primary);
+appearance: none;
+cursor: pointer;
+}
+
+.filter-input-wrapper .select-icon {
+position: absolute;
+right: 0.75rem;
+top: 50%;
+transform: translateY(-50%);
+pointer-events: none;
+width: 16px;
+height: 16px;
+color: var(--text-secondary);
+}
+
+.filter-input-wrapper select:disabled {
+opacity: 0.7;
+cursor: not-allowed;
+}
+
+.filter-input-wrapper select:focus {
+outline: none;
+border-color: var(--accent-color);
+}
+
+.pagination-controls {
+display: flex;
+align-items: center;
+justify-content: center;
+gap: 1.5rem;
+margin-top: 2rem;
+background: var(--bg-secondary);
+border-top: 1px solid var(--border-color);
+position: relative;
+padding: 1rem;
+}
+
+.pagination-controls button {
+display: flex;
+align-items: center;
+gap: 0.5rem;
+}
+
+.pagination-controls button:disabled {
+opacity: 0.5;
+cursor: not-allowed;
+}
+
+#pageInfo {
+color: var(--text-secondary);
+}
+
+.no-data {
+text-align: center;
+padding: 2rem;
+color: var(--text-secondary);
+}
+
+.no-data i {
+font-size: 2rem;
+margin-bottom: 0.5rem;
+opacity: 0.5;
+}
+
+.no-data.error {
+color: var(--danger-color);
+}
+
+.no-data.error i {
+color: var(--danger-color);
+}
+
+.back-link {
+display: flex;
+align-items: center;
+gap: 0.5rem;
+color: var(--text-secondary);
+text-decoration: none;
+margin-bottom: 1rem;
+}
+
+.back-link:hover {
+color: var(--accent-color);
+}
+
+.header-title {
+display: flex;
+flex-direction: column;
+}
+
+.header-actions {
+display: flex;
+justify-content: space-between;
+align-items: center;
+margin-bottom: 2rem;
+}
+
+.loading-overlay {
+position: absolute;
+top: 0;
+left: 0;
+right: 0;
+bottom: 0;
+background-color: rgba(0, 0, 0, 0.5);
+display: flex;
+align-items: center;
+justify-content: center;
+border-radius: 8px;
+z-index: 10;
+}
+
+.form-group {
+display: flex;
+flex-direction: column;
+margin-bottom: 0.5rem !important;
+}
+
+.form-grid {
+display: grid;
+grid-template-columns: 1fr 1fr;
+gap: 1rem;
+}
+
+.modal-actions {
+display: flex;
+justify-content: flex-end;
+gap: 0.5rem;
+margin-top: 1rem;
+}
+
+.search-input {
+display: flex;
+gap: 0.5rem;
+}
+
+.search-input input {
+flex: 1;
+padding: 0.5rem;
+border: 1px solid var(--border-color);
+border-radius: 4px;
+background: var(--bg-tertiary);
+color: var(--text-primary);
+}
+
+.search-input button {
+padding: 0.5rem 1rem;
+}
+
+.page-container {
+padding: 2rem;
+}
+
+/* Modal de visualização em tela cheia */
+#previewModal {
+display: none;
+position: fixed;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+background-color: rgba(0, 0, 0, 0.9);
+z-index: 2000;
+overflow: hidden;
+}
+
+.preview-modal {
+width: 100% !important;
+height: 100vh !important;
+max-width: 100% !important;
+margin: 0 !important;
+padding: 0 !important;
+border-radius: 0 !important;
+display: flex;
+flex-direction: column;
+}
+
+.preview-header {
+display: flex;
+flex-direction: row;
+align-items: center;
+justify-content: space-between;
+padding: 0.75rem;
+background-color: var(--bg-secondary);
+border-bottom: 1px solid var(--border-color);
+z-index: 2001;
+width: 100%;
+}
+
+.preview-title-container {
+flex-shrink: 1;
+overflow: hidden;
+min-width: 100px;
+max-width: 180px;
+}
+
+#previewTitle {
+font-size: 1rem;
+margin: 0;
+white-space: nowrap;
+overflow: hidden;
+text-overflow: ellipsis;
+}
+
+.preview-controls-group {
+flex-grow: 0;
+flex-shrink: 0;
+display: flex;
+justify-content: flex-end;
+}
+
+.zoom-controls {
+display: flex;
+align-items: center;
+gap: 0.25rem;
+}
+
+.preview-controls {
+display: flex;
+justify-content: space-between;
+align-items: center;
+padding: 1rem;
+background-color: var(--bg-secondary);
+border-top: 1px solid var(--border-color);
+}
+
+/* Estilos para canvas e imagens */
+#pdfCanvas {
+max-height: 90vh;
+box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+}
+
+#imagePreview {
+max-height: 90vh;
+max-width: 90vw;
+object-fit: contain;
+transition: transform 0.3s ease;
+}
+
+/* Controles do PDF */
+.preview-controls {
+display: flex;
+justify-content: center;
+align-items: center;
+gap: 1rem;
+padding: 1rem;
+background-color: var(--bg-secondary);
+border-top: 1px solid var(--border-color);
+}
+
+/* Estilos para o botão de ação do PDF */
+.pdf-action-button {
+position: absolute;
+bottom: 20px;
+right: 20px;
+z-index: 100;
+padding: 10px 15px;
+box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+/* Estilos para o modal simples */
+.simple-modal {
+max-width: 650px;
+display: flex;
+flex-direction: column;
+padding: 0 !important;
+}
+
+/* Garante que o modal simples fique sobre o modal de visualização */
+#simpleModal {
+z-index: 3000; /* Valor mais alto que o z-index do previewModal (2000) */
+}
+
+#previewModal {
+z-index: 2000;
+}
+
+.modal-header {
+display: flex;
+justify-content: space-between;
+align-items: center;
+padding: 15px 20px;
+border-bottom: 1px solid var(--border-color);
+background-color: var(--bg-secondary);
+}
+
+.modal-body {
+padding: 20px;
+flex: 1;
+}
+
+.modal-footer {
+display: flex;
+justify-content: flex-end;
+gap: 10px;
+padding: 15px 20px;
+border-top: 1px solid var(--border-color);
+background-color: var(--bg-secondary);
+}
+
+/* Tabs */
+.tabs-container {
+width: 100%;
+}
+
+.tab-buttons {
+display: flex;
+border-bottom: 1px solid var(--border-color);
+margin-bottom: 20px;
+}
+
+.tab-btn {
+padding: 10px 20px;
+background: none;
+border: none;
+cursor: pointer;
+color: var(--text-secondary);
+font-weight: 500;
+transition: all 0.2s ease;
+}
+
+.tab-btn.active {
+color: var(--accent-color);
+border-bottom: 2px solid var(--accent-color);
+}
+
+.tab-pane {
+display: none;
+padding: 10px 0;
+}
+
+.tab-pane.active {
+display: block;
+}
+
+/* Canvas e controles de assinatura */
+#modalSignatureCanvas {
+width: 100%;
+height: 200px;
+border: 1px solid var(--border-color);
+background-color: white;
+margin: 15px 0;
+border-radius: 4px;
+cursor: crosshair;
+}
+
+.signature-controls {
+display: flex;
+justify-content: flex-end;
+gap: 10px;
+margin-top: 10px;
+}
+
+/* Área de texto de assinatura */
+.form-control {
+width: 100%;
+padding: 10px;
+margin-bottom: 15px;
+border: 1px solid var(--border-color);
+border-radius: 4px;
+background-color: var(--bg-tertiary);
+color: var(--text-primary);
+}
+
+.form-group {
+margin-bottom: 20px;
+}
+
+.form-group label {
+display: block;
+margin-bottom: 8px;
+font-weight: 500;
+}
+
+.font-preview {
+padding: 20px;
+border: 1px solid var(--border-color);
+border-radius: 4px;
+background-color: white;
+color: black;
+min-height: 80px;
+font-size: 24px;
+display: flex;
+align-items: center;
+justify-content: center;
+margin-top: 15px;
+}
+
+.tab-description {
+margin-bottom: 10px;
+color: var(--text-secondary);
+}
+
+.preview-container {
+position: relative;
+background-color: var(--bg-tertiary);
+display: flex;
+justify-content: center;
+overflow: hidden;
+width: 100%;
+height: calc(100vh - 120px);
+}
+
+/* PDF viewer styling */
+.pdf-viewer-container {
+width: 100%;
+height: 100%;
+display: flex;
+flex-direction: column;
+overflow: hidden;
+}
+
+.pdf-pages-container {
+width: 100%;
+height: 100%;
+overflow-y: auto;
+overflow-x: auto;
+display: flex;
+flex-direction: column;
+align-items: center;
+padding: 20px 0;
+}
+
+.pdf-page-wrapper {
+margin-bottom: 20px;
+background-color: white;
+box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+position: relative;
+display: flex;
+justify-content: center;
+}
+
+.pdf-page-canvas {
+display: block;
+}
+
+.pdf-page-number {
+position: absolute;
+bottom: -20px;
+left: 50%;
+transform: translateX(-50%);
+background-color: rgba(0, 0, 0, 0.5);
+color: white;
+padding: 2px 10px;
+border-radius: 10px;
+font-size: 12px;
+opacity: 0.7;
+}
+
+.pdf-page-error {
+padding: 20px;
+background-color: #ffeeee;
+color: #cc0000;
+text-align: center;
+border: 1px solid #cc0000;
+margin: 20px;
+}
+
+/* Loading indicator */
+.pdf-loading {
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+height: 100%;
+width: 100%;
+}
+
+.loading-spinner {
+border: 4px solid #f3f3f3;
+border-top: 4px solid var(--accent-color);
+border-radius: 50%;
+width: 40px;
+height: 40px;
+animation: spin 1s linear infinite;
+margin-bottom: 15px;
+}
+
+@keyframes spin {
+0% { transform: rotate(0deg); }
+100% { transform: rotate(360deg); }
+}
+
+/* Image container */
+.image-container {
+display: flex;
+justify-content: center;
+align-items: center;
+overflow: auto;
+width: 100%;
+height: 100%;
+background-color: var(--bg-primary);
+}
+
+.preview-image {
+max-width: 90%;
+max-height: 90%;
+object-fit: contain;
+transition: transform 0.2s ease;
+transform-origin: center center;
+}
+
+/* Document container */
+.document-container {
+width: 100%;
+height: 100%;
+overflow: auto;
+}
+
+.document-iframe {
+width: 100%;
+height: 100%;
+border: none;
+}
+
+.content-grid {
+background-color: var(--bg-secondary);
+border-radius: 8px;
+padding: 1.5rem;
+}
+
+/* Estilos responsivos para mobile */
+@media screen and (max-width: 768px) {
+.page-container {
+    padding: 1rem;
+}
+
+.content-grid {
+    padding: 1rem;
+}
+
+.documents-grid {
+    grid-template-columns: 1fr; /* Uma coluna apenas em dispositivos móveis */
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.document-card {
+    margin-bottom: 1rem;
+    width: 100%;
+    padding: 1rem;
+    height: auto;
+}
+
+.document-header {
+    gap: 0.5rem;
+}
+
+.document-header i {
+    padding: 0.5rem;
+}
+
+.document-info {
+    margin: 0.5rem 0;
+}
+
+.user-info {
+    gap: 0.5rem;
+}
+
+.user-avatar {
+    width: 32px;
+    height: 32px;
+}
+
+.document-meta {
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.filter-section {
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.filter-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.filter-header h2 {
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem;
+}
+
+.filter-header button {
+    width: 100%;
+}
+
+.pagination-controls {
+    padding: 0.5rem;
+    margin-top: 0;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    gap: 0.25rem;
+    width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.pagination-controls button {
+    min-width: auto;
+    padding: 0.4rem 0.5rem;
+    font-size: 0.75rem;
+}
+
+.pagination-controls button i {
+    width: 14px;
+    height: 14px;
+}
+
+.pagination-controls span {
+    min-width: auto;
+    font-size: 0.75rem;
+    text-align: center;
+}
+
+/* Ocultar textos dos botões em telas pequenas, mantendo apenas ícones */
+.pagination-controls .btn-text {
+    display: none;
+}
+
+/* Mantendo o estilo original para os botões de ação */
+.document-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+/* Modal adjustments for mobile */
+.modal-content {
+    width: 95%;
+    max-width: 95% !important;
+    margin: 10px auto;
+    padding: 1rem;
+}
+
+.preview-modal {
+    padding: 0 !important;
+}
+
+.preview-header {
+    padding: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.preview-header {
+    padding: 0.5rem;
+}
+
+.preview-title-container {
+    max-width: 120px;
+}
+
+#previewTitle {
+    font-size: 0.875rem;
+}
+
+.zoom-controls {
+    gap: 2px;
+}
+
+.preview-controls-group .action-btn {
+    width: 32px;
+    height: 32px;
+    padding: 4px;
+}
+
+#zoomLevel {
+    font-size: 0.75rem;
+    min-width: 36px;
+    text-align: center;
+}
+
+.zoom-controls button {
+    padding: 0.3rem !important;
+}
+
+#zoomLevel {
+    font-size: 0.75rem;
+}
+
+.font-buttons-container {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+}
+
+/* Fix for PDF viewer on mobile */
+.pdf-pages-container {
+    padding: 10px 0;
+}
+
+.pdf-page-wrapper {
+    margin-bottom: 10px;
+}
 }
 </style>
 <script src="{{ url_for('static', filename='js/signature-modal.js') }}"></script>
@@ -1374,667 +2235,4 @@
 
 
 </script>
-
-<style>
-.documents-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-}
-
-.document-card {
-    background-color: var(--bg-tertiary);
-    border-radius: 8px;
-    padding: 1.5rem;
-    transition: transform 0.2s;
-    position: relative;
-}
-
-.document-card:hover {
-    transform: translateY(-2px);
-}
-
-.document-header {
-    display: flex;
-    align-items: flex-start;
-    gap: 1rem;
-    margin-bottom: 1rem;
-}
-
-.document-header i {
-    padding: 0.75rem;
-    background-color: var(--accent-color);
-    border-radius: 6px;
-}
-
-.document-title {
-    flex: 1;
-}
-
-.document-title h3 {
-    margin: 0;
-    margin-bottom: 0.25rem;
-}
-
-.document-subtitle {
-    color: var(--text-secondary);
-    font-size: 0.875rem;
-    margin: 0;
-}
-
-.document-info {
-    margin: 1rem 0;
-}
-
-.user-info {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    margin-bottom: 1rem;
-}
-
-.user-avatar {
-    width: 40px;
-    height: 40px;
-    background-color: var(--accent-color);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.user-details {
-    flex: 1;
-}
-
-.user-name {
-    margin: 0;
-    font-weight: 500;
-}
-
-.user-cpf {
-    margin: 0;
-    font-size: 0.875rem;
-    color: var(--text-secondary);
-}
-
-.document-meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
-    color: var(--text-secondary);
-    font-size: 0.875rem;
-}
-
-.document-meta p {
-    margin: 0;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.document-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 0.5rem;
-    margin-top: 1rem;
-}
-
-.filter-section {
-    background-color: var(--bg-secondary);
-    border-radius: 8px;
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
-}
-
-.filter-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.filter-header h3 {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin: 0;
-    font-size: 1.1rem;
-    color: var(--text-primary);
-}
-
-.filter-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1rem;
-}
-
-.filter-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.filter-group label {
-    font-size: 0.9rem;
-    color: var(--text-secondary);
-}
-
-.filter-input-wrapper {
-    position: relative;
-    width: 100%;
-}
-
-.filter-input-wrapper select {
-    width: 100%;
-    padding: 0.5rem 2rem 0.5rem 0.75rem;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    background-color: var(--bg-primary);
-    color: var(--text-primary);
-    appearance: none;
-    cursor: pointer;
-}
-
-.filter-input-wrapper .select-icon {
-    position: absolute;
-    right: 0.75rem;
-    top: 50%;
-    transform: translateY(-50%);
-    pointer-events: none;
-    width: 16px;
-    height: 16px;
-    color: var(--text-secondary);
-}
-
-.filter-input-wrapper select:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-}
-
-.filter-input-wrapper select:focus {
-    outline: none;
-    border-color: var(--accent-color);
-}
-
-.pagination-controls {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 1rem;
-    margin-top: 2rem;
-}
-
-.pagination-controls button {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.pagination-controls button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-#pageInfo {
-    color: var(--text-secondary);
-}
-
-.no-data {
-    text-align: center;
-    padding: 2rem;
-    color: var(--text-secondary);
-}
-
-.no-data i {
-    font-size: 2rem;
-    margin-bottom: 0.5rem;
-    opacity: 0.5;
-}
-
-.no-data.error {
-    color: var(--danger-color);
-}
-
-.no-data.error i {
-    color: var(--danger-color);
-}
-
-.back-link {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: var(--text-secondary);
-    text-decoration: none;
-    margin-bottom: 1rem;
-}
-
-.back-link:hover {
-    color: var(--accent-color);
-}
-
-.header-title {
-    display: flex;
-    flex-direction: column;
-}
-
-.header-actions {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2rem;
-}
-
-.loading-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 8px;
-    z-index: 10;
-}
-
-.modal {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-}
-
-.modal-content {
-    position: relative;
-    background-color: var(--bg-secondary);
-    margin: 5% auto;
-    padding: 2rem;
-    border-radius: 12px;
-    max-width: 650px !important;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-    animation: slideIn 0.3s ease;
-}
-
-.modal-content {
-        position: relative;
-        background-color: var(--bg-secondary);
-        margin: 5% auto;
-    }
-
-    .preview-modal {
-        max-width: 100% !important;
-        width: 100%;
-        height: 100vh;
-        display: flex;
-        flex-direction: column;
-        margin: 0 !important;
-        padding: 1rem !important;
-        border-radius: 0;
-    }
-
-    .preview-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 0.5rem;
-        border-bottom: 1px solid var(--border-color);
-    }
-
-    .preview-title {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-    }
-
-    .zoom-controls {
-        display: flex;
-        align-items: center;
-        gap: 1.5rem;
-        margin-right: 1.5rem;
-    }
-
-    .preview-header button,
-    .zoom-controls button {
-        padding: 0.4rem !important;
-        font-size: 0.9rem;
-    }
-
-    .preview-header h3 {
-        font-size: 1rem;
-        margin: 0;
-    }
-
-    @media (max-width: 768px) {
-        .preview-header {
-            padding: 0.3rem;
-        }
-
-        .preview-title {
-            gap: 0.5rem;
-        }
-
-        .zoom-controls {
-            gap: 0.3rem;
-        }
-
-        .preview-header button,
-        .zoom-controls button {
-            padding: 0.3rem !important;
-            font-size: 0.8rem;
-        }
-
-        #zoomLevel {
-            font-size: 0.8rem;
-        }
-    }
-    .preview-container {
-        flex: 1;
-        overflow: auto;
-        padding: 1rem;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        background: var(--bg-tertiary);
-        min-height: 85vh;
-    }
-
-    #pdfCanvas {
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-        background: white;
-        margin: auto;
-    }
-
-    .preview-controls {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 1rem;
-        padding-top: 1rem;
-        border-top: 1px solid var(--border-color);
-    }
-
-    #pdfCanvas {
-        max-width: 100%;
-        height: auto;
-    }
-
-    #imagePreview {
-        max-width: 100%;
-        height: auto;
-        transition: transform 0.2s ease;
-    }
-
-.form-group {
-    display: flex;
-    flex-direction: column;
-    margin-bottom: 0.5rem !important;
-}
-
-.form-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-}
-
-.modal-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 0.5rem;
-    margin-top: 1rem;
-}
-
-.search-input {
-    display: flex;
-    gap: 0.5rem;
-}
-
-.search-input input {
-    flex: 1;
-    padding: 0.5rem;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    background: var(--bg-tertiary);
-    color: var(--text-primary);
-}
-
-.search-input button {
-    padding: 0.5rem 1rem;
-}
-
-.page-container {
-    padding: 2rem;
-}
-
-/* Modal de visualização em tela cheia */
-#previewModal {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.9);
-    z-index: 2000;
-    overflow: hidden;
-}
-
-.preview-modal {
-    width: 100% !important;
-    height: 100vh !important;
-    max-width: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    border-radius: 0 !important;
-    display: flex;
-    flex-direction: column;
-}
-
-.preview-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem;
-    background-color: var(--bg-secondary);
-    border-bottom: 1px solid var(--border-color);    z-index: 2001;
-}
-    .preview-title {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-    }
-
-    .zoom-controls {
-        display: flex;
-        align-items: center;
-        gap: 1.5rem;
-        margin-right: 1.5rem;
-    }
-
-    .preview-controls {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 1rem;
-        background-color: var(--bg-secondary);
-        border-top: 1px solid var(--border-color);
-    }
-
-    /* Estilos para canvas e imagens */
-    #pdfCanvas {
-        max-height: 90vh;
-        box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
-    }
-
-    #imagePreview {
-        max-height: 90vh;
-        max-width: 90vw;
-        object-fit: contain;
-        transition: transform 0.3s ease;
-    }
-
-    /* Controles do PDF */
-    .preview-controls {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 1rem;
-        padding: 1rem;
-        background-color: var(--bg-secondary);
-        border-top: 1px solid var(--border-color);
-    }
-
-    /* Estilos para o botão de ação do PDF */
-    .pdf-action-button {
-        position: absolute;
-        bottom: 20px;
-        right: 20px;
-        z-index: 100;
-        padding: 10px 15px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-    }
-
-    /* Estilos para o modal simples */
-    .simple-modal {
-        max-width: 650px;
-        display: flex;
-        flex-direction: column;
-        padding: 0 !important;
-    }
-
-    /* Garante que o modal simples fique sobre o modal de visualização */
-    #simpleModal {
-        z-index: 3000; /* Valor mais alto que o z-index do previewModal (2000) */
-    }
-
-    #previewModal {
-        z-index: 2000;
-    }
-
-    .modal-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 15px 20px;
-        border-bottom: 1px solid var(--border-color);
-        background-color: var(--bg-secondary);
-    }
-
-    .modal-body {
-        padding: 20px;
-        flex: 1;
-    }
-
-    .modal-footer {
-        display: flex;
-        justify-content: flex-end;
-        gap: 10px;
-        padding: 15px 20px;
-        border-top: 1px solid var(--border-color);
-        background-color: var(--bg-secondary);
-    }
-
-    /* Tabs */
-    .tabs-container {
-        width: 100%;
-    }
-
-    .tab-buttons {
-        display: flex;
-        border-bottom: 1px solid var(--border-color);
-        margin-bottom: 20px;
-    }
-
-    .tab-btn {
-        padding: 10px 20px;
-        background: none;
-        border: none;
-        cursor: pointer;
-        color: var(--text-secondary);
-        font-weight: 500;
-        transition: all 0.2s ease;
-    }
-
-    .tab-btn.active {
-        color: var(--accent-color);
-        border-bottom: 2px solid var(--accent-color);
-    }
-
-    .tab-pane {
-        display: none;
-        padding: 10px 0;
-    }
-
-    .tab-pane.active {
-        display: block;
-    }
-
-    /* Canvas e controles de assinatura */
-    #modalSignatureCanvas {
-        width: 100%;
-        height: 200px;
-        border: 1px solid var(--border-color);
-        background-color: white;
-        margin: 15px 0;
-        border-radius: 4px;
-        cursor: crosshair;
-    }
-
-    .signature-controls {
-        display: flex;
-        justify-content: flex-end;
-        gap: 10px;
-        margin-top: 10px;
-    }
-
-    /* Área de texto de assinatura */
-    .form-control {
-        width: 100%;
-        padding: 10px;
-        margin-bottom: 15px;
-        border: 1px solid var(--border-color);
-        border-radius: 4px;
-        background-color: var(--bg-tertiary);
-        color: var(--text-primary);
-    }
-
-    .form-group {
-        margin-bottom: 20px;
-    }
-
-    .form-group label {
-        display: block;
-        margin-bottom: 8px;
-        font-weight: 500;
-    }
-
-    .font-preview {
-        padding: 20px;
-        border: 1px solid var(--border-color);
-        border-radius: 4px;
-        background-color: white;
-        color: black;
-        min-height: 80px;
-        font-size: 24px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-top: 15px;
-    }
-
-    .tab-description {
-        margin-bottom: 10px;
-        color: var(--text-secondary);
-    }
-
-</style>
 {% endblock %}

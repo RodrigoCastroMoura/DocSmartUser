@@ -362,11 +362,11 @@
             contentDiv.innerHTML = `${gridHTML}
             <div class="pagination-controls">
                 <button class="action-btn" onclick="changePage(currentPage - 1)" id="prevPage" ${currentPage <= 1 ? "disabled" : ""}>
-                    <i data-feather="chevron-left"></i> Previous
+                    <i data-feather="chevron-left"></i> <span class="btn-text">Previous</span>
                 </button>
                 <span id="pageInfo">Page ${currentPage} of ${totalPages}</span>
                 <button class="action-btn" onclick="changePage(currentPage + 1)" id="nextPage" ${currentPage >= totalPages ? "disabled" : ""}>
-                    Next <i data-feather="chevron-right"></i>
+                    <span class="btn-text">Next</span> <i data-feather="chevron-right"></i>
                 </button>
             </div>`;
 
@@ -883,6 +883,9 @@
         padding: 1.5rem;
         transition: transform 0.2s;
         margin-bottom: 0.5rem;
+        height: auto; /* Ajustar altura para ser automática */
+        display: flex;
+        flex-direction: column;
     }
 
     .document-type-header {
@@ -901,6 +904,7 @@
     .document-type-info {
         margin: 1rem 0;
         color: var(--text-secondary);
+        flex-grow: 1; /* Fazer o conteúdo crescer para preencher o espaço */
     }
 
     .document-type-info .description {
@@ -1006,9 +1010,7 @@
     }
 
     .modal {
-        display: flex;
-        justify-content: center;
-        align-items: flex-start;
+        display: none;
         position: fixed;
         top: 0;
         left: 0;
@@ -1017,6 +1019,7 @@
         background-color: rgba(0, 0, 0, 0.5);
         overflow-y: auto;
         padding: 20px;
+        z-index: 1000;
     }
 
     .modal-content {
@@ -1109,7 +1112,7 @@
         padding: 1rem;
         background: var(--bg-secondary);
         border-top: 1px solid var(--border-color);
-        position: sticky;
+        position: relative; /* Alterado de sticky para relative */
         bottom: 0;
     }
 
@@ -1126,6 +1129,88 @@
         min-width: 150px;
         text-align: center;
         font-weight: 500;
+    }
+
+    /* Estilos responsivos para mobile */
+    @media screen and (max-width: 768px) {
+        .page-container {
+            padding: 1rem;
+        }
+        
+        .content-grid {
+            padding: 1rem;
+        }
+        
+        .document-types-grid {
+            grid-template-columns: 1fr; /* Uma coluna apenas em dispositivos móveis */
+            gap: 1rem;
+        }
+        
+        .document-type-card {
+            margin-bottom: 1rem;
+            width: 100%;
+            height: auto; /* Altura automática para ajustar ao conteúdo */
+        }
+        
+        .document-type-info {
+            margin: 0.5rem 0;
+        }
+        
+        .pagination-controls {
+            padding: 0.5rem;
+            margin-top: 0;
+            position: relative; /* Garantir que não flutue */
+            bottom: 0;
+            flex-wrap: nowrap; /* Manter tudo em uma linha */
+            justify-content: space-between; /* Espaçamento uniforme */
+            gap: 0.25rem; /* Reduzir o espaço entre os itens */
+            width: 100%;
+            white-space: nowrap; /* Impedir quebra de linha */
+            overflow: hidden; /* Evitar overflow */
+        }
+        
+        .pagination-controls button {
+            min-width: auto;
+            padding: 0.4rem 0.5rem;
+            font-size: 0.75rem;
+        }
+        
+        .pagination-controls button i {
+            width: 14px;
+            height: 14px;
+        }
+        
+        .pagination-controls span {
+            min-width: auto;
+            font-size: 0.75rem;
+            text-align: center;
+        }
+        
+        /* Compactar textos em telas pequenas */
+        .pagination-controls #pageInfo:before {
+            content: "";
+        }
+        
+        .pagination-controls #pageInfo {
+            display: inline-block;
+            transform: none;
+        }
+        
+        .pagination-controls #pageInfo:after {
+            content: "";
+        }
+        
+        /* Ocultar textos dos botões em telas pequenas, mantendo apenas ícones */
+        .pagination-controls .btn-text {
+            display: none;
+        }
+        
+        .modal-content {
+            width: 95%;
+            max-width: 95% !important;
+            margin: 10px auto;
+            padding: 1rem;
+        }
     }
 </style>
 {% endblock %}
