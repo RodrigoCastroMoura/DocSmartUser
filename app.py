@@ -649,7 +649,7 @@ def track_document_download(document_id):
         print(f"Error tracking document download: {e}")
         return jsonify({'error': 'Failed to track document download'}), 500
 
-@app.route('/api/pdf-analyzer/<document_id>')
+@app.route('/api/pdf-analyzer/<document_id>', methods=['GET', 'POST'])
 @login_required
 def pdf_analyzer(document_id):
     
@@ -659,12 +659,16 @@ def pdf_analyzer(document_id):
     if not company_id:
         return jsonify({'error': 'Company ID not found in session'}), 400
 
-    try:    
-        response = requests.get(
+    try: 
+
+        method = request.method
+        response = requests.request(
+            method,
             f'{PDFANALYSER_URL}/document/{document_id}',
             headers=headers,
-            timeout=REQUEST_TIMEOUT * 2  # Double timeout for file upload
+            timeout=REQUEST_TIMEOUT
         )
+       
         return handle_api_response(response,
                                    error_message='Failed to create document')
     except requests.Timeout:

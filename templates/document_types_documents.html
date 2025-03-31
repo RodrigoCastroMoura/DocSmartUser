@@ -1109,6 +1109,123 @@ padding: 1.5rem;
     margin-bottom: 10px;
 }
 }
+/* Mobile-specific improvements for PDF reader */
+@media screen and (max-width: 768px) {
+    /* Improve preview modal for mobile */
+    .preview-modal {
+        padding: 0 !important;
+    }
+    
+    /* Better header layout for small screens */
+    .preview-header {
+        padding: 8px;
+        flex-wrap: nowrap;
+    }
+    
+    /* Optimize title container */
+    .preview-title-container {
+        max-width: 35%;
+    }
+    
+    /* Better spacing for controls */
+    .zoom-controls {
+        gap: 4px;
+    }
+    
+    /* Larger touch targets for buttons */
+    .preview-controls-group .action-btn {
+        min-width: 40px;
+        min-height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    /* Adjust zoom text size */
+    #zoomLevel {
+        font-size: 12px;
+        min-width: 42px;
+        text-align: center;
+    }
+    
+    /* PDF container improvements */
+    .pdf-pages-container {
+        padding: 10px 5px;
+    }
+    
+    /* Set initial zoom level better suited for mobile */
+    .pdf-page-canvas {
+        max-width: 100%;
+        height: auto !important; /* Ensure canvas respects container width */
+    }
+    
+    /* Improve page navigation */
+    .pdf-page-wrapper {
+        margin-bottom: 15px;
+        width: 98%; /* Give a bit of breathing room on sides */
+    }
+    
+    /* Make page numbers more visible */
+    .pdf-page-number {
+        bottom: -18px;
+        background-color: rgba(0, 0, 0, 0.7);
+        padding: 4px 10px;
+        font-size: 12px;
+    }
+    
+    /* Better handling of signature area */
+    #signatures-container {
+        position: absolute;
+        pointer-events: none;
+    }
+}
+.preview-modal {
+    width: 100% !important;
+    height: 100vh !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+    background-color: var(--bg-tertiary);
+}
+
+/* Ajusta o container do PDF para ocupar toda a largura disponível */
+.pdf-viewer-container {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: var(--bg-tertiary);
+}
+
+/* Centraliza o conteúdo do PDF */
+.pdf-pages-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    background-color: var(--bg-tertiary);
+}
+
+/* Ocultar o título do arquivo no cabeçalho */
+#previewTitle {
+    display: none !important;
+}
+
+/* Otimiza o espaço do cabeçalho */
+.preview-header {
+    justify-content: flex-end;
+    padding: 8px 12px;
+}
+
+.preview-title-container {
+    display: none;
+}
+
+/* Aumenta o tamanho da área de visualização */
+.preview-container {
+    height: calc(100vh - 60px);
+}
 </style>
 <script src="{{ url_for('static', filename='js/signature-modal.js') }}"></script>
 <script>
@@ -1532,17 +1649,14 @@ padding: 1.5rem;
                     ${data.documents.map(doc => `
                         <div class="document-card" data-id="${doc.id}">
                             <div class="document-header">
-                                <i data-feather="${getFileIcon(doc.name)}"></i>
+                                <i data-feather="${getFileIcon(doc.name)}"></i>.
                                 <div class="document-title">
-                                    <h3>${doc.document_type_name || 'Unknown Type'}</h3>
-                                    <p class="document-subtitle">${doc.titulo || doc.name}</p>
+                                    <h3>${doc.titulo || 'Unknown Type'}</h3>
                                 </div>
                             </div>
                             <div class="document-info">
                                 <div class="user-info">
-                                    <div class="user-avatar">
-                                        <i data-feather="user"></i>
-                                    </div>
+            
                                     <div class="user-details">
                                         <p class="user-name">${doc.user_name || 'Unknown User'}</p>
                                         <p class="user-cpf">${doc.user_cpf || 'No CPF'}</p>
@@ -1745,7 +1859,7 @@ padding: 1.5rem;
         rectignature = null;
         isIgnature = false;
         currentDocumentId = id;
-        zoomLevel = 1.8;
+        zoomLevel = getInitialZoomLevel();
         zoomLevelSpan.textContent = `${(zoomLevel * 100).toFixed(0)}%`;
         while (previewContainer.firstChild) {
             previewContainer.removeChild(previewContainer.firstChild);
@@ -2042,25 +2156,12 @@ padding: 1.5rem;
     // Salvar o documento com as assinaturas
     async function saveSignedDocument(documentId) {
     try {
-        showNotification('Salvando documento assinado...', 'info');
         openPopup();
-        // Get the canvas with the signed PDF
-        const canvas = document.querySelector('.pdf-page-canvas');
-        if (!canvas) {
-            throw new Error('Canvas not found');
-        }
-
-        // Convert canvas to blob
-        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'application/pdf'));
-
-        // Create form data
-        const formData = new FormData();
-        formData.append('file', blob, 'signed_document.pdf');
+        
 
         // Send the signed document to the server using the correct endpoint
         const response = await fetch(`/api/pdf-analyzer/${documentId}`, {
             method: 'POST',
-            body: formData
         });
 
         if (!response.ok) {
@@ -2205,8 +2306,65 @@ padding: 1.5rem;
             }
         `;
 
-        document.head.appendChild(styleElement);
-    });
+    document.head.appendChild(styleElement);
+        });
+
+        function isMobileDevice() {
+        return (window.innerWidth <= 768);
+    }
+
+    // Adjust initial zoom level based on device
+    function getInitialZoomLevel() {
+        // For mobile devices, start with smaller zoom to fit width
+        if (isMobileDevice()) {
+            return 1.0; // Smaller initial zoom for mobile
+        } else {
+            return 1.8; // Your original desktop zoom
+        }
+    }
+
+    // Add touch-friendly zoom gestures for mobile
+    function setupMobilePdfGestures() {
+        const container = document.querySelector('.pdf-pages-container');
+        if (!container) return;
+        
+        let touchStartY = 0;
+        let touchStartDistance = 0;
+        
+        // Handle pinch zoom
+        container.addEventListener('touchstart', function(e) {
+            if (e.touches.length === 2) {
+                touchStartDistance = Math.hypot(
+                    e.touches[0].pageX - e.touches[1].pageX,
+                    e.touches[0].pageY - e.touches[1].pageY
+                );
+            }
+            if (e.touches.length === 1) {
+                touchStartY = e.touches[0].pageY;
+            }
+        });
+        
+        container.addEventListener('touchmove', function(e) {
+            // Pinch to zoom
+            if (e.touches.length === 2) {
+                e.preventDefault(); // Prevent default scrolling
+                
+                const currentDistance = Math.hypot(
+                    e.touches[0].pageX - e.touches[1].pageX,
+                    e.touches[0].pageY - e.touches[1].pageY
+                );
+                
+                if (touchStartDistance > 0) {
+                    const distanceDiff = currentDistance - touchStartDistance;
+                    if (Math.abs(distanceDiff) > 10) { // Minimum threshold to prevent accidental zooms
+                        const zoomDelta = distanceDiff > 0 ? 0.1 : -0.1;
+                        adjustZoom(zoomDelta);
+                        touchStartDistance = currentDistance;
+                    }
+                }
+            }
+        });
+    }
 
     function updatePreviewModalStructure() {
         const previewModal = document.getElementById('previewModal');
@@ -2232,7 +2390,18 @@ padding: 1.5rem;
         loadDocuments();
 
     });
-
+// Call this after rendering PDF
+document.addEventListener('DOMContentLoaded', () => {
+    // Your existing code...
+    
+    // Setup event listeners for the preview modal
+    const previewModal = document.getElementById('previewModal');
+    if (previewModal) {
+        previewModal.addEventListener('shown', function() {
+            setupMobilePdfGestures();
+        });
+    }
+});
 
 </script>
 {% endblock %}
