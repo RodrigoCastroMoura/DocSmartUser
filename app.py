@@ -384,7 +384,8 @@ def document_type_documents(document_type_id):
                                document_type=document_type,
                                category=category,
                                name = name,
-                               signature = signature)
+                               signature = signature,
+                               id_doc = session.get('user__id'))
     except requests.Timeout:
         logger.error("Request timed out while fetching department_types")
         flash('Request timed out', 'error')

@@ -464,6 +464,16 @@
             transition: all 0.2s;
         }
 
+        .action-btn.success {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .action-btn.success:hover {
+            background-color: var(--success-hover);
+        }
+
+
         .action-btn.primary {
             background-color: var(--accent-color);
             color: white;
@@ -478,10 +488,12 @@
             color: white;
         }
 
+       
         .action-btn.danger:hover {
             background-color: var(--danger-hover);
         }
 
+       
         .action-btn:not(.primary):not(.danger) {
             background-color: var(--bg-tertiary);
             color: var(--text-primary);
