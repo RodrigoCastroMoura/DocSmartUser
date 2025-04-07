@@ -1315,3 +1315,21 @@ if (previewModal) {
     });
 }
 });
+
+// Função para controlar o estado do checkbox de termos
+function toggleTermsAgreement() {
+    const checkbox = document.getElementById('termsCheckbox');
+    const overlay = document.getElementById('termsOverlay');
+    
+    if (checkbox.checked) {
+        overlay.style.opacity = '0';
+        setTimeout(() => {
+            overlay.style.display = 'none';
+        }, 300);
+    } else {
+        overlay.style.display = 'flex';
+        setTimeout(() => {
+            overlay.style.opacity = '1';
+        }, 10);
+    }
+}
