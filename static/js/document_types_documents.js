@@ -644,6 +644,22 @@ async function previewDocument(url, filename) {
     try {
         if (fileType === 'pdf') {
             // Create PDF viewer container
+
+            const termsCheckbox = document.getElementById('termsCheckbox');
+            const termsOverlay = document.getElementById('termsOverlay');
+            
+            // Resetar o estado da caixa de seleção
+            if (termsCheckbox) {
+                termsCheckbox.checked = false;
+            }
+            
+            // Mostrar o overlay de termos
+            if (termsOverlay) {
+                termsOverlay.style.display = 'flex';
+                termsOverlay.style.opacity = '1';
+            }
+
+
             const pdfViewerContainer = document.createElement('div');
             pdfViewerContainer.className = 'pdf-viewer-container';
             previewContainer.appendChild(pdfViewerContainer);
@@ -775,6 +791,7 @@ async function renderPdfPage(pageNumber, canvas) {
 async function signatureDocument(url, filename, id) {
     openPopup();
     // Track view count
+
     try {
         await fetch(`/api/documents/${id}/view-count`, {
             method: 'POST',
@@ -1316,10 +1333,14 @@ if (previewModal) {
 }
 });
 
-// Função para controlar o estado do checkbox de termos
 function toggleTermsAgreement() {
     const checkbox = document.getElementById('termsCheckbox');
     const overlay = document.getElementById('termsOverlay');
+    
+    if (!overlay) {
+        console.error('Terms overlay element not found');
+        return;
+    }
     
     if (checkbox.checked) {
         overlay.style.opacity = '0';
