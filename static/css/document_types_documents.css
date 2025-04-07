@@ -428,11 +428,7 @@
         width: 100%;
         }
         
-    /* Estilos para o checkbox de termos */
-    .terms-checkbox-container {
-        margin-right: auto;
-        padding-left: 15px;
-    }
+
     
     .terms-checkbox-label {
         display: flex;
@@ -1060,17 +1056,20 @@
             position: absolute;
             pointer-events: none;
         }
-
+   
         .terms-checkbox-container {
             display: none; /* Oculta a versão desktop */
         }
         
         .mobile-terms-container {
             display: flex; /* Exibe a versão mobile */
+            width: 100%;
+            padding: 8px 12px;
+            background-color: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
             justify-content: center;
             align-items: center;
         }
-        
         .preview-header {
             justify-content: flex-end; /* Alinha os controles à direita */
             padding: 8px 12px;
@@ -1152,9 +1151,11 @@
     }
      
     .terms-checkbox-container {
+        display: flex;
         margin-right: auto;
         padding-left: 15px;
     }
+    
     
     .terms-checkbox-label {
         display: flex;
@@ -1171,12 +1172,6 @@
         cursor: pointer;
     }
     
-    /* Nova faixa de termos para mobile */
     .mobile-terms-container {
-        display: none; /* Oculto por padrão */
-        width: 100%;
-        padding: 8px 12px;
-        background-color: var(--bg-secondary);
-        border-bottom: 1px solid var(--border-color);
-        text-align: center;
+        display: none; /* Oculto por padrão em desktop */
     }
