@@ -1354,3 +1354,67 @@ function toggleTermsAgreement() {
         }, 10);
     }
 }
+
+function syncCheckboxes(sourceCheckbox, targetCheckboxId) {
+    const targetCheckbox = document.getElementById(targetCheckboxId);
+    if (targetCheckbox) {
+        targetCheckbox.checked = sourceCheckbox.checked;
+        // Chama a função de alternar os termos para manter a funcionalidade original
+        toggleTermsAgreement();
+    }
+}
+
+// Modificação da função toggleTermsAgreement existente
+function toggleTermsAgreement() {
+    const checkbox = document.getElementById('termsCheckbox');
+    const mobileCheckbox = document.getElementById('mobileTermsCheckbox');
+    const overlay = document.getElementById('termsOverlay');
+    
+    // Garante que os checkboxes estejam sincronizados
+    if (mobileCheckbox) {
+        mobileCheckbox.checked = checkbox.checked;
+    }
+    
+    if (!overlay) {
+        console.error('Terms overlay element not found');
+        return;
+    }
+    
+    if (checkbox.checked) {
+        overlay.style.opacity = '0';
+        setTimeout(() => {
+            overlay.style.display = 'none';
+        }, 300);
+    } else {
+        overlay.style.display = 'flex';
+        setTimeout(() => {
+            overlay.style.opacity = '1';
+        }, 10);
+    }
+}
+
+// Função para detectar quando a tela muda de tamanho e ajustar elementos
+function handleResponsiveLayout() {
+    const isMobile = window.innerWidth <= 768;
+    const previewContainer = document.querySelector('.preview-container');
+    
+    if (previewContainer) {
+        if (isMobile) {
+            // Ajusta a altura para considerar a faixa de termos em mobile
+            previewContainer.style.height = 'calc(100vh - 120px - 40px)';
+        } else {
+            // Restaura a altura original em desktop
+            previewContainer.style.height = 'calc(100vh - 120px)';
+        }
+    }
+}
+
+// Adicionar event listener para redimensionamento da janela
+window.addEventListener('resize', handleResponsiveLayout);
+
+// Inicializar o layout responsivo quando o documento carregar
+document.addEventListener('DOMContentLoaded', function() {
+    handleResponsiveLayout();
+    
+    // Outros inicializadores aqui...
+});
