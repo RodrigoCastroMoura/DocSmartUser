@@ -1086,19 +1086,15 @@
         
         /* Mostrar a versão mobile do checkbox como uma faixa dedicada */
         .mobile-terms-container {
-            display: flex !important;
+            display: flex ;
             width: 100%;
             padding: 8px 12px;
             background-color: var(--bg-secondary);
             border-bottom: 1px solid var(--border-color);
-            justify-content: center;
-            align-items: center;
+           
         }
         
-        /* Ajustar o cabeçalho para funcionar sem o checkbox */
-        .preview-header {
-            justify-content: space-between !important;
-        }
+        
         
         /* Ajustar a altura do container de visualização para compensar a nova faixa */
         .preview-container {
@@ -1196,5 +1192,6 @@
     }
     
     .mobile-terms-container {
-        display: none; /* Oculto por padrão em desktop */
+        display: none !important; /* Oculto por padrão em desktop */
     }
+    

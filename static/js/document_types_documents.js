@@ -12,6 +12,7 @@ var findSignature = null;
 var rectignature = null;
 var isIgnature = false;
 let currentDocumentId;
+var zoomSignature = false;
 
 
 async function loadFilterOptions() {
@@ -628,10 +629,28 @@ async function previewDocument(url, filename) {
     const previewTitle = document.getElementById('previewTitle');
     const previewContainer = document.querySelector('.preview-container');
     const zoomLevelSpan = document.getElementById('zoomLevel');
-    
+    const mobileTermsContainers = document.getElementsByClassName('mobile-terms-container');
+    const termsOverlay = document.getElementById('termsOverlay');
+    const termsCheckboxContainer = document.getElementById('termsCheckboxContainer');
+    document.getElementById('saveSignedDocBtn').disabled = true;
+    zoomSignature = false;
     // Reset zoom level
     zoomLevel = 1.0;
     zoomLevelSpan.textContent = `${(zoomLevel * 100).toFixed(0)}%`;
+
+    if (mobileTermsContainers.length > 0) {
+        mobileTermsContainers[0].style.setProperty('display', 'none', 'important');
+    }
+
+    // Mostrar o overlay de termos
+    if (termsOverlay) {
+        termsOverlay.style.setProperty('display', 'none', 'important');
+    }
+
+    if(termsCheckboxContainer){
+        termsCheckboxContainer.style.setProperty('display', 'none', 'important');
+    }
+
 
     // Clear previous content from preview container
     while (previewContainer.firstChild) {
@@ -644,22 +663,6 @@ async function previewDocument(url, filename) {
     try {
         if (fileType === 'pdf') {
             // Create PDF viewer container
-
-            const termsCheckbox = document.getElementById('termsCheckbox');
-            const termsOverlay = document.getElementById('termsOverlay');
-            
-            // Resetar o estado da caixa de seleção
-            if (termsCheckbox) {
-                termsCheckbox.checked = false;
-            }
-            
-            // Mostrar o overlay de termos
-            if (termsOverlay) {
-                termsOverlay.style.display = 'flex';
-                termsOverlay.style.opacity = '1';
-            }
-
-
             const pdfViewerContainer = document.createElement('div');
             pdfViewerContainer.className = 'pdf-viewer-container';
             previewContainer.appendChild(pdfViewerContainer);
@@ -804,6 +807,47 @@ async function signatureDocument(url, filename, id) {
     const previewTitle = document.getElementById('previewTitle');
     const previewContainer = document.querySelector('.preview-container');
     const zoomLevelSpan = document.getElementById('zoomLevel');
+    const termsCheckbox = document.getElementById('termsCheckbox');
+    const mobileTermsContainers = document.getElementsByClassName('mobile-terms-container');
+    const termsOverlay = document.getElementById('termsOverlay');
+    const termsCheckboxContainer = document.getElementById('termsCheckboxContainer');
+    if(isMobileDevice())
+    {
+
+        if (mobileTermsContainers.length > 0) {
+            mobileTermsContainers[0].style.setProperty('display', 'flex', 'important');
+        }
+
+        
+        if(termsCheckboxContainer){
+            termsCheckboxContainer.style.setProperty('display', 'none', 'important');
+        }
+
+    }else{
+
+        if(termsCheckboxContainer){
+            termsCheckboxContainer.style.setProperty('display', 'flex', 'important');
+        }
+
+         if (mobileTermsContainers.length > 0) {
+            mobileTermsContainers[0].style.setProperty('display', 'none', 'important');
+        }
+        
+    }
+
+     // Mostrar o overlay de termos
+     if (termsOverlay) {
+        termsOverlay.style.setProperty('display', 'flex', 'important');
+    }
+    
+    // Resetar o estado da caixa de seleção
+    if (termsCheckbox) {
+        termsCheckbox.checked = false;
+    }
+
+    
+
+    zoomSignature = true;
     currentPdf = null;
     findSignature = null;
     rectignature = null;
@@ -1078,7 +1122,10 @@ async function adjustZoom(delta) {
         if (pagesContainer) {
             pdfContainer.removeChild(pagesContainer);
         }
-        await renderPdfPages(pdfContainer);
+        if(!zoomSignature)
+            await renderPdfPages(pdfContainer);
+        else
+            await renderPdfPagesSignature(pdfContainer);
         const newScrollContainer = document.querySelector('.pdf-pages-container');
         setTimeout(() => {
             newScrollContainer.scrollTop = scrollRatio * newScrollContainer.scrollHeight;
@@ -1402,14 +1449,21 @@ function syncCheckboxes(sourceCheckbox, targetCheckboxId) {
 function handleResponsiveLayout() {
     const isMobile = window.innerWidth <= 768;
     const previewContainer = document.querySelector('.preview-container');
-    
+    const mobileTermsContainers = document.getElementsByClassName('mobile-terms-container');
+    const termsOverlay = document.getElementById('termsOverlay');
     if (previewContainer) {
         if (isMobile) {
             // Ajusta a altura para considerar a faixa de termos em mobile
             previewContainer.style.height = 'calc(100vh - 120px - 40px)';
+            if (mobileTermsContainers.length > 0) {
+                mobileTermsContainers[0].style.setProperty('display', 'flex', 'important');
+            }
         } else {
             // Restaura a altura original em desktop
             previewContainer.style.height = 'calc(100vh - 120px)';
+            if (mobileTermsContainers.length > 0) {
+                mobileTermsContainers[0].style.setProperty('display', 'none', 'important');
+            }
         }
     }
 }
