@@ -986,9 +986,7 @@
     .pdf-page-wrapper {
         margin-bottom: 10px;
     }
-    }
-    /* Mobile-specific improvements for PDF reader */
-    @media screen and (max-width: 768px) {
+    
         /* Improve preview modal for mobile */
         .preview-modal {
             padding: 0 !important;
@@ -1059,12 +1057,12 @@
    
         
         .terms-checkbox-container {
-            display: none;
+            display: none !important;
         }
         
-        /* Mostrar a versão mobile do checkbox como uma faixa separada */
+        /* Mostrar a versão mobile do checkbox como uma faixa dedicada */
         .mobile-terms-container {
-            display: flex;
+            display: flex !important;
             width: 100%;
             padding: 8px 12px;
             background-color: var(--bg-secondary);
@@ -1073,15 +1071,14 @@
             align-items: center;
         }
         
-        /* Ajustar o header para alinhar à direita sem o checkbox */
+        /* Ajustar o cabeçalho para funcionar sem o checkbox */
         .preview-header {
-            justify-content: flex-end;
-            padding: 8px 12px;
+            justify-content: space-between !important;
         }
         
-        /* Ajustar o espaço do container principal */
+        /* Ajustar a altura do container de visualização para compensar a nova faixa */
         .preview-container {
-            height: calc(100vh - 120px - 40px);
+            height: calc(100vh - 120px - 38px) !important;
         }
 
         
