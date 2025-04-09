@@ -1359,7 +1359,6 @@ function syncCheckboxes(sourceCheckbox, targetCheckboxId) {
     const targetCheckbox = document.getElementById(targetCheckboxId);
     if (targetCheckbox) {
         targetCheckbox.checked = sourceCheckbox.checked;
-        // Chama a função de alternar os termos para manter a funcionalidade original
         toggleTermsAgreement();
     }
 }

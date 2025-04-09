@@ -71,7 +71,8 @@
 <div id="previewModal" class="modal">
 <div class="modal-content preview-modal">
     <div class="preview-header">
-        <!-- Versão desktop do checkbox (será ocultada em mobile) -->
+
+       <!-- Versão desktop do checkbox -->
         <div class="terms-checkbox-container">
             <label class="terms-checkbox-label">
                 <input type="checkbox" id="termsCheckbox" onchange="toggleTermsAgreement()">
@@ -79,13 +80,6 @@
             </label>
         </div>
         
-        <!-- Faixa separada (para mobile) -->
-        <div class="mobile-terms-container">
-            <label class="terms-checkbox-label">
-                <input type="checkbox" id="mobileTermsCheckbox" onchange="syncCheckboxes(this, 'termsCheckbox')">
-                <span>Concordo com os termos do documento</span>
-            </label>
-        </div>
         <div class="preview-title-container">
             <h3 id="previewTitle">Document Preview</h3>
         </div>

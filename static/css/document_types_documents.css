@@ -1057,12 +1057,14 @@
             pointer-events: none;
         }
    
+        
         .terms-checkbox-container {
-            display: none; /* Oculta a versão desktop */
+            display: none;
         }
         
+        /* Mostrar a versão mobile do checkbox como uma faixa separada */
         .mobile-terms-container {
-            display: flex; /* Exibe a versão mobile */
+            display: flex;
             width: 100%;
             padding: 8px 12px;
             background-color: var(--bg-secondary);
@@ -1070,19 +1072,19 @@
             justify-content: center;
             align-items: center;
         }
+        
+        /* Ajustar o header para alinhar à direita sem o checkbox */
         .preview-header {
-            justify-content: flex-end; /* Alinha os controles à direita */
+            justify-content: flex-end;
             padding: 8px 12px;
         }
         
-        .preview-title-container {
-            max-width: 40%;
-        }
-        
-        /* Ajusta a altura do container principal para compensar a nova faixa */
+        /* Ajustar o espaço do container principal */
         .preview-container {
-            height: calc(100vh - 120px - 40px); /* Altura original - altura da nova faixa */
+            height: calc(100vh - 120px - 40px);
         }
+
+        
     }
     .preview-modal {
         width: 100% !important;
