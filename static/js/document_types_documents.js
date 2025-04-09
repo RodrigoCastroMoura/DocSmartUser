@@ -1355,40 +1355,46 @@ function toggleTermsAgreement() {
     }
 }
 
-function syncCheckboxes(sourceCheckbox, targetCheckboxId) {
-    const targetCheckbox = document.getElementById(targetCheckboxId);
-    if (targetCheckbox) {
-        targetCheckbox.checked = sourceCheckbox.checked;
-        toggleTermsAgreement();
-    }
-}
-
-// Modificação da função toggleTermsAgreement existente
 function toggleTermsAgreement() {
     const checkbox = document.getElementById('termsCheckbox');
     const mobileCheckbox = document.getElementById('mobileTermsCheckbox');
     const overlay = document.getElementById('termsOverlay');
     
-    // Garante que os checkboxes estejam sincronizados
+    // Sincronizar a caixa de seleção móvel com a desktop
     if (mobileCheckbox) {
         mobileCheckbox.checked = checkbox.checked;
     }
     
     if (!overlay) {
-        console.error('Terms overlay element not found');
+        console.error('Elemento do overlay de termos não encontrado');
         return;
     }
     
     if (checkbox.checked) {
+        // Esconder o overlay com fade out
         overlay.style.opacity = '0';
+        // Desativar pointer-events para garantir que o usuário possa interagir com o documento
+        overlay.style.pointerEvents = 'none';
         setTimeout(() => {
             overlay.style.display = 'none';
-        }, 300);
+        }, 300); // Duração da transição
     } else {
+        // Mostrar o overlay
         overlay.style.display = 'flex';
+        overlay.style.pointerEvents = 'auto';
+        // Pequeno delay para garantir que o display:flex seja aplicado antes da transição
         setTimeout(() => {
             overlay.style.opacity = '1';
         }, 10);
+    }
+}
+
+// Função para sincronizar as caixas de seleção (mobile e desktop)
+function syncCheckboxes(sourceCheckbox, targetCheckboxId) {
+    const targetCheckbox = document.getElementById(targetCheckboxId);
+    if (targetCheckbox) {
+        targetCheckbox.checked = sourceCheckbox.checked;
+        toggleTermsAgreement();
     }
 }
 

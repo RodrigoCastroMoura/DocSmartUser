@@ -456,8 +456,32 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        z-index: 1000;
+        z-index: 999; /* Reduzido para ficar abaixo do header */
         transition: opacity 0.3s ease;
+    }
+
+    .preview-header {
+        position: relative;
+        z-index: 1001; /* Aumentado para ficar acima do overlay */
+    }
+    
+    .terms-checkbox-container {
+        display: flex;
+        margin-right: auto;
+        padding-left: 15px;
+        position: relative;
+        z-index: 1002; /* Maior z-index para garantir que o checkbox seja clicável */
+    }
+    
+    .mobile-terms-container {
+        position: relative;
+        z-index: 1001; /* Garantir que a versão mobile também fique acima do overlay */
+    }
+    
+    /* Garantir que o preview-container contenha corretamente o overlay */
+    .preview-container {
+        position: relative; /* Manter isso para que elementos absolutos dentro dele usem ele como referência */
+        overflow: hidden;
     }
     
     .terms-overlay-content {
