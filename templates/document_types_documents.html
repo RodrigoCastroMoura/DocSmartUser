@@ -127,7 +127,7 @@
     <div class="modal-content simple-modal">
       <div class="modal-header">
         <h3>Área de Texto para Assinatura e Rubrica</h3>
-        <button class="action-btn" onclick="hideModal('simpleModal')">
+        <button class="action-btn" onclick="hideModal('simpleModal')" {% if signature is none %}disabled{% endif %}>
           <i data-feather="x"></i>
         </button>
       </div>
@@ -184,7 +184,7 @@
         </div>
       </div>
       <div class="modal-footer">
-        <button class="action-btn" onclick="hideModal('simpleModal')">Cancelar</button>
+        <button class="action-btn" onclick="hideModal('simpleModal')" {% if signature is none %}disabled{% endif %}>Cancelar</button>
         <button class="action-btn primary" onclick="applySignatureOrText()">Aplicar</button>
       </div>
     </div>

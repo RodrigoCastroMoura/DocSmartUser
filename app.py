@@ -384,11 +384,14 @@ def document_type_documents(document_type_id):
         else:
              rubric= user['rubric']
 
-        type_font = None
+        type_font = 'Dancing Script'
         if not user or 'type_font' not in user:
             type_font = 'Dancing Script'
         else:
              type_font= user['type_font']
+
+        if(type_font == None):
+             type_font = 'Dancing Script'
 
         category = categories_response.json()
         name = ''.join(session.get('user', {}).get('name').split())
