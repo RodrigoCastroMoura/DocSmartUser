@@ -413,34 +413,36 @@
         }
 
         const typesHTML = types
-            .map(
-                (type) => `
-        <div class="document-type-card" data-id="${type.id}">
-            <div class="document-type-header">
-                <i data-feather="file"></i>
-                <a href="/document_type/${type.id}/documents" class="document-type-link">
-                    <h3>${type.name}</h3>
-                </a>   
-            </div>
-            <div class="document-type-info">
-                 <div class="department-badge">
-                    <i data-feather="briefcase"></i>
-                    <span>${type.department_name || "No Department"}</span>
+        .map(
+            (type) => `
+            <a href="/document_type/${type.id}/documents" class="document-type-link">
+                <div class="document-type-card" data-id="${type.id}">
+                    <div class="document-type-header">
+                        <i data-feather="file"></i>
+                        <div class="document-type-title">
+                            <h3>${type.name}</h3>
+                        </div>
+                    </div>
+                    <div class="document-type-info">
+                        <div class="department-badge">
+                            <i data-feather="briefcase"></i>
+                            <span>${type.department_name || "No Department"}</span>
+                        </div>
+                        <div class="department-badge">
+                            <i data-feather="grid"></i>
+                            <span>${type.category_name || "No category"}</span>
+                        </div>
+                        <p class="description">${type.description || "No description"}</p>
+                        <p class="meta">
+                            <span>Documents: ${type.document_count || 0}</span>
+                            <span>Created: ${new Date(type.created_at).toLocaleDateString()}</span>
+                        </p>
+                    </div>
                 </div>
-                 <div class="department-badge">
-                    <i data-feather="grid"></i>
-                    <span>${type.category_name || "No category"}</span>
-                </div>
-                <p class="description">${type.description || "No description"}</p>
-                <p class="meta">
-                    <span>Documents: ${type.document_count || 0}</span>
-                    <span>Created: ${new Date(type.created_at).toLocaleDateString()}</span>
-                </p>
-            </div>
-        </div>
-    `,
-            )
-            .join("");
+            </a>
+        `
+        )
+        .join("");
 
         return `<div class="document-types-grid">${typesHTML}</div>`;
     }
@@ -1211,6 +1213,24 @@
             margin: 10px auto;
             padding: 1rem;
         }
+    }
+    .document-type-link {
+    text-decoration: none;
+    color: var(--text-primary);
+    display: block;
+    transition: transform 0.2s;
+    }
+
+    .document-type-link:hover {
+        transform: translateY(-2px);
+    }
+
+    .document-type-link:hover .document-type-card {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .document-type-link .document-type-card {
+        height: 100%;
     }
 </style>
 {% endblock %}
