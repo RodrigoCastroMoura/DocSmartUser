@@ -3,7 +3,6 @@
 // Verificar se já existe um canvas de assinatura modal e inicializá-lo
 let modalSignatureCanvas;
 let modalSignatureContext;
-let currentSelectedFont = 'Dancing Script';
 
 // Estilos de assinatura predefinidos
 const signatureStyles = {
@@ -148,22 +147,6 @@ function loadSavedSignature() {
     console.log("Load saved signature functionality to be implemented");
 }
 
-// Aplicar a assinatura ou texto selecionado ao documento
-function applySignatureOrText() {
-    const signatureText = document.getElementById('signatureText').value;
-   
-    // Gerar a assinatura como imagem
-    const signatureImg = generateTextSignature(signatureText, currentSelectedFont);
-
-    // Aqui você pode implementar a lógica para adicionar a assinatura ao PDF
-    console.log('Assinatura aplicada:', signatureImg);
-
-    // Fechar o modal
-    hideModal('simpleModal');
-
-    addSignature(signatureImg);
-}
-
 // Iniciar eventos quando o DOM estiver carregado
 document.addEventListener('DOMContentLoaded', function() {
     // Adicionar evento para os botões de fonte
@@ -191,7 +174,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Inicializar com a primeira fonte selecionada
-    const firstFontBtn = document.querySelector('.font-btn');
+    const firstFontBtn = document.querySelector(`.font-btn[data-font="${ currentSelectedFont }"]`);
     if (firstFontBtn) {
         firstFontBtn.classList.add('selected');
         currentSelectedFont = firstFontBtn.dataset.font;

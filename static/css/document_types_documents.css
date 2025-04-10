@@ -1094,11 +1094,20 @@
            
         }
         
-        
-        
         /* Ajustar a altura do container de visualização para compensar a nova faixa */
         .preview-container {
             height: calc(100vh - 120px - 38px) !important;
+        }
+
+        .signature-fields-container {
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        #fontPreview, #rubricPreview {
+            font-size: 32px;
+            min-height: 60px;
+            padding: 10px;
         }
 
         
@@ -1194,4 +1203,29 @@
     .mobile-terms-container {
         display: none !important; /* Oculto por padrão em desktop */
     }
-    
+
+    /* Estilos para o container de assinatura e rubrica */
+    .signature-fields-container {
+        display: flex;
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+
+    /* Estilo específico para o preview da rubrica */
+    #rubricPreview {
+        font-size: 42px;
+        padding: 15px;
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        background-color: white;
+        color: black;
+        min-height: 74px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        word-break: break-word;
+        text-align: center;
+        line-height: 1.2;
+        margin-top: 15px;
+    }
+        

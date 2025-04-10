@@ -887,7 +887,7 @@ async function signatureDocument(url, filename, id) {
         closePopup();
     }
 
-    if(!currentSignature)
+    if(currentSignature =="None")
         showSimpleModal();
 }
 
@@ -1027,8 +1027,9 @@ function findClickedField(x, y) {
         );
 }
 
-async function addSignature(signatureData) {
+async function addSignature(signatureData, rubricImg) {
         currentSignature = signatureData;
+        currentRubric = rubricImg;
         try {
             if(signatureData != null){
                 const response = await fetch(`/api/signature`, {
@@ -1037,7 +1038,9 @@ async function addSignature(signatureData) {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        signature : currentSignature
+                        signature : currentSignature,
+                        rubric : currentRubric,
+                        type_font : currentSelectedFont
                     })
                 });
                 if (!response.ok) {
@@ -1055,7 +1058,7 @@ async function placeSignature(event, canvas, field) {
     const ctx = canvas.getContext('2d');
     ctx.clearRect(field.x, field.y, field.width, field.height);
     const img = new Image();
-    img.src = this.currentSignature;
+    img.src = currentSignature;
     img.onload = () => {
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = "high";
@@ -1476,4 +1479,157 @@ document.addEventListener('DOMContentLoaded', function() {
     handleResponsiveLayout();
     
     // Outros inicializadores aqui...
+});
+
+// Função para atualizar o preview da rubrica
+function updateRubricPreview() {
+    const rubricText = document.getElementById('rubricText').value || 'Rubrica';
+    const fontFamily = document.getElementById('fontFamily').value;
+    const rubricPreview = document.getElementById('rubricPreview');
+
+    // Definir a fonte selecionada
+    rubricPreview.style.fontFamily = fontFamily;
+    rubricPreview.textContent = rubricText;
+
+    // Usar fonte um pouco maior para a rubrica para melhor visualização
+    const baseSize = 33; // Tamanho base um pouco menor que a assinatura
+    const textLength = rubricText.length;
+    let fontSize = baseSize;
+
+    // Ajuste de tamanho baseado na quantidade de caracteres
+    if (textLength > 3) {
+        fontSize = baseSize - (textLength - 3) * 2;
+        fontSize = Math.max(fontSize, 30); // Não deixar menor que 30px
+    }
+
+    rubricPreview.style.fontSize = `${fontSize}px`;
+}
+
+// Modificar a função updateSignaturePreview existente para também chamar updateRubricPreview
+function updateSignaturePreview() {
+    const signatureText = document.getElementById('signatureText').value || 'Prévia da Assinatura';
+    const fontFamily = document.getElementById('fontFamily').value;
+    const fontPreview = document.getElementById('fontPreview');
+
+    // Definir a fonte selecionada
+    fontPreview.style.fontFamily = fontFamily;
+    fontPreview.textContent = signatureText;
+
+    // Atualizar o tamanho da fonte dinamicamente com base no tamanho do texto
+    const baseSize = 30; // Tamanho base da fonte
+    const textLength = signatureText.length;
+    let fontSize = baseSize;
+
+    // Ajuste de tamanho baseado na quantidade de caracteres
+    if (textLength > 15) {
+        fontSize = baseSize - (textLength - 15) * 1.5;
+        fontSize = Math.max(fontSize, 26); // Não deixar menor que 36px
+    }
+
+    fontPreview.style.fontSize = `${fontSize}px`;
+
+    // Também atualiza o campo de entrada
+    document.getElementById('signatureText').style.fontFamily = fontFamily;
+    
+    // Atualizar também a rubrica
+    updateRubricPreview();
+}
+
+// Modificar a função applySignatureOrText para incluir a rubrica
+function applySignatureOrText() {
+    const signatureText = document.getElementById('signatureText').value;
+    const rubricText = document.getElementById('rubricText').value;
+   
+    // Gerar a assinatura como imagem
+    const signatureImg = generateTextSignature(signatureText, currentSelectedFont);
+    
+    // Gerar a rubrica como imagem
+    const rubricImg = generateRubricImage(rubricText, currentSelectedFont);
+
+    // Fechar o modal
+    hideModal('simpleModal');
+
+    // Armazenar tanto a assinatura quanto a rubrica
+    currentRubrica = rubricImg;
+    addSignature(signatureImg,rubricImg);
+}
+
+// Função para gerar a imagem da rubrica
+function generateRubricImage(text, font) {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+
+    // Ajustar o tamanho do canvas com base no tamanho do texto
+    const baseWidth = 200; // Menor que a assinatura
+    const textLength = text.length;
+    canvas.width = Math.max(baseWidth, textLength * 25);
+    canvas.height = 80;
+
+    // Limpar o canvas
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    let fontSize = 58; // Um pouco menor que a assinatura
+    if (textLength > 3) {
+        fontSize = Math.max(40, 58 - (textLength - 3) * 2); // Ajustar tamanho para textos mais longos
+    }
+
+    ctx.font = `${fontSize}px "${font}"`;
+    ctx.fillStyle = '#000';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    // Desenhar o texto
+    ctx.fillText(text, canvas.width/2, canvas.height/2);
+
+    // Retornar a imagem como URL de dados
+    return canvas.toDataURL('image/png');
+}
+
+// Adicionar evento para o campo de rubrica quando o DOM estiver carregado
+document.addEventListener('DOMContentLoaded', function() {
+    // Adicionar evento para os botões de fonte (existente no seu código)
+    document.querySelectorAll('.font-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            // Remover seleção anterior
+            document.querySelectorAll('.font-btn').forEach(b => b.classList.remove('selected'));
+
+            // Selecionar a nova fonte
+            this.classList.add('selected');
+
+            // Atualizar a fonte atual
+            currentSelectedFont = this.dataset.font;
+            document.getElementById('fontFamily').value = currentSelectedFont;
+
+            // Atualizar os previews
+            updateSignaturePreview();
+        });
+    });
+
+    // Adicionar evento para o campo de texto da rubrica
+    const rubricText = document.getElementById('rubricText');
+    if (rubricText) {
+        rubricText.addEventListener('input', updateRubricPreview);
+    }
+
+    // Inicializar os previews
+    updateSignaturePreview();
+    updateRubricPreview();
+    
+    // Definir um valor inicial para a rubrica baseado no nome (iniciais)
+    const signatureText = document.getElementById('signatureText').value;
+    if (signatureText && rubricText) {
+        // Pegar as iniciais ou primeiros caracteres
+        let initialValue = "";
+        const nameParts = signatureText.trim().split(' ');
+        if (nameParts.length >= 2) {
+            // Iniciais do primeiro e último nome
+            initialValue = nameParts[0].charAt(0) + nameParts[nameParts.length-1].charAt(0);
+        } else if (nameParts.length === 1) {
+            // Primeiros dois caracteres do nome
+            initialValue = nameParts[0].substring(0, Math.min(2, nameParts[0].length));
+        }
+        rubricText.value = initialValue;
+        updateRubricPreview();
+    }
 });

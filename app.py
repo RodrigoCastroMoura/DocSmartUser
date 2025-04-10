@@ -371,11 +371,24 @@ def document_type_documents(document_type_id):
             flash('User not found', 'error')
             
         user = user_response.json()
+
         signature = None
         if not user or 'signature' not in user:
             signature = None
         else:
              signature= user['signature']
+
+        rubric = None
+        if not user or 'rubric' not in user:
+            rubric = None
+        else:
+             rubric= user['rubric']
+
+        type_font = None
+        if not user or 'type_font' not in user:
+            type_font = 'Dancing Script'
+        else:
+             type_font= user['type_font']
 
         category = categories_response.json()
         name = ''.join(session.get('user', {}).get('name').split())
@@ -385,6 +398,8 @@ def document_type_documents(document_type_id):
                                category=category,
                                name = name,
                                signature = signature,
+                               rubric = rubric,
+                               type_font =type_font,
                                id_doc = session.get('user__id'))
     except requests.Timeout:
         logger.error("Request timed out while fetching department_types")
@@ -594,7 +609,9 @@ def add_signature():
 
         data = request.get_json()
         form_data = {
-            "signature" : data['signature']
+            "signature" : data['signature'],
+            "rubric" : data['rubric'],
+            "type_font" : data['type_font']
         }
         response = requests.post(
             f'{USER_URL}/{session.get('user__id')}/signature',
