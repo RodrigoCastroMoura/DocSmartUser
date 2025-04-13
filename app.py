@@ -614,6 +614,8 @@ def add_signature():
         form_data = {
             "signature" : data['signature'],
             "rubric" : data['rubric'],
+            "signatureDoc" : data['signatureDoc'],
+            "rubricDoc" : data['rubricDoc'],
             "type_font" : data['type_font']
         }
         response = requests.post(

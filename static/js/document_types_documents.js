@@ -911,6 +911,7 @@ async function renderPdfPagesSignature(container, id) {
     container.appendChild(pagesContainer);
     signatureFields = [];
     rubricFields = [];
+    totalSignaturesRequired  = 0;
     
     try {
         if(findSignature == null){
@@ -941,7 +942,7 @@ async function renderPdfPagesSignature(container, id) {
         
         // Verificamos se há área de rubrica definida na API
         if (findSignature && findSignature.resultados[pageNum-1] && 
-            findSignature.resultados[pageNum-1].has_rubric) {
+            !findSignature.resultados[pageNum-1].has_signature) {
             totalSignaturesRequired++;
             pageHasRubricField = true;
         }
@@ -983,14 +984,14 @@ async function renderPdfPageSignature(pageNumber, canvas) {
         
         await page.render(renderContext).promise;
         
-        if(!isIgnature){
-            await this.detectSignatureFields((pageNumber - 1), canvas, viewport);
-        } else {
-            // Se já estiver no modo assinatura, replicamos o comportamento
+        if(signedPages.includes(pageNumber)){
+
+            const { width: pageWidth, height: pageHeight } = viewport;
+
             if (findSignature && findSignature.resultados[pageNumber-1] && 
                 findSignature.resultados[pageNumber-1].has_signature) {
                 rectignature = findSignature.resultados[pageNumber-1].rect;
-                const { width: pageWidth, height: pageHeight } = viewport;
+               
                 const [x0, y0] = viewport.convertToViewportPoint(rectignature.x0, rectignature.y0);
                 const [x1, y1] = viewport.convertToViewportPoint(rectignature.x1, rectignature.y1);
                 
@@ -1012,13 +1013,34 @@ async function renderPdfPageSignature(pageNumber, canvas) {
                 if (signedPages.includes(pageNumber)) {
                     this.placeSignature(null, canvas, field);
                 }
-            } 
-            
-            // Verificar se esta página tem uma área de rubrica
-            const rubricField = this.rubricFields.find(field => field.pageNumber === pageNumber);
-            if (rubricField && signedPages.includes(pageNumber)) {
-                this.placeRubric(null, canvas, rubricField);
+            } else{
+
+                const rubrectangle = findSignature.resultados[pageNumber].rect;
+                const [rx0, ry0] = viewport.convertToViewportPoint(rubrectangle.x0, rubrectangle.y0);
+                const [rx1, ry1] = viewport.convertToViewportPoint(rubrectangle.x1, rubrectangle.y1);
+                
+                const field = {
+                    x: rx0,
+                    y: (viewport.height - ry1) - 6,
+                    width: rx1 - rx0,
+                    height:  (ry1 - ry0) - 10,
+                    type: 'rubric',
+                    pageNumber: pageNumber
+                };
+                
+                field.x = Math.max(this.margins.left, Math.min(field.x, pageWidth - field.width - this.margins.right));
+                field.y = Math.max(this.margins.top, Math.min(field.y, pageHeight - field.height - this.margins.bottom));
+                
+                this.rubricFields.push(field);
+
+                 // Verificar se esta página tem uma área de rubrica
+                if (signedPages.includes(pageNumber)) {
+                    this.placeRubric(null, canvas, field);
+                }
             }
+
+        }else{
+            await this.detectSignatureFields((pageNumber - 1), canvas, viewport);
         }
         
         // Adicionar eventos de clique para assinatura e rubrica
@@ -1030,8 +1052,7 @@ async function renderPdfPageSignature(pageNumber, canvas) {
             // Verificar se clicou em uma área de assinatura
             const signatureField = this.signatureFields.find(field => 
                 field.pageNumber === pageNumber &&
-                x >= field.x && x <= (field.x + field.width) &&
-                y >= field.y && y <= (field.y + field.height)
+                field.type == "signature"
             );
             
             if (signatureField && currentSignature) {
@@ -1055,8 +1076,7 @@ async function renderPdfPageSignature(pageNumber, canvas) {
             // Verificar se clicou em uma área de rubrica
             const rubricField = this.rubricFields.find(field => 
                 field.pageNumber === pageNumber &&
-                x >= field.x && x <= (field.x + field.width) &&
-                y >= field.y && y <= (field.y + field.height)
+                 field.type == "rubric"             
             );
             
             if (rubricField && currentRubrica) {
@@ -1164,15 +1184,15 @@ async function detectSignatureFields(pageNumber, canvas, viewport) {
             const iconFontSize = 10 * zoomLevel;
             const textFontSize = 8 * zoomLevel;
             ctx.font = `${iconFontSize}px Arial`;
-            ctx.fillText('✒️', (field.x * 2) + (25 * zoomLevel), field.y + (field.height / 2));
+            ctx.fillText('✒️', field.x + 25, field.y + (field.height / 2));
             ctx.font = `${textFontSize}px Arial`;
             ctx.fillStyle = '#666';
-            ctx.fillText('Clique para assinar', field.width, field.y + (field.height / 2));
+            ctx.fillText('Clique para assinar', (field.x) + 50, field.y + (field.height / 2));
         } else {
             // Esta página não tem campo de assinatura, então precisamos verificar se há rubrica
             // Verificamos se a API forneceu posicionamento de rubrica para esta página
-            if (findSignature.resultados[pageNumber].has_rubric) {
-                const rubrectangle = findSignature.resultados[pageNumber].rubric_rect;
+            if (!findSignature.resultados[pageNumber].has_signature) {
+                const rubrectangle = findSignature.resultados[pageNumber].rect;
                 const [rx0, ry0] = viewport.convertToViewportPoint(rubrectangle.x0, rubrectangle.y0);
                 const [rx1, ry1] = viewport.convertToViewportPoint(rubrectangle.x1, rubrectangle.y1);
                 
@@ -1204,7 +1224,7 @@ async function detectSignatureFields(pageNumber, canvas, viewport) {
                 ctx.fillText('✓', field.x + 10, field.y + (field.height / 2));
                 ctx.font = `${textFontSize}px Arial`;
                 ctx.fillStyle = '#666';
-                ctx.fillText('Clique para rubricar', field.x + 25, field.y + (field.height / 2));
+                ctx.fillText('rubricar', field.x + 25, field.y + (field.height / 2));
                 ctx.restore();
             } else {
                 // Se não há posicionamento de rubrica vindo da API, verificamos se devemos adicionar rubrica
@@ -1265,7 +1285,7 @@ function findClickedField(x, y) {
     return rubricField;
 }
 
-async function addSignature(signatureData, rubricImg) {
+async function addSignature(signatureData, rubricImg, signatureDataDoc, rubricImgDoc) {
     currentSignature = signatureData;
     currentRubric = rubricImg;
     try {
@@ -1278,6 +1298,8 @@ async function addSignature(signatureData, rubricImg) {
                 body: JSON.stringify({
                     signature : currentSignature,
                     rubric : currentRubric,
+                    signatureDoc : signatureDataDoc,
+                    rubricDoc : rubricImgDoc,
                     type_font : currentSelectedFont
                 })
             });
@@ -1580,7 +1602,7 @@ document.addEventListener('DOMContentLoaded', () => {
 document.head.appendChild(styleElement);
 });
 
-    function isMobileDevice() {
+function isMobileDevice() {
     return (window.innerWidth <= 768);
 }
 
@@ -1812,44 +1834,19 @@ function applySignatureOrText() {
     // Gerar a rubrica como imagem
     const rubricImg = generateRubricImage(rubricText, currentSelectedFont);
 
+    // Gerar a assinatura como imagem
+    const signatureImgDoc = generateTextSignatureDoc(signatureText, currentSelectedFont);
+    
+    // Gerar a rubrica como imagem
+    const rubricImgDoC = generateRubricImageDoc(rubricText, currentSelectedFont);
+
+
     // Fechar o modal
     hideModal('simpleModal');
 
     // Armazenar tanto a assinatura quanto a rubrica
     currentRubrica = rubricImg;
-    addSignature(signatureImg,rubricImg);
-}
-
-// Função para gerar a imagem da rubrica
-function generateRubricImage(text, font) {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-
-    // Ajustar o tamanho do canvas com base no tamanho do texto
-    const baseWidth = 200; // Menor que a assinatura
-    const textLength = text.length;
-    canvas.width = Math.max(baseWidth, textLength * 25);
-    canvas.height = 80;
-
-    // Limpar o canvas
-    ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    let fontSize = 58; // Um pouco menor que a assinatura
-    if (textLength > 3) {
-        fontSize = Math.max(40, 58 - (textLength - 3) * 2); // Ajustar tamanho para textos mais longos
-    }
-
-    ctx.font = `${fontSize}px "${font}"`;
-    ctx.fillStyle = '#000';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-
-    // Desenhar o texto
-    ctx.fillText(text, canvas.width/2, canvas.height/2);
-
-    // Retornar a imagem como URL de dados
-    return canvas.toDataURL('image/png');
+    addSignature(signatureImg, rubricImg, signatureImgDoc, rubricImgDoC);
 }
 
 // Adicionar evento para o campo de rubrica quando o DOM estiver carregado
