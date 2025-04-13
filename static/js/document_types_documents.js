@@ -629,7 +629,7 @@ function get_auth_headers() {
     };
 }
 
-async function previewDocument(url, filename) {
+async function previewDocument(url, filename, id) {
     openPopup();
     const previewTitle = document.getElementById('previewTitle');
     const previewContainer = document.querySelector('.preview-container');
@@ -718,6 +718,15 @@ async function previewDocument(url, filename) {
             docContainer.appendChild(iframeElement);
         }
 
+        try {
+            await fetch(`/api/documents/${id}/view-count`, {
+                method: 'POST',
+                headers: get_auth_headers()
+            });
+        } catch (error) {
+            console.error('Error tracking view count:', error);
+        }
+    
         showModal('previewModal');
         closePopup();
     } catch (error) {

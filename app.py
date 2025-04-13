@@ -601,6 +601,7 @@ def update_document(document_id):
         print(f"Error updating document:", e)
         return jsonify({'error': 'Failed to update document'}), 500
 
+
 @app.route('/api/signature', methods=['POST'])
 @login_required
 def add_signature():
@@ -655,6 +656,7 @@ def track_document_view(document_id):
         print(f"Error tracking document view: {e}")
         return jsonify({'error': 'Failed to track document view'}), 500
 
+
 @app.route('/api/documents/<document_id>/download-count', methods=['POST'])
 @login_required
 def track_document_download(document_id):
@@ -671,6 +673,7 @@ def track_document_download(document_id):
     except Exception as e:
         print(f"Error tracking document download: {e}")
         return jsonify({'error': 'Failed to track document download'}), 500
+
 
 @app.route('/api/pdf-analyzer/<document_id>', methods=['GET', 'POST'])
 @login_required
