@@ -688,10 +688,14 @@ def pdf_analyzer(document_id):
     try: 
 
         method = request.method
+        params = {
+            'find': request.args.get('find', ''),
+        }
         response = requests.request(
             method,
             f'{PDFANALYSER_URL}/document/{document_id}',
             headers=headers,
+            params=params,
             timeout=REQUEST_TIMEOUT
         )
        

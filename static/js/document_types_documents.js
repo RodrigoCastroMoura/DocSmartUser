@@ -454,7 +454,7 @@ async function loadDocuments(page = 1, filters = {}) {
                         </div>
                         <div class="document-actions">
                              ${doc.flow > 1 ? (!doc.signature ? `
-                                <button class="action-btn success" onclick="signatureDocument('${doc.url}', '${doc.name}','${doc.id}')">
+                                <button class="action-btn success" onclick="signatureDocument('${doc.url}', '${doc.name}','${doc.id}','${doc.flow === 2 ? '' : doc.flow_user.length > 1 ? doc.flow_user.find(item => item.user_id === doc.user_id && item.signature === false)?.id : ''}')">
                                 <i data-feather="edit"></i>
                                </button>
                             ` : `
@@ -620,7 +620,6 @@ async function downloadDocument(url, id) {
         showNotification('Failed to download document', 'error');
     }
 }
-
 
 function get_auth_headers() {
     return {
@@ -805,10 +804,10 @@ async function renderPdfPage(pageNumber, canvas) {
 }
 
 
-async function signatureDocument(url, filename, id) {
+async function signatureDocument(url, filename, id, find = '') {
     openPopup();
-    // Track view count
 
+    // Track view count
     try {
         await fetch(`/api/documents/${id}/view-count`, {
             method: 'POST',
@@ -850,16 +849,6 @@ async function signatureDocument(url, filename, id) {
         }
     }
 
-    // Mostrar o overlay de termos
-    if (termsOverlay) {
-        termsOverlay.style.setProperty('display', 'flex', 'important');
-    }
-    
-    // Resetar o estado da caixa de seleção
-    if (termsCheckbox) {
-        termsCheckbox.checked = false;
-    }
-
     zoomSignature = true;
     currentPdf = null;
     findSignature = null;
@@ -896,9 +885,19 @@ async function signatureDocument(url, filename, id) {
             currentPdf = await loadingTask.promise;
             pdfViewerContainer.removeChild(loadingIndicator);
             
-            await renderPdfPagesSignature(pdfViewerContainer, id);
+            await renderPdfPagesSignature(pdfViewerContainer, id, find);
             document.getElementById("openSimpleModalBtn").style.display = 'block';
         } 
+
+        // Mostrar o overlay de termos
+        if (termsOverlay) {
+            termsOverlay.style.setProperty('display', 'flex', 'important');
+        }
+        
+        // Resetar o estado da caixa de seleção
+        if (termsCheckbox) {
+            termsCheckbox.checked = false;
+        }
         
         closePopup();
         showModal('previewModal');
@@ -912,7 +911,7 @@ async function signatureDocument(url, filename, id) {
         showSimpleModal();
 }
 
-async function renderPdfPagesSignature(container, id) {
+async function renderPdfPagesSignature(container, id, find) {
     if (!currentPdf) return;
     const totalPages = currentPdf.numPages;    
     const pagesContainer = document.createElement('div');
@@ -924,7 +923,8 @@ async function renderPdfPagesSignature(container, id) {
     
     try {
         if(findSignature == null){
-            const response = await fetch(`/api/pdf-analyzer/${id}`, {
+            const params = new URLSearchParams({ find: find });
+            const response = await fetch(`/api/pdf-analyzer/${id}?${params.toString()}`, {
                 method: 'GET',
             });
             if (!response.ok) {
