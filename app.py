@@ -415,6 +415,85 @@ def document_type_documents(document_type_id):
         flash('An unexpected error occurred', 'error')
     return redirect(url_for('document_types'))
 
+@app.route('/view_pdf/<document_id>')
+@login_required
+def view_pdf(document_id):
+    headers = get_auth_headers()
+    
+    try:
+        # Obter informações do documento
+        response = requests.get(f"{DOCUMENTS_URL}/{document_id}",
+                                headers=headers,
+                                timeout=REQUEST_TIMEOUT)
+        
+        if not response.ok:
+            logger.error(f"Failed to fetch document: {response.status_code}")
+            flash('Document not found', 'error')
+            return redirect(url_for('document_types'))
+            
+        document = response.json()
+        
+        # Registrar visualização
+        try:
+            requests.post(f"{DOCUMENTS_URL}/{document_id}/view-count",
+                          headers=headers,
+                          timeout=REQUEST_TIMEOUT)
+        except Exception as e:
+            logger.error(f"Failed to track view count: {e}")
+            
+        # Obter informações do usuário
+        user_response = requests.get(f"{USER_URL}/{session.get('user__id')}",
+                                    headers=headers,
+                                    timeout=REQUEST_TIMEOUT)
+        
+        if not user_response.ok:
+            logger.error(f"Failed to fetch user: {user_response.status_code}")
+            flash('User information not available', 'warning')
+            user = {}
+        else:
+            user = user_response.json()
+        
+        # Preparar dados para o template
+        signature = user.get('signature')
+        rubric = user.get('rubric')
+        type_font = user.get('type_font', 'Dancing Script')
+        
+        if type_font is None:
+            type_font = 'Dancing Script'
+            
+        name = ''.join(session.get('user', {}).get('name', '').split())
+        
+        # Determinar se o documento precisa de assinatura
+        need_signature = document.get('flow', 0) > 1 and not document.get('signature', False)
+        
+        # URL para retornar após visualização
+        back_url = request.referrer or url_for('document_types')
+        
+        return render_template('pdf_viewer.html',
+                               document_name=document.get('name', 'Document'),
+                               document_url=document.get('url', ''),
+                               document_id=document_id,
+                               document_type_id=document.get('document_type_id', ''),
+                               need_signature=need_signature,
+                               back_url=back_url,
+                               name=name,
+                               signature=signature,
+                               rubric=rubric,
+                               type_font=type_font,
+                               id_doc=session.get('user__id'))
+                               
+    except requests.Timeout:
+        logger.error("Request timed out while fetching document")
+        flash('Request timed out', 'error')
+    except requests.ConnectionError:
+        logger.error("Connection error while fetching document")
+        flash('Failed to connect to server', 'error')
+    except Exception as e:
+        logger.error(f"Unexpected error in view_pdf: {e}")
+        flash('An unexpected error occurred', 'error')
+        
+    return redirect(url_for('document_types'))
+
 
 @app.route('/api/documents')
 @login_required

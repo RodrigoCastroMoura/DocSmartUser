@@ -1,0 +1,159 @@
+
+{% extends "base.html" %}
+
+{% block content %}
+<div class="pdf-viewer-page">
+    <div class="header-title">
+        <a href="{{ back_url }}" class="back-link">
+            <i data-feather="arrow-left"></i>
+            Voltar
+        </a>
+    </div>
+    <div class="viewer-container">
+        <div class="preview-header">
+            <!-- Versão desktop do checkbox -->
+            <div class="terms-checkbox-container" id="termsCheckboxContainer">
+                <label class="terms-checkbox-label">
+                    <input type="checkbox" id="termsCheckbox" onchange="toggleTermsAgreement()">
+                    <span>Concordo com os termos do documento</span>
+                </label>
+            </div>
+            <div class="preview-title-container">
+                <h3 id="previewTitle">{{ document_name }}</h3>
+            </div>
+            <div class="preview-controls-group">
+                <div class="zoom-controls">
+                    <button class="action-btn" onclick="adjustZoom(-0.2)" title="Reduzir">
+                        <i data-feather="zoom-out"></i>
+                    </button>
+                    <span id="zoomLevel">100%</span>
+                    <button class="action-btn" onclick="adjustZoom(0.2)" title="Ampliar">
+                        <i data-feather="zoom-in"></i>
+                    </button>
+                    <button class="action-btn" onclick="printDocument()" title="Imprimir">
+                        <i data-feather="printer"></i>
+                    </button>
+                    <button id="openSimpleModalBtn" class="action-btn" onclick="showSimpleModal()" title="Assinar" style="display: none;">
+                        <i data-feather="pen-tool"></i>
+                    </button>
+                    <button id="saveSignedDocBtn" class="action-btn primary" onclick="saveSignedDocument(currentDocumentId)" title="Salvar" disabled>
+                        <i data-feather="save"></i>
+                    </button>
+                    <button class="action-btn" onclick="window.location.href='{{ back_url }}'" title="Fechar">
+                        <i data-feather="x"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- Nova faixa abaixo do header para termos em dispositivos móveis -->
+        <div class="mobile-terms-container">
+            <label class="terms-checkbox-label">
+                <input type="checkbox" id="mobileTermsCheckbox" onchange="syncCheckboxes(this, 'termsCheckbox')">
+                <span>Concordo com os termos do documento</span>
+            </label>
+        </div>
+        <div class="preview-container">
+            <div id="pdfViewerContainer" class="pdf-viewer-container">
+                <!-- O conteúdo do PDF será carregado aqui dinamicamente -->
+            </div>
+        </div>
+        <div id="termsOverlay" class="terms-overlay"></div>
+    </div>
+</div>
+
+<!-- Modal Simples para PDF -->
+<div id="simpleModal" class="modal">
+    <div class="modal-content simple-modal">
+      <div class="modal-header">
+        <h3>Área de Texto para Assinatura e Rubrica</h3>
+        <button class="action-btn" onclick="hideModal('simpleModal')" {% if signature is none %}disabled{% endif %}>
+          <i data-feather="x"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="tabs-container">
+          <div class="tab-content">
+            <div id="text-tab" class="tab-pane active">
+              <div class="signature-fields-container">
+                <!-- Área de assinatura -->
+                <div class="form-group" style="flex: 2;">
+                  <label for="signatureText">Sua assinatura:</label>
+                  <input type="text" id="signatureText" class="form-control" style="display:none;" value="{{name}}">
+                  <div id="fontPreview" class="font-preview">Prévia da Assinatura</div>
+                </div>
+                <!-- Nova área de rubrica -->
+                <div class="form-group" style="flex: 1;">
+                  <label for="rubricText">Sua rubrica:</label>
+                  <input type="text" id="rubricText" class="form-control" oninput="updateRubricPreview()" value="{{name|truncate(2, True, '')}}" style="display:none;">
+                  <div id="rubricPreview" class="font-preview" style="font-size: 28px;">Rubrica</div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Escolha a fonte para ambos:</label>
+                <div class="font-buttons-container">
+                  <div class="font-btn" data-font="Dancing Script">
+                    <span style="font-family: 'Dancing Script'">Dancing Script</span>
+                  </div>
+                  <div class="font-btn" data-font="Great Vibes">
+                    <span style="font-family: 'Great Vibes'">Great Vibes</span>
+                  </div>
+                  <div class="font-btn" data-font="Allura">
+                    <span style="font-family: 'Allura'">Allura</span>
+                  </div>
+                  <div class="font-btn" data-font="Alex Brush">
+                    <span style="font-family: 'Alex Brush'">Alex Brush</span>
+                  </div>
+                  <div class="font-btn" data-font="Sacramento">
+                    <span style="font-family: 'Sacramento'">Sacramento</span>
+                  </div>
+                  <div class="font-btn" data-font="Tangerine">
+                    <span style="font-family: 'Tangerine'">Tangerine</span>
+                  </div>
+                  <div class="font-btn" data-font="Yellowtail">
+                    <span style="font-family: 'Yellowtail'">Yellowtail</span>
+                  </div>
+                  <div class="font-btn" data-font="Mr De Haviland">
+                    <span style="font-family: 'Mr De Haviland'">Mr De Haviland</span>
+                  </div>
+                </div>
+                <input type="hidden" id="fontFamily" value="Dancing Script">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="action-btn" onclick="hideModal('simpleModal')" {% if signature is none %}disabled{% endif %}>Cancelar</button>
+        <button class="action-btn primary" onclick="applySignatureOrText()">Aplicar</button>
+      </div>
+    </div>
+</div>
+
+<div id="signatures-container" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; pointer-events: none;"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.0.3/dist/tesseract.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<!-- Importação de fontes do Google para assinaturas -->
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script&family=Great+Vibes&family=Pacifico&family=Allura&family=Alex+Brush&family=Sacramento&family=Tangerine&family=Yellowtail&family=Homemade+Apple&family=Mr+De+Haviland&family=Rouge+Script&family=Pinyon+Script&family=Petit+Formal+Script&family=Playball&family=Lovers+Quarrel&family=Monsieur+La+Doulaise&family=Herr+Von+Muellerhoff&family=Miss+Fajardose&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pdf_viewer.css') }}">
+<script src="{{ url_for('static', filename='js/signature-modal.js') }}"></script>
+<script>
+    let currentSignature = "{{signature}}";
+    let currentSelectedFont = "{{type_font}}";
+    let currentRubrica = "{{rubric}}";
+    let currentDocumentId = "{{document_id}}";
+    let pdfUrl = "{{document_url}}";
+    let id_doc = "{{id_doc}}";
+    let document_type_id = "{{document_type_id}}";
+    let needSignature = {{ need_signature|tojson }};
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        initPdfViewer();
+        if (needSignature) {
+            document.getElementById("openSimpleModalBtn").style.display = 'block';
+        }
+    });
+</script>
+<script src="{{ url_for('static', filename='js/pdf_viewer.js') }}"></script>
+{% endblock %}
