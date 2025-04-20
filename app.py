@@ -788,6 +788,11 @@ def pdf_analyzer(document_id):
         print(f"Error creating document: {e}")
         return jsonify({'error': 'An unexpected error occurred'}), 500  
 
+@app.route('/token-expired')
+def token_expired():
+    """Rota para página de token expirado ou utilizado"""
+    return render_template('token_expired.html')  
+
 if __name__ == "__main__":
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
     port = int(os.environ.get('PORT', 3000))
