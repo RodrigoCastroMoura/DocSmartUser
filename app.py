@@ -30,7 +30,7 @@ ALLOWED_EXTENSIONS = {
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # API endpoints
-API_BASE_URL = "https://doc-smart-api-rodrigocastromo.replit.app/api"
+API_BASE_URL = "http://127.0.0.1:8000/api"
 LOGIN_URL = f"{API_BASE_URL}/auth/login"
 LOGOUT_URL = f"{API_BASE_URL}/auth/logout"
 REFRESH_URL = f"{API_BASE_URL}/auth/refresh"
@@ -443,8 +443,16 @@ def view_pdf(token):
             flash('Document not found', 'error')
             return redirect(url_for('token_expired'))
         
-        resource_id = token_response.json()
-        document_id =  resource_id.get('resource_id')
+        data = token_response.json()
+        session.permanent = True
+        session['access_token'] = data['access_token']
+        session['refresh_token'] = data['refresh_token']
+        session['user'] = data['user']
+        session['company_id'] = data['user'].get('company_id')
+        session['user__id'] = data['user'].get('id')
+        session['token_expiry'] = time.time(
+        ) + 3600  # Set token expiry to 1 hour
+        document_id =  data['user'].get('document_id')
 
         # Obter informações do documento
         response = requests.get(f"{DOCUMENTS_URL}/{document_id}/user",

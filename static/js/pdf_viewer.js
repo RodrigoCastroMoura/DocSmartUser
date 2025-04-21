@@ -116,12 +116,12 @@ async function renderPdfPages() {
     // Inicializar contadores para assinaturas
     signatureFields = [];
     rubricFields = [];
-    totalSignaturesRequired = 0;
+
 
     // Verificar se precisamos carregar posições de assinatura
-    if (needSignature && currentDocumentId) {
-        await loadSignaturePositions(currentDocumentId);
-    }
+    //if (needSignature && currentDocumentId) {
+    await loadSignaturePositions(currentDocumentId);
+    //}
 
     // Renderizar cada página
     const totalPages = currentPdf.numPages;
@@ -138,11 +138,11 @@ async function renderPdfPages() {
         pageContainer.appendChild(pageCanvas);
 
         // Renderizar a página
-        if (needSignature) {
+       // if (needSignature) {
             await renderPdfPageWithSignature(pageNum, pageCanvas);
-        } else {
-            await renderPdfPage(pageNum, pageCanvas);
-        }
+        //} else {
+            //await renderPdfPage(pageNum, pageCanvas);
+        //}
 
         // Adicionar número da página se houver mais de uma
         if (totalPages > 1) {
@@ -232,10 +232,10 @@ async function renderPdfPageWithSignature(pageNumber, canvas) {
 
                 // Colocar a assinatura
                 placeSignature(null, canvas, field);
-            } else if (findSignature && findSignature.resultados[pageNumber] && 
-                      !findSignature.resultados[pageNumber].has_signature) {
+            } else if (findSignature && findSignature.resultados[pageNumber-1] && 
+                      !findSignature.resultados[pageNumber-1].has_signature) {
                 // Colocar rubrica
-                const rubrectangle = findSignature.resultados[pageNumber].rect;
+                const rubrectangle = findSignature.resultados[pageNumber-1].rect;
                 const [rx0, ry0] = viewport.convertToViewportPoint(rubrectangle.x0, rubrectangle.y0);
                 const [rx1, ry1] = viewport.convertToViewportPoint(rubrectangle.x1, rubrectangle.y1);
 
@@ -269,9 +269,7 @@ async function renderPdfPageWithSignature(pageNumber, canvas) {
             // Verificar se clicou em área de assinatura
             const signatureField = signatureFields.find(field => 
                 field.pageNumber === pageNumber &&
-                field.type === "signature" &&
-                x >= field.x && x <= (field.x + field.width) &&
-                y >= field.y && y <= (field.y + field.height)
+                field.type === "signature" 
             );
 
             if (signatureField && currentSignature) {
@@ -295,9 +293,7 @@ async function renderPdfPageWithSignature(pageNumber, canvas) {
             // Verificar se clicou em área de rubrica
             const rubricField = rubricFields.find(field => 
                 field.pageNumber === pageNumber &&
-                field.type === "rubric" &&
-                x >= field.x && x <= (field.x + field.width) &&
-                y >= field.y && y <= (field.y + field.height)
+                 field.type == "rubric"             
             );
 
             if (rubricField && currentRubrica) {
@@ -329,27 +325,15 @@ async function renderPdfPageWithSignature(pageNumber, canvas) {
 async function loadSignaturePositions(documentId) {
     try {
         if (findSignature === null) {
-            const response = await fetch(`/api/pdf-analyzer/${documentId}`, {
+            const params = new URLSearchParams({ find: find });
+            const response = await fetch(`/api/pdf-analyzer/${documentId}?${params.toString()}`, {
                 method: 'GET',
-                headers: {
-                    'Accept': 'application/json'
-                }
             });
 
             if (!response.ok) {
-                // Tenta verificar o tipo de conteúdo da resposta
-                const contentType = response.headers.get('content-type');
-                if (contentType && contentType.includes('application/json')) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || 'Erro desconhecido do servidor');
-                } else {
-                    // Se não for JSON, lê como texto para diagnóstico
-                    const textResponse = await response.text();
-                    console.error('Resposta não-JSON recebida:', textResponse.substring(0, 200) + '...');
-                    throw new Error(`Erro ao comunicar com o servidor: ${response.status} ${response.statusText}`);
-                }
-            }
-
+                const errorData = await response.json();
+                throw new Error(errorData.error);
+            } 
             const responseText = await response.text();
             try {
                 findSignature = JSON.parse(responseText);

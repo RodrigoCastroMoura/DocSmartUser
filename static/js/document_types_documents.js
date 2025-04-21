@@ -629,16 +629,6 @@ function get_auth_headers() {
 }
 
 async function previewDocument(url, filename, id) {
-    // Redirecionar para a página dedicada de visualização de PDF
-    const fileType = filename.split('.').pop().toLowerCase();
-    
-    if (fileType === 'pdf') {
-        // Usar a nova página de visualização para PDFs
-        window.location.href = `/view_pdf/${id}`;
-        return;
-    }
-    
-    // Continuar com a visualização integrada para outros tipos de arquivo
     openPopup();
     const previewTitle = document.getElementById('previewTitle');
     const previewContainer = document.querySelector('.preview-container');
@@ -672,9 +662,33 @@ async function previewDocument(url, filename, id) {
     }
     
     previewTitle.textContent = filename;
+    const fileType = filename.split('.').pop().toLowerCase();
 
     try {
-        if (['jpg', 'jpeg', 'png', 'gif'].includes(fileType)) {
+        if (fileType === 'pdf') {
+            // Create PDF viewer container
+            const pdfViewerContainer = document.createElement('div');
+            pdfViewerContainer.className = 'pdf-viewer-container';
+            previewContainer.appendChild(pdfViewerContainer);
+            
+            // Show loading indicator
+            const loadingIndicator = document.createElement('div');
+            loadingIndicator.className = 'pdf-loading';
+            loadingIndicator.innerHTML = '<div class="loading-spinner"></div><p>Loading PDF...</p>';
+            pdfViewerContainer.appendChild(loadingIndicator);
+            
+            // Load the PDF
+            const proxyUrl = `/proxy/storage/${url.replace('https://storage.googleapis.com/', '')}`;
+            const loadingTask = pdfjsLib.getDocument(proxyUrl);
+            currentPdf = await loadingTask.promise;
+            
+            // Remove loading indicator
+            pdfViewerContainer.removeChild(loadingIndicator);
+            
+            // Render all pages in the viewer
+            await renderPdfPages(pdfViewerContainer);
+            
+        } else if (['jpg', 'jpeg', 'png', 'gif'].includes(fileType)) {
             // Create image container
             const imgContainer = document.createElement('div');
             imgContainer.className = 'image-container';
@@ -791,8 +805,110 @@ async function renderPdfPage(pageNumber, canvas) {
 
 
 async function signatureDocument(url, filename, id, find = '') {
-    // Redirecionar para a página dedicada de visualização de PDF com parâmetro para assinatura
-    window.location.href = `/view_pdf/${id}`;
+    openPopup();
+
+    // Track view count
+    try {
+        await fetch(`/api/documents/${id}/view-count`, {
+            method: 'POST',
+            headers: get_auth_headers()
+        });
+    } catch (error) {
+        console.error('Error tracking view count:', error);
+    }
+
+    const previewTitle = document.getElementById('previewTitle');
+    const previewContainer = document.querySelector('.preview-container');
+    const zoomLevelSpan = document.getElementById('zoomLevel');
+    const termsCheckbox = document.getElementById('termsCheckbox');
+    const mobileTermsContainers = document.getElementsByClassName('mobile-terms-container');
+    const termsOverlay = document.getElementById('termsOverlay');
+    const termsCheckboxContainer = document.getElementById('termsCheckboxContainer');
+    
+    // Resetar contadores de assinatura
+    completedSignatures = 0;
+    totalSignaturesRequired = 0;
+    pendingRubrics = [];
+    signedPages = [];
+    
+    if(isMobileDevice()) {
+        if (mobileTermsContainers.length > 0) {
+            mobileTermsContainers[0].style.setProperty('display', 'flex', 'important');
+        }
+        
+        if(termsCheckboxContainer){
+            termsCheckboxContainer.style.setProperty('display', 'none', 'important');
+        }
+    } else {
+        if(termsCheckboxContainer){
+            termsCheckboxContainer.style.setProperty('display', 'flex', 'important');
+        }
+
+        if (mobileTermsContainers.length > 0) {
+            mobileTermsContainers[0].style.setProperty('display', 'none', 'important');
+        }
+    }
+
+    zoomSignature = true;
+    currentPdf = null;
+    findSignature = null;
+    rectignature = null;
+    isIgnature = false;
+    currentDocumentId = id;
+    zoomLevel = getInitialZoomLevel();
+    zoomLevelSpan.textContent = `${(zoomLevel * 100).toFixed(0)}%`;
+    
+    while (previewContainer.firstChild) {
+        previewContainer.removeChild(previewContainer.firstChild);
+    }
+    
+    previewTitle.textContent = filename;
+    const fileType = filename.split('.').pop().toLowerCase();
+    
+    try {
+        if (fileType === 'pdf') {
+            document.getElementById('previewTitle').style.display = 'block';
+            document.getElementById('previewTitle').disabled = true;
+            document.getElementById('saveSignedDocBtn').disabled = true;
+            
+            const pdfViewerContainer = document.createElement('div');
+            pdfViewerContainer.className = 'pdf-viewer-container';
+            previewContainer.appendChild(pdfViewerContainer);
+            
+            const loadingIndicator = document.createElement('div');
+            loadingIndicator.className = 'pdf-loading';
+            loadingIndicator.innerHTML = '<div class="loading-spinner"></div><p>Loading PDF...</p>';
+            pdfViewerContainer.appendChild(loadingIndicator);
+            
+            const proxyUrl = `/proxy/storage/${url.replace('https://storage.googleapis.com/', '')}`;
+            const loadingTask = pdfjsLib.getDocument(proxyUrl);
+            currentPdf = await loadingTask.promise;
+            pdfViewerContainer.removeChild(loadingIndicator);
+            
+            await renderPdfPagesSignature(pdfViewerContainer, id, find);
+            document.getElementById("openSimpleModalBtn").style.display = 'block';
+        } 
+
+        // Mostrar o overlay de termos
+        if (termsOverlay) {
+            termsOverlay.style.setProperty('display', 'flex', 'important');
+        }
+        
+        // Resetar o estado da caixa de seleção
+        if (termsCheckbox) {
+            termsCheckbox.checked = false;
+        }
+        
+        closePopup();
+        showModal('previewModal');
+    } catch (error) {
+        console.error('Error previewing document:', error);
+        showNotification('Failed to preview document', 'error');
+        closePopup();
+    }
+
+    if(currentSignature == "None")
+        showSimpleModal();
 }
 
 async function renderPdfPagesSignature(container, id, find) {
@@ -908,7 +1024,7 @@ async function renderPdfPageSignature(pageNumber, canvas) {
                 }
             } else{
 
-                const rubrectangle = findSignature.resultados[pageNumber].rect;
+                const rubrectangle = findSignature.resultados[pageNumbe-1].rect;
                 const [rx0, ry0] = viewport.convertToViewportPoint(rubrectangle.x0, rubrectangle.y0);
                 const [rx1, ry1] = viewport.convertToViewportPoint(rubrectangle.x1, rubrectangle.y1);
                 

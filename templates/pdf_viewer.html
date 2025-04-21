@@ -136,13 +136,12 @@
     let pdfUrl = "{{document_url}}";
     let id_doc = "{{id_doc}}";
     let document_type_id = "{{document_type_id}}";
-    let needSignature = {{ need_signature|tojson }};
     
     document.addEventListener('DOMContentLoaded', function() {
         initPdfViewer();
-        if (needSignature) {
-            document.getElementById("openSimpleModalBtn").style.display = 'block';
-        }
+       
+          document.getElementById("openSimpleModalBtn").style.display = 'block';
+        
     });
 </script>
 <script src="{{ url_for('static', filename='js/pdf_viewer.js') }}"></script>
