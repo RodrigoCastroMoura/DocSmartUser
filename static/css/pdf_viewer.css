@@ -55,7 +55,7 @@
     justify-content: center;
     overflow: hidden;
     width: 100%;
-    height: calc(100vh - 120px);
+    height: calc(100vh - 60px);
 }
 
 /* PDF viewer styling */

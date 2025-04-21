@@ -3,23 +3,13 @@
 
 {% block content %}
 <div class="pdf-viewer-page">
-    <div class="header-title">
-        <a href="{{ back_url }}" class="back-link">
-            <i data-feather="arrow-left"></i>
-            Voltar
-        </a>
-    </div>
     <div class="viewer-container">
         <div class="preview-header">
-            <!-- Versão desktop do checkbox -->
             <div class="terms-checkbox-container" id="termsCheckboxContainer">
                 <label class="terms-checkbox-label">
                     <input type="checkbox" id="termsCheckbox" onchange="toggleTermsAgreement()">
                     <span>Concordo com os termos do documento</span>
                 </label>
-            </div>
-            <div class="preview-title-container">
-                <h3 id="previewTitle">{{ document_name }}</h3>
             </div>
             <div class="preview-controls-group">
                 <div class="zoom-controls">
@@ -39,7 +29,7 @@
                     <button id="saveSignedDocBtn" class="action-btn primary" onclick="saveSignedDocument(currentDocumentId)" title="Salvar" disabled>
                         <i data-feather="save"></i>
                     </button>
-                    <button class="action-btn" onclick="window.location.href='{{ back_url }}'" title="Fechar">
+                    <button class="action-btn" onclick="window.close()" title="Fechar">
                         <i data-feather="x"></i>
                     </button>
                 </div>
