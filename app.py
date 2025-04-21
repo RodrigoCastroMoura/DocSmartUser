@@ -38,9 +38,10 @@ REFRESH_URL = f"{API_BASE_URL}/auth/refresh"
 # CRUD endpoints
 CATEGORIES_URL = f"{API_BASE_URL}/categories"
 DOCUMENTS_URL = f"{API_BASE_URL}/documents"
-DOCUMENT_TYPES_URL = f"{API_BASE_URL}/document_types"
+DOCUMENT_TYPES_URL = f"{API_BASE_URL}/document-types"
 PDFANALYSER_URL = f"{API_BASE_URL}/pdf-analyzer"
 USER_URL = f"{API_BASE_URL}/users"
+LINKS_URL = f"{API_BASE_URL}/links"
 
 # Request timeout in seconds
 REQUEST_TIMEOUT = 30  # Increased timeout for better reliability
@@ -110,6 +111,17 @@ def login_required(f):
 def get_auth_headers():
     """Get authentication headers with proper error handling"""
     token = session.get('access_token')
+    if not token:
+        raise ValueError('No access token found')
+
+    return {
+        'Authorization': f'Bearer {token}',
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+    }
+
+def get_auth_headers_parm(token):
+    """Get authentication headers with proper error handling"""
     if not token:
         raise ValueError('No access token found')
 
@@ -415,21 +427,34 @@ def document_type_documents(document_type_id):
         flash('An unexpected error occurred', 'error')
     return redirect(url_for('document_types'))
 
-@app.route('/view_pdf/<document_id>')
-@login_required
-def view_pdf(document_id):
-    headers = get_auth_headers()
+
+@app.route('/view_pdf/<token>')
+def view_pdf(token):
+    headers = get_auth_headers_parm(token)
     
     try:
+        # Obter informações do token
+        token_response = requests.get(f"{LINKS_URL}/validate/{token}",
+                                headers=headers,
+                                timeout=REQUEST_TIMEOUT)
+        
+        if not token_response.ok:
+            logger.error(f"Failed to fetch document: {response.status_code}")
+            flash('Document not found', 'error')
+            return redirect(url_for('token_expired'))
+        
+        resource_id = token_response.json()
+        document_id =  resource_id.get('resource_id')
+
         # Obter informações do documento
-        response = requests.get(f"{DOCUMENTS_URL}/{document_id}",
+        response = requests.get(f"{DOCUMENTS_URL}/{document_id}/user",
                                 headers=headers,
                                 timeout=REQUEST_TIMEOUT)
         
         if not response.ok:
             logger.error(f"Failed to fetch document: {response.status_code}")
             flash('Document not found', 'error')
-            return redirect(url_for('document_types'))
+            return redirect(url_for('token_expired'))
             
         document = response.json()
         
@@ -492,8 +517,12 @@ def view_pdf(document_id):
         logger.error(f"Unexpected error in view_pdf: {e}")
         flash('An unexpected error occurred', 'error')
         
-    return redirect(url_for('document_types'))
+    return redirect(url_for('token_expired'))
 
+@app.route('/token-expired')
+def token_expired():
+    """Rota para página de token expirado ou utilizado"""
+    return render_template('token_expired.html')  
 
 @app.route('/api/documents')
 @login_required
@@ -788,10 +817,6 @@ def pdf_analyzer(document_id):
         print(f"Error creating document: {e}")
         return jsonify({'error': 'An unexpected error occurred'}), 500  
 
-@app.route('/token-expired')
-def token_expired():
-    """Rota para página de token expirado ou utilizado"""
-    return render_template('token_expired.html')  
 
 if __name__ == "__main__":
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
