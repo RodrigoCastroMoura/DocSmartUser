@@ -19,11 +19,38 @@ let completedSignatures = 0;
 // Inicializar o visualizador de PDF
 async function initPdfViewer() {
     const container = document.getElementById('pdfViewerContainer');
+    
+    if (!container) {
+        console.error('Container de visualização PDF não encontrado');
+        return;
+    }
+    
     showLoading(container);
 
     try {
+        // Verificar se temos uma URL válida
+        if (!pdfUrl) {
+            throw new Error('URL do PDF não informada');
+        }
+        
         await loadPdf(pdfUrl);
         hideLoading(container);
+        
+        // Inicializar eventos responsivos
+        handleResponsiveLayout();
+        
+        // Verificar concordância com termos
+        const termsOverlay = document.getElementById('termsOverlay');
+        if (termsOverlay) {
+            const termsCheckbox = document.getElementById('termsCheckbox');
+            const mobileTermsCheckbox = document.getElementById('mobileTermsCheckbox');
+            
+            // Se algum checkbox estiver marcado, esconder o overlay
+            if ((termsCheckbox && termsCheckbox.checked) || 
+                (mobileTermsCheckbox && mobileTermsCheckbox.checked)) {
+                toggleTermsAgreement();
+            }
+        }
     } catch (error) {
         console.error('Error loading PDF:', error);
         container.innerHTML = `
@@ -34,11 +61,16 @@ async function initPdfViewer() {
         `;
         feather.replace();
         hideLoading(container);
+        showNotification(`Erro ao carregar o PDF: ${error.message}`, 'error');
     }
 }
 
 // Função para mostrar indicador de carregamento
 function showLoading(container) {
+    if (!container) return;
+    // Verificar se já existe um indicador de carregamento
+    if (container.querySelector('.pdf-loading')) return;
+    
     const loadingIndicator = document.createElement('div');
     loadingIndicator.className = 'pdf-loading';
     loadingIndicator.innerHTML = '<div class="loading-spinner"></div><p>Carregando PDF...</p>';
@@ -47,6 +79,7 @@ function showLoading(container) {
 
 // Função para esconder indicador de carregamento
 function hideLoading(container) {
+    if (!container) return;
     const loadingIndicator = container.querySelector('.pdf-loading');
     if (loadingIndicator) {
         container.removeChild(loadingIndicator);
@@ -649,17 +682,32 @@ async function saveSignedDocument(documentId) {
         openPopup();
         const response = await fetch(`/api/pdf-analyzer/${documentId}`, {
             method: 'POST',
+            headers: {
+                'Accept': 'application/json'
+            }
         });
 
         if (!response.ok) {
-            throw new Error('Falha ao salvar documento assinado');
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Falha ao salvar documento assinado');
+            } else {
+                throw new Error('Falha ao salvar documento assinado');
+            }
         }
 
         showNotification('Documento assinado salvo com sucesso!', 'success');
         closePopup();
 
-        // Redirecionar para a lista de documentos após salvar
-        window.location.href = document.querySelector('.back-link').getAttribute('href');
+        // Se existir um elemento back-link, usá-lo para redirecionamento
+        const backLink = document.querySelector('.back-link');
+        if (backLink) {
+            window.location.href = backLink.getAttribute('href');
+        } else {
+            // Caso contrário, redirecionar para a rota padrão
+            window.location.href = `/document_type/${document_type_id}/documents`;
+        }
     } catch (error) {
         console.error('Erro ao salvar documento assinado:', error);
         showNotification('Erro ao salvar o documento assinado: ' + error.message, 'error');
@@ -706,40 +754,53 @@ function toggleTermsAgreement() {
     const overlay = document.getElementById('termsOverlay');
     const checkbox = document.getElementById('termsCheckbox');
     const mobileCheckbox = document.getElementById('mobileTermsCheckbox');
-
-    // Sincronizar os checkboxes
+    
+    // Sincronizar a caixa de seleção móvel com a desktop
     if (checkbox && mobileCheckbox) {
         if (checkbox.checked !== undefined) mobileCheckbox.checked = checkbox.checked;
         else if (mobileCheckbox.checked !== undefined) checkbox.checked = mobileCheckbox.checked;
     }
-
+    
     // Atualizar overlay
     const isChecked = (checkbox && checkbox.checked) || (mobileCheckbox && mobileCheckbox.checked);
-
+    
     if (isChecked) {
         if (overlay) {
+            // Esconder o overlay com fade out
             overlay.style.opacity = '0';
-            // Manter pointer-events: none para garantir que o elemento não bloqueie cliques
+            overlay.style.pointerEvents = 'none';
             setTimeout(() => {
                 if (overlay) overlay.style.display = 'none';
-            }, 300);
+            }, 300); // Duração da transição
         }
+        
+        // Habilitar botões
         const signBtn = document.getElementById('openSimpleModalBtn');
         const saveBtn = document.getElementById('saveSignedDocBtn');
         if (signBtn) signBtn.removeAttribute('disabled');
-        if (saveBtn) saveBtn.removeAttribute('disabled');
+        if (saveBtn && completedSignatures >= totalSignaturesRequired) {
+            saveBtn.removeAttribute('disabled');
+        }
     } else {
         if (overlay) {
+            // Mostrar o overlay
             overlay.style.display = 'flex';
+            overlay.style.pointerEvents = 'auto';
+            // Pequeno delay para garantir que o display:flex seja aplicado antes da transição
             setTimeout(() => {
                 if (overlay) overlay.style.opacity = '1';
             }, 10);
         }
+        
+        // Desabilitar botões
         const signBtn = document.getElementById('openSimpleModalBtn');
         const saveBtn = document.getElementById('saveSignedDocBtn');
         if (signBtn) signBtn.setAttribute('disabled', 'disabled');
         if (saveBtn) saveBtn.setAttribute('disabled', 'disabled');
     }
+    
+    // Verificar se é mobile e ajustar layout
+    handleResponsiveLayout();
 }
 
 // Função para sincronizar as caixas de seleção (mobile e desktop)
@@ -801,17 +862,57 @@ function isMobileDevice() {
 
 // Mostrar notificação
 function showNotification(message, type = 'info') {
-    // Implementar se necessário ou utilizar sistema de notificação existente
+    // Remover notificações antigas
+    const existingNotifications = document.querySelectorAll('.notification');
+    existingNotifications.forEach(notif => {
+        document.body.removeChild(notif);
+    });
+    
+    // Criar elemento de notificação
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.innerHTML = `
+        <div class="notification-content">
+            <i data-feather="${type === 'success' ? 'check-circle' : type === 'error' ? 'alert-circle' : 'info'}"></i>
+            <span>${message}</span>
+        </div>
+        <button class="notification-close" onclick="this.parentElement.remove()">
+            <i data-feather="x"></i>
+        </button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    // Inicializar ícones Feather
+    if (typeof feather !== 'undefined') {
+        feather.replace();
+    }
+    
+    // Auto remover após 5 segundos
+    setTimeout(() => {
+        if (document.body.contains(notification)) {
+            notification.classList.add('fade-out');
+            setTimeout(() => {
+                if (document.body.contains(notification)) {
+                    document.body.removeChild(notification);
+                }
+            }, 300);
+        }
+    }, 5000);
+    
     console.log(`[${type}] ${message}`);
 }
 
 // Abrir e fechar popup de carregamento
-function openPopup() {
+function openPopup(message = 'Processando...') {
+    // Remover qualquer popup existente primeiro
+    closePopup();
+    
     const popup = document.createElement('div');
     popup.className = 'loading-popup';
     popup.innerHTML = `
         <div class="loading-spinner"></div>
-        <p>Processando...</p>
+        <p>${message}</p>
     `;
     document.body.appendChild(popup);
     document.body.style.overflow = 'hidden';
@@ -820,14 +921,20 @@ function openPopup() {
 function closePopup() {
     const popup = document.querySelector('.loading-popup');
     if (popup) {
-        document.body.removeChild(popup);
-        document.body.style.overflow = '';
+        // Aplicar animação de fade-out
+        popup.style.opacity = '0';
+        setTimeout(() => {
+            if (document.body.contains(popup)) {
+                document.body.removeChild(popup);
+                document.body.style.overflow = '';
+            }
+        }, 300);
     }
 }
 
 // Adicionar estilos necessários ao carregar a página
 document.addEventListener('DOMContentLoaded', function() {
-    // Adicionar estilos para popup de carregamento
+    // Adicionar estilos para popup de carregamento e notificações
     const styleElement = document.createElement('style');
     styleElement.textContent = `
         .loading-popup {
@@ -848,31 +955,96 @@ document.addEventListener('DOMContentLoaded', function() {
             color: white;
             margin-top: 15px;
         }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--bg-primary);
+            border-left: 4px solid var(--accent-color);
+            padding: 12px 15px;
+            border-radius: 5px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: opacity 0.3s, transform 0.3s;
+        }
+        
+        .notification.error {
+            border-left-color: #f44336;
+        }
+        
+        .notification.success {
+            border-left-color: #4caf50;
+        }
+        
+        .notification.warning {
+            border-left-color: #ff9800;
+        }
+        
+        .notification-content {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .notification-close {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-secondary);
+        }
+        
+        .notification.fade-out {
+            opacity: 0;
+            transform: translateX(30px);
+        }
     `;
     document.head.appendChild(styleElement);
 
-    // Verificar se é mobile e ajustar layout
-    if (isMobileDevice()) {
-        document.querySelector('.mobile-terms-container').style.display = 'flex';
-        document.querySelector('.terms-checkbox-container').style.display = 'none';
-    } else {
-        document.querySelector('.mobile-terms-container').style.display = 'none';
-        document.querySelector('.terms-checkbox-container').style.display = 'flex';
-    }
-
+    // Inicializar layout responsivo
+    handleResponsiveLayout();
+    
     // Inicializar ícones Feather
     if (typeof feather !== 'undefined') {
         feather.replace();
     }
+    
+    // Configurar eventos de toque para dispositivos móveis
+    setupMobilePdfGestures();
 });
 
-// Adicionar listener para redimensionamento da janela
-window.addEventListener('resize', function() {
-    if (isMobileDevice()) {
-        document.querySelector('.mobile-terms-container').style.display = 'flex';
-        document.querySelector('.terms-checkbox-container').style.display = 'none';
-    } else {
-        document.querySelector('.mobile-terms-container').style.display = 'none';
-        document.querySelector('.terms-checkbox-container').style.display = 'flex';
+// Função para detectar quando a tela muda de tamanho e ajustar elementos
+function handleResponsiveLayout() {
+    const isMobile = window.innerWidth <= 768;
+    const previewContainer = document.querySelector('.preview-container');
+    const mobileTermsContainer = document.querySelector('.mobile-terms-container');
+    const termsCheckboxContainer = document.querySelector('.terms-checkbox-container');
+    
+    if (previewContainer) {
+        if (isMobile) {
+            // Ajusta a altura para considerar a faixa de termos em mobile
+            previewContainer.style.height = 'calc(100vh - 120px - 40px)';
+            if (mobileTermsContainer) {
+                mobileTermsContainer.style.setProperty('display', 'flex', 'important');
+            }
+            if (termsCheckboxContainer) {
+                termsCheckboxContainer.style.setProperty('display', 'none', 'important');
+            }
+        } else {
+            // Restaura a altura original em desktop
+            previewContainer.style.height = 'calc(100vh - 120px)';
+            if (mobileTermsContainer) {
+                mobileTermsContainer.style.setProperty('display', 'none', 'important');
+            }
+            if (termsCheckboxContainer) {
+                termsCheckboxContainer.style.setProperty('display', 'flex', 'important');
+            }
+        }
     }
-});
+}
+
+// Adicionar event listener para redimensionamento da janela
+window.addEventListener('resize', handleResponsiveLayout);
