@@ -22,7 +22,8 @@
     padding: 0.75rem 1rem;
     background-color: var(--bg-secondary);
     border-bottom: 1px solid var(--border-color);
-    z-index: 10;
+    z-index: 101;
+    position: relative;
 }
 
 .preview-title-container {
@@ -149,7 +150,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 100;
+    z-index: 50;
     transition: opacity 0.3s ease;
 }
 
@@ -177,6 +178,8 @@
     background-color: var(--bg-secondary);
     border-bottom: 1px solid var(--border-color);
     justify-content: center;
+    position: relative;
+    z-index: 101;
 }
 
 /* Modal styling */

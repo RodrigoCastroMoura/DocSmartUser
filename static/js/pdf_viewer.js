@@ -1,4 +1,3 @@
-
 // Configurações iniciais
 const pdfjsLib = window['pdfjs-dist/build/pdf'];
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
@@ -21,7 +20,7 @@ let completedSignatures = 0;
 async function initPdfViewer() {
     const container = document.getElementById('pdfViewerContainer');
     showLoading(container);
-    
+
     try {
         await loadPdf(pdfUrl);
         hideLoading(container);
@@ -57,40 +56,40 @@ function hideLoading(container) {
 // Carregar o PDF
 async function loadPdf(url) {
     if (!url) throw new Error('URL do PDF não especificada');
-    
+
     const proxyUrl = `/proxy/storage/${url.replace('https://storage.googleapis.com/', '')}`;
     const loadingTask = pdfjsLib.getDocument(proxyUrl);
     currentPdf = await loadingTask.promise;
-    
+
     await renderPdfPages();
 }
 
 // Renderizar páginas do PDF
 async function renderPdfPages() {
     if (!currentPdf) return;
-    
+
     const container = document.getElementById('pdfViewerContainer');
-    
+
     // Limpar o container
     while (container.firstChild) {
         container.removeChild(container.firstChild);
     }
-    
+
     // Criar container para páginas
     const pagesContainer = document.createElement('div');
     pagesContainer.className = 'pdf-pages-container';
     container.appendChild(pagesContainer);
-    
+
     // Inicializar contadores para assinaturas
     signatureFields = [];
     rubricFields = [];
     totalSignaturesRequired = 0;
-    
+
     // Verificar se precisamos carregar posições de assinatura
     if (needSignature && currentDocumentId) {
         await loadSignaturePositions(currentDocumentId);
     }
-    
+
     // Renderizar cada página
     const totalPages = currentPdf.numPages;
     for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
@@ -99,19 +98,19 @@ async function renderPdfPages() {
         pageContainer.className = 'pdf-page-wrapper';
         pageContainer.dataset.pageNumber = pageNum;
         pagesContainer.appendChild(pageContainer);
-        
+
         // Criar canvas para a página
         const pageCanvas = document.createElement('canvas');
         pageCanvas.className = 'pdf-page-canvas';
         pageContainer.appendChild(pageCanvas);
-        
+
         // Renderizar a página
         if (needSignature) {
             await renderPdfPageWithSignature(pageNum, pageCanvas);
         } else {
             await renderPdfPage(pageNum, pageCanvas);
         }
-        
+
         // Adicionar número da página se houver mais de uma
         if (totalPages > 1) {
             const pageNumberIndicator = document.createElement('div');
@@ -120,7 +119,7 @@ async function renderPdfPages() {
             pageContainer.appendChild(pageNumberIndicator);
         }
     }
-    
+
     // Configurar eventos de toque para dispositivos móveis
     setupMobilePdfGestures();
 }
@@ -130,22 +129,22 @@ async function renderPdfPage(pageNumber, canvas) {
     try {
         const page = await currentPdf.getPage(pageNumber);
         const context = canvas.getContext('2d');
-        
+
         // Calcular viewport com base no zoom
         const viewport = page.getViewport({ scale: zoomLevel });
-        
+
         // Configurar dimensões do canvas
         canvas.height = viewport.height;
         canvas.width = viewport.width;
         canvas.style.width = `${viewport.width}px`;
         canvas.style.height = `${viewport.height}px`;
-        
+
         // Renderizar PDF no contexto do canvas
         const renderContext = {
             canvasContext: context,
             viewport: viewport
         };
-        
+
         await page.render(renderContext).promise;
     } catch (error) {
         console.error(`Error rendering PDF page ${pageNumber}:`, error);
@@ -162,17 +161,17 @@ async function renderPdfPageWithSignature(pageNumber, canvas) {
         const page = await currentPdf.getPage(pageNumber);
         const context = canvas.getContext('2d');
         const viewport = page.getViewport({ scale: zoomLevel });
-        
+
         canvas.height = viewport.height;
         canvas.width = viewport.width;
-        
+
         const renderContext = {
             canvasContext: context,
             viewport: viewport
         };           
-        
+
         await page.render(renderContext).promise;
-        
+
         // Se a página já foi assinada, mostrar assinatura/rubrica
         if(signedPages.includes(pageNumber)){
             const { width: pageWidth, height: pageHeight } = viewport;
@@ -180,10 +179,10 @@ async function renderPdfPageWithSignature(pageNumber, canvas) {
             if (findSignature && findSignature.resultados[pageNumber-1] && 
                 findSignature.resultados[pageNumber-1].has_signature) {
                 rectignature = findSignature.resultados[pageNumber-1].rect;
-               
+
                 const [x0, y0] = viewport.convertToViewportPoint(rectignature.x0, rectignature.y0);
                 const [x1, y1] = viewport.convertToViewportPoint(rectignature.x1, rectignature.y1);
-                
+
                 const field = {
                     x: x0,
                     y: (viewport.height - y1) - 6,
@@ -192,12 +191,12 @@ async function renderPdfPageWithSignature(pageNumber, canvas) {
                     type: 'signature',
                     pageNumber: pageNumber
                 };
-                
+
                 field.x = Math.max(margins.left, Math.min(field.x, pageWidth - field.width - margins.right));
                 field.y = Math.max(margins.top, Math.min(field.y, pageHeight - field.height - margins.bottom));
-                
+
                 signatureFields.push(field);
-                
+
                 // Colocar a assinatura
                 placeSignature(null, canvas, field);
             } else if (findSignature && findSignature.resultados[pageNumber] && 
@@ -206,7 +205,7 @@ async function renderPdfPageWithSignature(pageNumber, canvas) {
                 const rubrectangle = findSignature.resultados[pageNumber].rect;
                 const [rx0, ry0] = viewport.convertToViewportPoint(rubrectangle.x0, rubrectangle.y0);
                 const [rx1, ry1] = viewport.convertToViewportPoint(rubrectangle.x1, rubrectangle.y1);
-                
+
                 const field = {
                     x: rx0,
                     y: (viewport.height - ry1) - 6,
@@ -215,25 +214,25 @@ async function renderPdfPageWithSignature(pageNumber, canvas) {
                     type: 'rubric',
                     pageNumber: pageNumber
                 };
-                
+
                 field.x = Math.max(margins.left, Math.min(field.x, pageWidth - field.width - margins.right));
                 field.y = Math.max(margins.top, Math.min(field.y, pageHeight - field.height - margins.bottom));
-                
+
                 rubricFields.push(field);
-                
+
                 placeRubric(null, canvas, field);
             }
         } else {
             // Detectar campos de assinatura/rubrica
             await detectSignatureFields((pageNumber - 1), canvas, viewport);
         }
-        
+
         // Adicionar evento de clique para áreas de assinatura e rubrica
         canvas.addEventListener('click', (e) => {
             const rect = canvas.getBoundingClientRect();
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
-            
+
             // Verificar se clicou em área de assinatura
             const signatureField = signatureFields.find(field => 
                 field.pageNumber === pageNumber &&
@@ -241,25 +240,25 @@ async function renderPdfPageWithSignature(pageNumber, canvas) {
                 x >= field.x && x <= (field.x + field.width) &&
                 y >= field.y && y <= (field.y + field.height)
             );
-            
+
             if (signatureField && currentSignature) {
                 // Colocar assinatura
                 placeSignature(e, canvas, signatureField);
-                
+
                 // Marcar página como assinada
                 if (!signedPages.includes(pageNumber)) {
                     signedPages.push(pageNumber);
                     completedSignatures++;
                 }
-                
+
                 checkSignatureCompletion();
-                
+
                 // Avançar para próxima página
                 scrollToNextPage(pageNumber);
-                
+
                 return;
             }
-            
+
             // Verificar se clicou em área de rubrica
             const rubricField = rubricFields.find(field => 
                 field.pageNumber === pageNumber &&
@@ -267,19 +266,19 @@ async function renderPdfPageWithSignature(pageNumber, canvas) {
                 x >= field.x && x <= (field.x + field.width) &&
                 y >= field.y && y <= (field.y + field.height)
             );
-            
+
             if (rubricField && currentRubrica) {
                 // Colocar rubrica
                 placeRubric(e, canvas, rubricField);
-                
+
                 // Marcar página como rubricada
                 if (!signedPages.includes(pageNumber)) {
                     signedPages.push(pageNumber);
                     completedSignatures++;
                 }
-                
+
                 checkSignatureCompletion();
-                
+
                 // Avançar para próxima página
                 scrollToNextPage(pageNumber);
             }
@@ -300,34 +299,34 @@ async function loadSignaturePositions(documentId) {
             const response = await fetch(`/api/pdf-analyzer/${documentId}`, {
                 method: 'GET',
             });
-            
+
             if (!response.ok) {
                 const errorData = await response.json();
                 throw new Error(errorData.error);
             }
-            
+
             findSignature = await response.json();
-            
+
             // Contar quantas assinaturas e rubricas são necessárias
             const totalPages = currentPdf.numPages;
             for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
                 let pageHasSignatureField = false;
                 let pageHasRubricField = false;
-                
+
                 // Verificar se há área de assinatura na página
                 if (findSignature && findSignature.resultados[pageNum-1] && 
                     findSignature.resultados[pageNum-1].has_signature) {
                     totalSignaturesRequired++;
                     pageHasSignatureField = true;
                 }
-                
+
                 // Verificar se há área de rubrica definida na API
                 if (findSignature && findSignature.resultados[pageNum-1] && 
                     !findSignature.resultados[pageNum-1].has_signature) {
                     totalSignaturesRequired++;
                     pageHasRubricField = true;
                 }
-                
+
                 // Se não há nem assinatura nem rubrica, adicionar à lista de pendências
                 if (!pageHasSignatureField && !pageHasRubricField) {
                     pendingRubrics.push(pageNum);
@@ -345,14 +344,14 @@ async function loadSignaturePositions(documentId) {
 async function detectSignatureFields(pageNumber, canvas, viewport) {
     const ctx = canvas.getContext('2d');
     const { width: pageWidth, height: pageHeight } = viewport;
-    
+
     if (findSignature != null) {
         // Verificar se esta página tem campo de assinatura
         if (findSignature.resultados[pageNumber].has_signature == true) {
             rectignature = findSignature.resultados[pageNumber].rect;
             const [x0, y0] = viewport.convertToViewportPoint(rectignature.x0, rectignature.y0);
             const [x1, y1] = viewport.convertToViewportPoint(rectignature.x1, rectignature.y1);
-            
+
             const field = {
                 x: x0,
                 y: (viewport.height - y1) - 6,
@@ -361,12 +360,12 @@ async function detectSignatureFields(pageNumber, canvas, viewport) {
                 type: 'signature',
                 pageNumber: pageNumber + 1
             };
-            
+
             field.x = Math.max(margins.left, Math.min(field.x, pageWidth - field.width - margins.right));
             field.y = Math.max(margins.top, Math.min(field.y, pageHeight - field.height - margins.bottom));
-            
+
             signatureFields.push(field);
-            
+
             ctx.save();
             ctx.strokeStyle = '#2196F3';
             ctx.fillStyle = 'rgba(33, 150, 243, 0.1)';
@@ -389,7 +388,7 @@ async function detectSignatureFields(pageNumber, canvas, viewport) {
                 const rubrectangle = findSignature.resultados[pageNumber].rect;
                 const [rx0, ry0] = viewport.convertToViewportPoint(rubrectangle.x0, rubrectangle.y0);
                 const [rx1, ry1] = viewport.convertToViewportPoint(rubrectangle.x1, rubrectangle.y1);
-                
+
                 const field = {
                     x: rx0,
                     y: (viewport.height - ry1) - 6,
@@ -398,12 +397,12 @@ async function detectSignatureFields(pageNumber, canvas, viewport) {
                     type: 'rubric',
                     pageNumber: pageNumber + 1
                 };
-                
+
                 field.x = Math.max(margins.left, Math.min(field.x, pageWidth - field.width - margins.right));
                 field.y = Math.max(margins.top, Math.min(field.y, pageHeight - field.height - margins.bottom));
-                
+
                 rubricFields.push(field);
-                
+
                 ctx.save();
                 ctx.strokeStyle = '#4CAF50'; // Verde para diferenciar da assinatura
                 ctx.fillStyle = 'rgba(76, 175, 80, 0.1)';
@@ -424,7 +423,7 @@ async function detectSignatureFields(pageNumber, canvas, viewport) {
                 // Posicionar rubrica no canto superior direito como fallback
                 const rubricWidth = 80 * zoomLevel;
                 const rubricHeight = 40 * zoomLevel;
-                
+
                 const field = {
                     x: pageWidth - rubricWidth - margins.right,
                     y: margins.top,
@@ -433,9 +432,9 @@ async function detectSignatureFields(pageNumber, canvas, viewport) {
                     type: 'rubric',
                     pageNumber: pageNumber + 1
                 };
-                
+
                 rubricFields.push(field);
-                
+
                 ctx.save();
                 ctx.strokeStyle = '#4CAF50';
                 ctx.fillStyle = 'rgba(76, 175, 80, 0.1)';
@@ -562,22 +561,22 @@ async function placeRubric(event, canvas, field) {
 function scrollToNextPage(currentPageNumber) {
     // Encontrar a próxima página que precisa de assinatura ou rubrica
     let nextPage = null;
-    
+
     // Verificar páginas pendentes
     for (let i = 0; i < currentPdf.numPages; i++) {
         const pageNum = ((currentPageNumber) % currentPdf.numPages) + 1;
-        
+
         if (!signedPages.includes(pageNum)) {
             nextPage = pageNum;
             break;
         }
     }
-    
+
     if (nextPage) {
         // Rolar para a próxima página
         const pagesContainer = document.querySelector('.pdf-pages-container');
         const nextPageElement = document.querySelector(`.pdf-page-wrapper[data-page-number="${nextPage}"]`);
-        
+
         if (pagesContainer && nextPageElement) {
             pagesContainer.scrollTo({
                 top: nextPageElement.offsetTop,
@@ -600,17 +599,17 @@ async function adjustZoom(delta) {
     zoomLevel += delta;
     zoomLevel = Math.max(0.2, Math.min(3, zoomLevel));
     if (oldZoom === zoomLevel) return;
-    
+
     const zoomLevelSpan = document.getElementById('zoomLevel');
     zoomLevelSpan.textContent = `${(zoomLevel * 100).toFixed(0)}%`;
-    
+
     // Lembrar a posição de scroll atual
     const pagesContainer = document.querySelector('.pdf-pages-container');
     const scrollRatio = pagesContainer ? pagesContainer.scrollTop / pagesContainer.scrollHeight : 0;
-    
+
     // Renderizar novamente com novo zoom
     await renderPdfPages();
-    
+
     // Restaurar a posição de scroll
     const newPagesContainer = document.querySelector('.pdf-pages-container');
     if (newPagesContainer) {
@@ -634,7 +633,7 @@ async function saveSignedDocument(documentId) {
 
         showNotification('Documento assinado salvo com sucesso!', 'success');
         closePopup();
-        
+
         // Redirecionar para a lista de documentos após salvar
         window.location.href = document.querySelector('.back-link').getAttribute('href');
     } catch (error) {
@@ -648,7 +647,7 @@ async function saveSignedDocument(documentId) {
 function printDocument() {
     const printWindow = window.open('', '_blank');
     const pdfUrl = `/proxy/storage/${pdfUrl.replace('https://storage.googleapis.com/', '')}`;
-    
+
     printWindow.document.write(`
         <html>
         <head>
@@ -663,7 +662,7 @@ function printDocument() {
         </body>
         </html>
     `);
-    
+
     printWindow.document.close();
 }
 
@@ -683,28 +682,34 @@ function toggleTermsAgreement() {
     const checkbox = document.getElementById('termsCheckbox');
     const mobileCheckbox = document.getElementById('mobileTermsCheckbox');
     const overlay = document.getElementById('termsOverlay');
-    
+
     // Sincronizar a caixa de seleção móvel com a desktop
     if (mobileCheckbox) {
         mobileCheckbox.checked = checkbox.checked;
     }
-    
+
     if (!overlay) {
         console.error('Elemento do overlay de termos não encontrado');
         return;
     }
-    
+
     if (checkbox.checked) {
         // Esconder o overlay com fade out
         overlay.style.opacity = '0';
+        // Desativar pointer-events para garantir que o usuário possa interagir com o documento
         overlay.style.pointerEvents = 'none';
         setTimeout(() => {
             overlay.style.display = 'none';
-        }, 300);
+        }, 300); // Duração da transição
     } else {
-        // Mostrar o overlay
+        // Mostrar o overlay mas manter controles clicáveis
         overlay.style.display = 'flex';
         overlay.style.pointerEvents = 'auto';
+
+        // Certificar que o overlay está atrás dos controles
+        overlay.style.zIndex = '50';
+
+        // Pequeno delay para garantir que o display:flex seja aplicado antes da transição
         setTimeout(() => {
             overlay.style.opacity = '1';
         }, 10);
@@ -724,10 +729,10 @@ function syncCheckboxes(sourceCheckbox, targetCheckboxId) {
 function setupMobilePdfGestures() {
     const container = document.querySelector('.pdf-pages-container');
     if (!container) return;
-    
+
     let touchStartY = 0;
     let touchStartDistance = 0;
-    
+
     // Manipular zoom com pinça
     container.addEventListener('touchstart', function(e) {
         if (e.touches.length === 2) {
@@ -740,17 +745,17 @@ function setupMobilePdfGestures() {
             touchStartY = e.touches[0].pageY;
         }
     });
-    
+
     container.addEventListener('touchmove', function(e) {
         // Zoom com pinça
         if (e.touches.length === 2) {
             e.preventDefault(); // Prevenir comportamento padrão
-            
+
             const currentDistance = Math.hypot(
                 e.touches[0].pageX - e.touches[1].pageX,
                 e.touches[0].pageY - e.touches[1].pageY
             );
-            
+
             if (touchStartDistance > 0) {
                 const distanceDiff = currentDistance - touchStartDistance;
                 if (Math.abs(distanceDiff) > 10) { // Mínimo para prevenir zooms acidentais
@@ -812,14 +817,14 @@ document.addEventListener('DOMContentLoaded', function() {
             align-items: center;
             z-index: 9999;
         }
-        
+
         .loading-popup p {
             color: white;
             margin-top: 15px;
         }
     `;
     document.head.appendChild(styleElement);
-    
+
     // Verificar se é mobile e ajustar layout
     if (isMobileDevice()) {
         document.querySelector('.mobile-terms-container').style.display = 'flex';
@@ -828,7 +833,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelector('.mobile-terms-container').style.display = 'none';
         document.querySelector('.terms-checkbox-container').style.display = 'flex';
     }
-    
+
     // Inicializar ícones Feather
     if (typeof feather !== 'undefined') {
         feather.replace();
