@@ -693,13 +693,24 @@ function toggleTermsAgreement() {
     const isChecked = (checkbox && checkbox.checked) || (mobileCheckbox && mobileCheckbox.checked);
 
     if (isChecked) {
-        if (overlay) overlay.style.display = 'none';
+        if (overlay) {
+            overlay.style.opacity = '0';
+            // Manter pointer-events: none para garantir que o elemento não bloqueie cliques
+            setTimeout(() => {
+                if (overlay) overlay.style.display = 'none';
+            }, 300);
+        }
         const signBtn = document.getElementById('openSimpleModalBtn');
         const saveBtn = document.getElementById('saveSignedDocBtn');
         if (signBtn) signBtn.removeAttribute('disabled');
         if (saveBtn) saveBtn.removeAttribute('disabled');
     } else {
-        if (overlay) overlay.style.display = 'flex';
+        if (overlay) {
+            overlay.style.display = 'flex';
+            setTimeout(() => {
+                if (overlay) overlay.style.opacity = '1';
+            }, 10);
+        }
         const signBtn = document.getElementById('openSimpleModalBtn');
         const saveBtn = document.getElementById('saveSignedDocBtn');
         if (signBtn) signBtn.setAttribute('disabled', 'disabled');
