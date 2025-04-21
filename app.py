@@ -317,6 +317,32 @@ def login():
             logger.error("Connection error during login")
         except Exception as e:
             logger.error(f"Login error: {e}")
+
+@app.route('/signature-success/<document_id>')
+@login_required
+def signature_success(document_id):
+    try:
+        # Aqui você pode buscar informações sobre o documento assinado
+        document_info = get_document_by_id(document_id)
+        
+        if not document_info:
+            flash('Documento não encontrado', 'error')
+            return redirect(url_for('dashboard'))
+        
+        # Formatar data atual
+        from datetime import datetime
+        current_date = datetime.now().strftime('%d/%m/%Y às %H:%M')
+        
+        return render_template(
+            'signature_success.html', 
+            document_name=document_info.get('name', 'Documento'),
+            document_id=document_id,
+            signed_date=current_date
+        )
+    except Exception as e:
+        flash(f'Erro ao carregar página de sucesso: {str(e)}', 'error')
+        return redirect(url_for('dashboard'))
+
             flash('An error occurred during login', 'error')
 
     return render_template('login.html')

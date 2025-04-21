@@ -497,6 +497,42 @@ async function detectSignatureFields(pageNumber, canvas, viewport) {
     }
 }
 
+
+// Função para salvar o documento assinado e redirecionar para página de sucesso
+async function saveSignedDocument(documentId) {
+    try {
+        openPopup(); // Mostra o indicador de carregamento
+        
+        // Enviar os dados de assinatura para o servidor
+        const response = await fetch(`/api/documents/${documentId}/sign`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                signatures: signedPages,
+                signatureData: currentSignature,
+                rubricData: currentRubrica,
+                fontFamily: currentSelectedFont
+            })
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Erro ao salvar documento assinado');
+        }
+        
+        const result = await response.json();
+        
+        // Redirecionar para a página de sucesso
+        window.location.href = `/signature-success/${documentId}`;
+        
+    } catch (error) {
+        closePopup();
+        showNotification(error.message, 'error');
+    }
+}
+
 // Função para colocar a assinatura no canvas
 async function placeSignature(event, canvas, field) {
     const ctx = canvas.getContext('2d');
