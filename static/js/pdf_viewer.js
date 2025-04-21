@@ -298,14 +298,33 @@ async function loadSignaturePositions(documentId) {
         if (findSignature === null) {
             const response = await fetch(`/api/pdf-analyzer/${documentId}`, {
                 method: 'GET',
+                headers: {
+                    'Accept': 'application/json'
+                }
             });
 
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error);
+                // Tenta verificar o tipo de conteúdo da resposta
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Erro desconhecido do servidor');
+                } else {
+                    // Se não for JSON, lê como texto para diagnóstico
+                    const textResponse = await response.text();
+                    console.error('Resposta não-JSON recebida:', textResponse.substring(0, 200) + '...');
+                    throw new Error(`Erro ao comunicar com o servidor: ${response.status} ${response.statusText}`);
+                }
             }
 
-            findSignature = await response.json();
+            const responseText = await response.text();
+            try {
+                findSignature = JSON.parse(responseText);
+            } catch (jsonError) {
+                console.error('Erro ao analisar JSON:', jsonError);
+                console.error('Resposta recebida:', responseText.substring(0, 200) + '...');
+                throw new Error('A resposta do servidor não é um JSON válido');
+            }
 
             // Contar quantas assinaturas e rubricas são necessárias
             const totalPages = currentPdf.numPages;
@@ -314,14 +333,14 @@ async function loadSignaturePositions(documentId) {
                 let pageHasRubricField = false;
 
                 // Verificar se há área de assinatura na página
-                if (findSignature && findSignature.resultados[pageNum-1] && 
+                if (findSignature && findSignature.resultados && findSignature.resultados[pageNum-1] && 
                     findSignature.resultados[pageNum-1].has_signature) {
                     totalSignaturesRequired++;
                     pageHasSignatureField = true;
                 }
 
                 // Verificar se há área de rubrica definida na API
-                if (findSignature && findSignature.resultados[pageNum-1] && 
+                if (findSignature && findSignature.resultados && findSignature.resultados[pageNum-1] && 
                     !findSignature.resultados[pageNum-1].has_signature) {
                     totalSignaturesRequired++;
                     pageHasRubricField = true;
@@ -336,7 +355,12 @@ async function loadSignaturePositions(documentId) {
         }
     } catch (error) {
         console.error('Error loading signature positions:', error);
-        showNotification(error.message, 'error');
+        // Verifica se você está autenticado
+        if (document.body.innerHTML.includes('login') || document.body.innerHTML.includes('Login')) {
+            showNotification('Você precisa estar autenticado para acessar este recurso', 'error');
+        } else {
+            showNotification(error.message, 'error');
+        }
     }
 }
 
