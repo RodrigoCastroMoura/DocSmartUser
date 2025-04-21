@@ -679,40 +679,31 @@ function hideModal(modalId) {
 
 // Alternar concordância com os termos
 function toggleTermsAgreement() {
+    const overlay = document.getElementById('termsOverlay');
     const checkbox = document.getElementById('termsCheckbox');
     const mobileCheckbox = document.getElementById('mobileTermsCheckbox');
-    const overlay = document.getElementById('termsOverlay');
 
-    // Sincronizar a caixa de seleção móvel com a desktop
-    if (mobileCheckbox) {
-        mobileCheckbox.checked = checkbox.checked;
+    // Sincronizar os checkboxes
+    if (checkbox && mobileCheckbox) {
+        if (checkbox.checked !== undefined) mobileCheckbox.checked = checkbox.checked;
+        else if (mobileCheckbox.checked !== undefined) checkbox.checked = mobileCheckbox.checked;
     }
 
-    if (!overlay) {
-        console.error('Elemento do overlay de termos não encontrado');
-        return;
-    }
+    // Atualizar overlay
+    const isChecked = (checkbox && checkbox.checked) || (mobileCheckbox && mobileCheckbox.checked);
 
-    if (checkbox.checked) {
-        // Esconder o overlay com fade out
-        overlay.style.opacity = '0';
-        // Desativar pointer-events para garantir que o usuário possa interagir com o documento
-        overlay.style.pointerEvents = 'none';
-        setTimeout(() => {
-            overlay.style.display = 'none';
-        }, 300); // Duração da transição
+    if (isChecked) {
+        if (overlay) overlay.style.display = 'none';
+        const signBtn = document.getElementById('openSimpleModalBtn');
+        const saveBtn = document.getElementById('saveSignedDocBtn');
+        if (signBtn) signBtn.removeAttribute('disabled');
+        if (saveBtn) saveBtn.removeAttribute('disabled');
     } else {
-        // Mostrar o overlay mas manter controles clicáveis
-        overlay.style.display = 'flex';
-        overlay.style.pointerEvents = 'auto';
-
-        // Certificar que o overlay está atrás dos controles
-        overlay.style.zIndex = '50';
-
-        // Pequeno delay para garantir que o display:flex seja aplicado antes da transição
-        setTimeout(() => {
-            overlay.style.opacity = '1';
-        }, 10);
+        if (overlay) overlay.style.display = 'flex';
+        const signBtn = document.getElementById('openSimpleModalBtn');
+        const saveBtn = document.getElementById('saveSignedDocBtn');
+        if (signBtn) signBtn.setAttribute('disabled', 'disabled');
+        if (saveBtn) saveBtn.setAttribute('disabled', 'disabled');
     }
 }
 
