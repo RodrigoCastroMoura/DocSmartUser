@@ -19,12 +19,12 @@ let completedSignatures = 0;
 // Inicializar o visualizador de PDF
 async function initPdfViewer() {
     const container = document.getElementById('pdfViewerContainer');
-    
+
     if (!container) {
         console.error('Container de visualização PDF não encontrado');
         return;
     }
-    
+
     openPopup();
 
     showLoading(container);
@@ -34,26 +34,26 @@ async function initPdfViewer() {
         if (!pdfUrl) {
             throw new Error('URL do PDF não informada');
         }
-        
+
         await loadPdf(pdfUrl);
         hideLoading(container);
-        
+
         // Inicializar eventos responsivos
         handleResponsiveLayout();
-        
+
         // Verificar concordância com termos
         const termsOverlay = document.getElementById('termsOverlay');
         if (termsOverlay) {
             const termsCheckbox = document.getElementById('termsCheckbox');
             const mobileTermsCheckbox = document.getElementById('mobileTermsCheckbox');
-            
+
             // Se algum checkbox estiver marcado, esconder o overlay
             if ((termsCheckbox && termsCheckbox.checked) || 
                 (mobileTermsCheckbox && mobileTermsCheckbox.checked)) {
                 toggleTermsAgreement();
             }
         }
-        
+
         closePopup();
         if(currentSignature == "None")
             showSimpleModal();
@@ -77,7 +77,7 @@ function showLoading(container) {
     if (!container) return;
     // Verificar se já existe um indicador de carregamento
     if (container.querySelector('.pdf-loading')) return;
-    
+
     const loadingIndicator = document.createElement('div');
     loadingIndicator.className = 'pdf-loading';
     loadingIndicator.innerHTML = '<div class="loading-spinner"></div><p>Carregando PDF...</p>';
@@ -509,22 +509,22 @@ async function detectSignatureFields(pageNumber, canvas, viewport) {
 async function saveSignedDocument(documentId) {
     try {
         openPopup(); // Mostra o indicador de carregamento
-        
+
         // Enviar os dados de assinatura para o servidor
         const response = await fetch(`/api/pdf-analyzer/${documentId}`, {
             method: 'POST',
         });
-        
+
         if (!response.ok) {
             const errorData = await response.json();
             throw new Error(errorData.error || 'Erro ao salvar documento assinado');
         }
-        
+
         const result = await response.json();
-        
+
         // Redirecionar para a página de sucesso
         window.location.href = `/signature-success`;
-        
+
     } catch (error) {
         closePopup();
         showNotification(error.message, 'error');
@@ -728,16 +728,16 @@ function toggleTermsAgreement() {
     const overlay = document.getElementById('termsOverlay');
     const checkbox = document.getElementById('termsCheckbox');
     const mobileCheckbox = document.getElementById('mobileTermsCheckbox');
-    
+
     // Sincronizar a caixa de seleção móvel com a desktop
     if (checkbox && mobileCheckbox) {
         if (checkbox.checked !== undefined) mobileCheckbox.checked = checkbox.checked;
         else if (mobileCheckbox.checked !== undefined) checkbox.checked = mobileCheckbox.checked;
     }
-    
+
     // Atualizar overlay
     const isChecked = (checkbox && checkbox.checked) || (mobileCheckbox && mobileCheckbox.checked);
-    
+
     if (isChecked) {
         if (overlay) {
             // Esconder o overlay com fade out
@@ -747,7 +747,7 @@ function toggleTermsAgreement() {
                 if (overlay) overlay.style.display = 'none';
             }, 300); // Duração da transição
         }
-        
+
         // Habilitar botões
         const signBtn = document.getElementById('openSimpleModalBtn');
         const saveBtn = document.getElementById('saveSignedDocBtn');
@@ -765,14 +765,14 @@ function toggleTermsAgreement() {
                 if (overlay) overlay.style.opacity = '1';
             }, 10);
         }
-        
+
         // Desabilitar botões
         const signBtn = document.getElementById('openSimpleModalBtn');
         const saveBtn = document.getElementById('saveSignedDocBtn');
         if (signBtn) signBtn.setAttribute('disabled', 'disabled');
         if (saveBtn) saveBtn.setAttribute('disabled', 'disabled');
     }
-    
+
     // Verificar se é mobile e ajustar layout
     handleResponsiveLayout();
 }
@@ -793,8 +793,9 @@ function setupMobilePdfGestures() {
 
     let touchStartY = 0;
     let touchStartDistance = 0;
+    let lastTapTime = 0;
 
-    // Manipular zoom com pinça
+    // Handle pinch zoom
     container.addEventListener('touchstart', function(e) {
         if (e.touches.length === 2) {
             touchStartDistance = Math.hypot(
@@ -804,13 +805,32 @@ function setupMobilePdfGestures() {
         }
         if (e.touches.length === 1) {
             touchStartY = e.touches[0].pageY;
+
+            // Detectar duplo toque para zoom
+            const currentTime = new Date().getTime();
+            const tapLength = currentTime - lastTapTime;
+            if (tapLength < 300 && tapLength > 0) {
+                e.preventDefault();
+                // Alternar entre zoom padrão e zoom ampliado
+                if (zoomLevel <= 1.0) {
+                    adjustZoom(0.8); // Aumentar zoom
+                } else {
+                    zoomLevel = getInitialZoomLevel();
+                    const zoomLevelSpan = document.getElementById('zoomLevel');
+                    if (zoomLevelSpan) {
+                        zoomLevelSpan.textContent = `${(zoomLevel * 100).toFixed(0)}%`;
+                    }
+                    renderPdfPages(); // Renderizar novamente
+                }
+            }
+            lastTapTime = currentTime;
         }
     });
 
     container.addEventListener('touchmove', function(e) {
-        // Zoom com pinça
+        // Pinch to zoom
         if (e.touches.length === 2) {
-            e.preventDefault(); // Prevenir comportamento padrão
+            e.preventDefault(); // Prevent default scrolling
 
             const currentDistance = Math.hypot(
                 e.touches[0].pageX - e.touches[1].pageX,
@@ -819,7 +839,7 @@ function setupMobilePdfGestures() {
 
             if (touchStartDistance > 0) {
                 const distanceDiff = currentDistance - touchStartDistance;
-                if (Math.abs(distanceDiff) > 10) { // Mínimo para prevenir zooms acidentais
+                if (Math.abs(distanceDiff) > 10) { // Minimum threshold to prevent accidental zooms
                     const zoomDelta = distanceDiff > 0 ? 0.1 : -0.1;
                     adjustZoom(zoomDelta);
                     touchStartDistance = currentDistance;
@@ -827,6 +847,22 @@ function setupMobilePdfGestures() {
             }
         }
     });
+
+    // Adicionar tratamento para tap na área de assinatura
+    const signaturesContainer = document.getElementById('signatures-container');
+    if (signaturesContainer) {
+        signaturesContainer.addEventListener('touchstart', function(e) {
+            // Permitir eventos de toque passarem para as assinaturas
+            signaturesContainer.style.pointerEvents = 'auto';
+        });
+
+        signaturesContainer.addEventListener('touchend', function(e) {
+            // Reverter para não interceptar eventos após o toque
+            setTimeout(() => {
+                signaturesContainer.style.pointerEvents = 'none';
+            }, 300);
+        });
+    }
 }
 
 // Verificar se é dispositivo móvel
@@ -841,7 +877,7 @@ function showNotification(message, type = 'info') {
     existingNotifications.forEach(notif => {
         document.body.removeChild(notif);
     });
-    
+
     // Criar elemento de notificação
     const notification = document.createElement('div');
     notification.className = `notification ${type}`;
@@ -854,14 +890,14 @@ function showNotification(message, type = 'info') {
             <i data-feather="x"></i>
         </button>
     `;
-    
+
     document.body.appendChild(notification);
-    
+
     // Inicializar ícones Feather
     if (typeof feather !== 'undefined') {
         feather.replace();
     }
-    
+
     // Auto remover após 5 segundos
     setTimeout(() => {
         if (document.body.contains(notification)) {
@@ -873,7 +909,7 @@ function showNotification(message, type = 'info') {
             }, 300);
         }
     }, 5000);
-    
+
     console.log(`[${type}] ${message}`);
 }
 
@@ -881,7 +917,7 @@ function showNotification(message, type = 'info') {
 function openPopup(message = 'Processando...') {
     // Remover qualquer popup existente primeiro
     closePopup();
-    
+
     const popup = document.createElement('div');
     popup.className = 'loading-popup';
     popup.innerHTML = `
@@ -929,7 +965,7 @@ document.addEventListener('DOMContentLoaded', function() {
             color: white;
             margin-top: 15px;
         }
-        
+
         .notification {
             position: fixed;
             top: 20px;
@@ -945,32 +981,32 @@ document.addEventListener('DOMContentLoaded', function() {
             justify-content: space-between;
             transition: opacity 0.3s, transform 0.3s;
         }
-        
+
         .notification.error {
             border-left-color: #f44336;
         }
-        
+
         .notification.success {
             border-left-color: #4caf50;
         }
-        
+
         .notification.warning {
             border-left-color: #ff9800;
         }
-        
+
         .notification-content {
             display: flex;
             align-items: center;
             gap: 10px;
         }
-        
+
         .notification-close {
             background: none;
             border: none;
             cursor: pointer;
             color: var(--text-secondary);
         }
-        
+
         .notification.fade-out {
             opacity: 0;
             transform: translateX(30px);
@@ -980,12 +1016,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Inicializar layout responsivo
     handleResponsiveLayout();
-    
+
     // Inicializar ícones Feather
     if (typeof feather !== 'undefined') {
         feather.replace();
     }
-    
+
     // Configurar eventos de toque para dispositivos móveis
     setupMobilePdfGestures();
 });
@@ -996,7 +1032,7 @@ function handleResponsiveLayout() {
     const previewContainer = document.querySelector('.preview-container');
     const mobileTermsContainer = document.querySelector('.mobile-terms-container');
     const termsCheckboxContainer = document.querySelector('.terms-checkbox-container');
-    
+
     if (previewContainer) {
         if (isMobile) {
             // Ajusta a altura para considerar a faixa de termos em mobile
@@ -1024,16 +1060,16 @@ function handleResponsiveLayout() {
 function applySignatureOrText() {
     const signatureText = document.getElementById('signatureText').value;
     const rubricText = document.getElementById('rubricText').value;
-   
+
     // Gerar a assinatura como imagem
     const signatureImg = generateTextSignature(signatureText, currentSelectedFont);
-    
+
     // Gerar a rubrica como imagem
     const rubricImg = generateRubricImage(rubricText, currentSelectedFont);
 
     // Gerar a assinatura como imagem
     const signatureImgDoc = generateTextSignatureDoc(signatureText, currentSelectedFont);
-    
+
     // Gerar a rubrica como imagem
     const rubricImgDoC = generateRubricImageDoc(rubricText, currentSelectedFont);
 
@@ -1077,3 +1113,12 @@ async function addSignature(signatureData, rubricImg, signatureDataDoc, rubricIm
 
 // Adicionar event listener para redimensionamento da janela
 window.addEventListener('resize', handleResponsiveLayout);
+
+function getInitialZoomLevel() {
+    // For mobile devices, start with smaller zoom to fit width
+    if (isMobileDevice()) {
+        return 0.8; // Smaller initial zoom for mobile
+    } else {
+        return 1.8; // Your original desktop zoom
+    }
+}
