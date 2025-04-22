@@ -145,7 +145,8 @@ function initializeFontButtons() {
 
 // Função para atualizar a prévia da assinatura
 function updateSignaturePreview() {
-    const signatureText = document.getElementById('signatureText').value || 'Prévia da Assinatura';
+    const signatureElement = document.getElementById('signatureText');
+    const signatureText = signatureElement && signatureElement.value ? signatureElement.value : 'Prévia da Assinatura';
     const fontFamily = document.getElementById('fontFamily').value;
     const fontPreview = document.getElementById('fontPreview');
 
@@ -218,13 +219,21 @@ function showSimpleModal() {
     const signatureTextField = document.getElementById('signatureText');
     const rubricTextField = document.getElementById('rubricText');
 
-    // Garantir valores iniciais para os campos caso estejam vazios
-    if (signatureTextField && !signatureTextField.value) {
-        signatureTextField.value = signatureTextField.getAttribute('value') || '';
+    // Garantir valores iniciais para os campos a partir do nome no currentPagina
+    if (signatureTextField) {
+        if (!signatureTextField.value) {
+            signatureTextField.value = signatureTextField.getAttribute('value') || name || '';
+        }
+        // Forçar um evento de input para atualizar a prévia
+        const inputEvent = new Event('input', { bubbles: true });
+        signatureTextField.dispatchEvent(inputEvent);
     }
 
     if (rubricTextField && !rubricTextField.value) {
         rubricTextField.value = rubricTextField.getAttribute('value') || '';
+        // Forçar um evento de input para atualizar a prévia
+        const inputEvent = new Event('input', { bubbles: true });
+        rubricTextField.dispatchEvent(inputEvent);
     }
 
     // Reinicializar os botões de fonte quando o modal é exibido
