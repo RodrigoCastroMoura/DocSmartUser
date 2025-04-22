@@ -283,6 +283,8 @@
     text-align: center;
     line-height: 1.2;
     margin-top: 15px;
+    overflow: hidden; /* Evita que o texto ultrapasse o container */
+    width: 100%; /* Garante que use a largura toda disponível */
 }
 
 .signature-fields-container {
