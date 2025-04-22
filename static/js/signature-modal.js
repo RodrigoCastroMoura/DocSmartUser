@@ -177,14 +177,14 @@ function updateSignaturePreview() {
     // Escala progressiva baseada no comprimento do texto
     let fontSize = baseSize;
     if (textLength > 12) {
-        fontSize = baseSize - Math.min(14, (textLength - 12) * 0.9);
+        fontSize = baseSize - Math.min(16, (textLength - 12) * 0.9);
     }
     if (textLength > 20) {
         fontSize = fontSize - Math.min(8, (textLength - 20) * 0.7);
     }
 
     // Garantir tamanho mínimo da fonte
-    fontSize = Math.max(fontSize, 18);
+    fontSize = Math.max(fontSize, 25);
 
     // Aplicar a fonte ajustada
     fontPreview.style.fontSize = `${fontSize}px`;
