@@ -252,10 +252,13 @@
     justify-content: center;
     margin-top: 10px;
     background-color: white;
-    font-size: 48px;
+    font-size: 40px;
     overflow: hidden;
     text-align: center;
     padding: 10px;
+    word-break: break-word;
+    line-height: 1.2;
+    transition: all 0.2s ease;
 }
 
 .signature-fields-container {

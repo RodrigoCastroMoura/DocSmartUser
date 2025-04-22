@@ -140,9 +140,37 @@
     
     document.addEventListener('DOMContentLoaded', function() {
         initPdfViewer();
-       
-          document.getElementById("openSimpleModalBtn").style.display = 'block';
+        document.getElementById("openSimpleModalBtn").style.display = 'block';
         
+        // Inicializar eventos para o modal de assinatura
+        const fontButtons = document.querySelectorAll('.font-btn');
+        fontButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Remover seleção anterior
+                fontButtons.forEach(b => b.classList.remove('selected'));
+                // Adicionar seleção atual
+                this.classList.add('selected');
+                
+                // Atualizar fonte selecionada
+                currentSelectedFont = this.dataset.font;
+                document.getElementById('fontFamily').value = currentSelectedFont;
+                
+                // Atualizar previews
+                updateSignaturePreview();
+                updateRubricPreview();
+            });
+        });
+        
+        // Adicionar listener para campos de texto
+        const signatureText = document.getElementById('signatureText');
+        if (signatureText) {
+            signatureText.addEventListener('input', updateSignaturePreview);
+        }
+        
+        const rubricText = document.getElementById('rubricText');
+        if (rubricText) {
+            rubricText.addEventListener('input', updateRubricPreview);
+        }
     });
 </script>
 <script src="{{ url_for('static', filename='js/pdf_viewer.js') }}"></script>

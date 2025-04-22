@@ -7,155 +7,143 @@ let docTitle = 'DocSmartSignature by';
 
 
 // Função para gerar assinatura baseada em texto com fonte específica
-function generateTextSignature(text, font) {
+function generateTextSignature(text, fontFamily) {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
 
-    // Ajustar o tamanho do canvas com base no tamanho do texto
-    const baseWidth = 320; 
-    const textLength = text.length + 3;
-    canvas.width = Math.max(baseWidth, textLength * 30);
-    canvas.height = 90;
+    // Tamanho do canvas dependendo do comprimento do texto
+    const textLength = text.length;
+    const width = Math.max(300, textLength * 20);
+    const height = 120;
 
-    // Limpar o canvas
-    ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    canvas.width = width;
+    canvas.height = height;
 
-    let fontSize = 78; // Alterado de 60 para 80
-    if (textLength > 15) {
-        fontSize = Math.max(48, 80 - (textLength - 15) * 0.4); // Também aumentei o valor mínimo
-    }
+    // Fundo transparente
+    ctx.clearRect(0, 0, width, height);
 
-    ctx.font = `${fontSize}px "${font}"`;
-    ctx.fillStyle = '#000';
+    // Configurações de texto
+    const fontSize = textLength > 15 ? Math.max(48 - (textLength - 15) * 1.5, 30) : 48;
+    ctx.font = `${fontSize}px "${fontFamily}", cursive`;
+    ctx.fillStyle = 'black';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
-    // Desenhar o texto
-    ctx.fillText(text, canvas.width/2, canvas.height -40);
+    // Desenhar o texto centralizado
+    ctx.fillText(text, width / 2, height / 2);
 
-    // Retornar a imagem como URL de dados
     return canvas.toDataURL('image/png');
 }
 
 // Função para gerar a imagem da rubrica
-function generateRubricImage(text, font) {
+function generateRubricImage(text, fontFamily) {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
 
-    // Ajustar o tamanho do canvas com base no tamanho do texto
-    const baseWidth = 200; // Menor que a assinatura
+    // Tamanho do canvas 
+    const width = 200;
+    const height = 80;
+
+    canvas.width = width;
+    canvas.height = height;
+
+    // Fundo transparente
+    ctx.clearRect(0, 0, width, height);
+
+    // Configurações de texto para rubrica
     const textLength = text.length;
-    canvas.width = Math.max(baseWidth, textLength * 25);
-    canvas.height = 80;
-
-    // Limpar o canvas
-    ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    let fontSize = 58; // Um pouco menor que a assinatura
-    if (textLength > 3) {
-        fontSize = Math.max(40, 58 - (textLength - 3) * 2); // Ajustar tamanho para textos mais longos
-    }
-
-    ctx.font = `${fontSize}px "${font}"`;
-    ctx.fillStyle = '#000';
+    const fontSize = textLength > 3 ? Math.max(46 - (textLength - 3) * 3, 28) : 46;
+    ctx.font = `${fontSize}px "${fontFamily}", cursive`;
+    ctx.fillStyle = 'black';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
-    // Desenhar o texto
-    ctx.fillText(text, canvas.width/2, canvas.height/2);
+    // Desenhar o texto centralizado
+    ctx.fillText(text, width / 2, height / 2);
 
-    // Retornar a imagem como URL de dados
     return canvas.toDataURL('image/png');
 }
 
-// Função para gerar assinatura baseada em texto com fonte específica
-function generateTextSignatureDoc(text, font) {
+// Função para gerar imagem da assinatura com texto para o documento
+function generateTextSignatureDoc(text, fontFamily) {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
 
-    // Ajustar o tamanho do canvas com base no tamanho do texto
-    const baseWidth = 320; 
-    const textLength = text.length + 3;
-    canvas.width = Math.max(baseWidth, textLength * 30);
-    canvas.height = 111;
-
-    // Limpar o canvas
-    ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    let fontSize = 80; // Alterado de 60 para 80
-    if (textLength > 15) {
-        fontSize = Math.max(48, 80 - (textLength - 15) * 0.4); // Também aumentei o valor mínimo
-    }
- 
-    // Texto "DocSmartSignatureBy"
-    ctx.fillStyle = '#0033A0';
-    ctx.font = 'bold 20px Arial';
-    ctx.fillText(`${docTitle}:`, 26, 15);
-
-    ctx.font = `${fontSize}px "${font}"`;
-    ctx.fillStyle = '#000';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    // Desenhar o texto
-    ctx.fillText(text, canvas.width/2, canvas.height -55);
-
-    // Identificador abaixo da linha
-    ctx.font = '20px Courier New';
-    ctx.fillStyle = '#666';
-    ctx.fillText(id_doc, canvas.width - canvas.height -100, 106);
-
-
-    // Retornar a imagem como URL de dados
-    return canvas.toDataURL('image/png');
-}
-
-// Função para gerar a imagem da rubrica
-function generateRubricImageDoc(text, font) {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-
-    // Ajustar o tamanho do canvas com base no tamanho do texto
-    const baseWidth = 200; // Menor que a assinatura
+    // Tamanho do canvas dependendo do comprimento do texto
     const textLength = text.length;
-    canvas.width = Math.max(baseWidth, textLength * 25);
-    canvas.height = 80;
+    const width = Math.max(300, textLength * 20);
+    const height = 120;
 
-    // Limpar o canvas
-    ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    canvas.width = width;
+    canvas.height = height;
 
-    let fontSize = 60; // Um pouco menor que a assinatura
-    if (textLength > 3) {
-        fontSize = Math.max(40, 58 - (textLength - 3) * 2); // Ajustar tamanho para textos mais longos
-    }
+    // Fundo transparente
+    ctx.clearRect(0, 0, width, height);
 
-    // Texto "DocSmartSignatureBy"
-    ctx.fillStyle = '#0033A0';
-    ctx.font = 'bold 10px Arial';
-    ctx.fillText(`${docTitle}:`, 26, 15);
-
-    ctx.font = `${fontSize}px "${font}"`;
-    ctx.fillStyle = '#000';
+    // Configurações de texto
+    const fontSize = textLength > 15 ? Math.max(48 - (textLength - 15) * 1.5, 30) : 48;
+    ctx.font = `${fontSize}px "${fontFamily}", cursive`;
+    ctx.fillStyle = 'black';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
-    // Desenhar o texto
-    ctx.fillText(text, 80, (canvas.height/2) + 5 );
+    // Desenhar o texto centralizado
+    ctx.fillText(text, width / 2, height / 2);
 
-    // Identificador abaixo da linha
-    ctx.font = '8px Courier New';
-    ctx.fillStyle = '#666';
-    ctx.fillText(id_doc, canvas.width/2, 75);
-
-    // Retornar a imagem como URL de dados
     return canvas.toDataURL('image/png');
 }
 
+// Função para gerar imagem da rubrica com texto para o documento
+function generateRubricImageDoc(text, fontFamily) {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
 
-// Atualizar preview de assinatura baseado no texto e fonte
+    // Tamanho do canvas para documento
+    const width = 200;
+    const height = 80;
+
+    canvas.width = width;
+    canvas.height = height;
+
+    // Fundo transparente
+    ctx.clearRect(0, 0, width, height);
+
+    // Configurações de texto para rubrica
+    const textLength = text.length;
+    const fontSize = textLength > 3 ? Math.max(46 - (textLength - 3) * 3, 28) : 46;
+    ctx.font = `${fontSize}px "${fontFamily}", cursive`;
+    ctx.fillStyle = 'black';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    // Desenhar o texto centralizado
+    ctx.fillText(text, width / 2, height / 2);
+
+    return canvas.toDataURL('image/png');
+}
+
+// Inicializar os botões de fonte e atualizar previews
+function initializeFontButtons() {
+    document.querySelectorAll('.font-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            // Remover seleção anterior
+            document.querySelectorAll('.font-btn').forEach(b => b.classList.remove('selected'));
+
+            // Selecionar a nova fonte
+            this.classList.add('selected');
+
+            // Atualizar a fonte atual
+            currentSelectedFont = this.dataset.font;
+            document.getElementById('fontFamily').value = currentSelectedFont;
+
+            // Atualizar os previews
+            updateSignaturePreview();
+            updateRubricPreview();
+        });
+    });
+}
+
+// Função para atualizar a prévia da assinatura
 function updateSignaturePreview() {
     const signatureText = document.getElementById('signatureText').value || 'Prévia da Assinatura';
     const fontFamily = document.getElementById('fontFamily').value;
@@ -166,24 +154,46 @@ function updateSignaturePreview() {
     fontPreview.textContent = signatureText;
 
     // Atualizar o tamanho da fonte dinamicamente com base no tamanho do texto
-    const baseSize = 60; // Tamanho base da fonte
+    const baseSize = 40; // Tamanho base da fonte
     const textLength = signatureText.length;
     let fontSize = baseSize;
 
     // Ajuste de tamanho baseado na quantidade de caracteres
     if (textLength > 15) {
         fontSize = baseSize - (textLength - 15) * 1.5;
-        fontSize = Math.max(fontSize, 36); // Não deixar menor que 36px
+        fontSize = Math.max(fontSize, 24); // Não deixar menor que 24px
     }
 
     fontPreview.style.fontSize = `${fontSize}px`;
 
     // Também atualiza o campo de entrada
     document.getElementById('signatureText').style.fontFamily = fontFamily;
-    
-    // Atualizar rubrica também para manter consistência
-    updateRubricPreview();
 }
+
+// Função para atualizar a prévia da rubrica
+function updateRubricPreview() {
+    const rubricText = document.getElementById('rubricText').value || 'Rubrica';
+    const fontFamily = document.getElementById('fontFamily').value;
+    const rubricPreview = document.getElementById('rubricPreview');
+
+    // Definir a fonte selecionada
+    rubricPreview.style.fontFamily = fontFamily;
+    rubricPreview.textContent = rubricText;
+
+    // Usar fonte um pouco maior para a rubrica para melhor visualização
+    const baseSize = 32; // Tamanho base um pouco menor que a assinatura
+    const textLength = rubricText.length;
+    let fontSize = baseSize;
+
+    // Ajuste de tamanho baseado na quantidade de caracteres
+    if (textLength > 3) {
+        fontSize = baseSize - (textLength - 3) * 2;
+        fontSize = Math.max(fontSize, 22); // Não deixar menor que 22px
+    }
+
+    rubricPreview.style.fontSize = `${fontSize}px`;
+}
+
 
 function clearModalCanvas(canvasId) {
     const canvas = document.getElementById(canvasId);
@@ -198,104 +208,29 @@ function loadSavedSignature() {
     console.log("Load saved signature functionality to be implemented");
 }
 
-// Função para adicionar eventos aos botões de fonte
-function initializeFontButtons() {
-    // Adicionar evento para os botões de fonte
-    document.querySelectorAll('.font-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            // Remover seleção anterior
-            document.querySelectorAll('.font-btn').forEach(b => b.classList.remove('selected'));
 
-            // Selecionar a nova fonte
-            this.classList.add('selected');
-
-            // Atualizar a fonte atual
-            currentSelectedFont = this.dataset.font;
-            document.getElementById('fontFamily').value = currentSelectedFont;
-
-            // Atualizar o preview
-            updateSignaturePreview();
-            
-            // Atualizar rubrica também
-            updateRubricPreview();
-        });
-    });
-}
-
-// Função para atualizar a visualização da rubrica
-function updateRubricPreview() {
-    const rubricText = document.getElementById('rubricText').value || 'Rubrica';
-    const fontFamily = document.getElementById('fontFamily').value;
-    const rubricPreview = document.getElementById('rubricPreview');
-
-    // Definir a fonte selecionada
-    rubricPreview.style.fontFamily = fontFamily;
-    rubricPreview.textContent = rubricText;
-    
-    // Ajustar o tamanho da fonte dinamicamente para a rubrica
-    const baseSize = 40; // Tamanho base um pouco menor que a assinatura
-    const textLength = rubricText.length;
-    let fontSize = baseSize;
-
-    // Ajuste de tamanho baseado na quantidade de caracteres
-    if (textLength > 3) {
-        fontSize = baseSize - (textLength - 3) * 2;
-        fontSize = Math.max(fontSize, 24); // Não deixar menor que 24px
-    }
-
-    rubricPreview.style.fontSize = `${fontSize}px`;
-}
-
-// Iniciar eventos quando o DOM estiver carregado
-document.addEventListener('DOMContentLoaded', function() {
-    initializeFontButtons();
-
-    // Adicionar evento para o campo de texto da assinatura
-    const signatureText = document.getElementById('signatureText');
-    if (signatureText) {
-        signatureText.addEventListener('input', updateSignaturePreview);
-    }
-    
-    // Adicionar evento para o campo de texto da rubrica
-    const rubricText = document.getElementById('rubricText');
-    if (rubricText) {
-        rubricText.addEventListener('input', updateRubricPreview);
-    }
-
-    // Inicializar com a fonte selecionada
-    const selectedFontBtn = document.querySelector(`.font-btn[data-font="${currentSelectedFont}"]`);
-    if (selectedFontBtn) {
-        selectedFontBtn.classList.add('selected');
-        document.getElementById('fontFamily').value = currentSelectedFont;
-    }
-
-    // Inicializar os previews
-    updateSignaturePreview();
-    updateRubricPreview();
-});
-
-// Garantir que os botões de fonte sejam inicializados quando o modal é exibido
+// Função inicializados quando o modal é exibido
 function showSimpleModal() {
     document.getElementById('simpleModal').style.display = 'block';
     feather.replace();
-    
+
     // Preencher os campos corretamente
     const signatureTextField = document.getElementById('signatureText');
     const rubricTextField = document.getElementById('rubricText');
-    
+
     // Garantir valores iniciais para os campos caso estejam vazios
     if (signatureTextField && !signatureTextField.value) {
         signatureTextField.value = signatureTextField.getAttribute('value') || '';
     }
-    
+
     if (rubricTextField && !rubricTextField.value) {
         rubricTextField.value = rubricTextField.getAttribute('value') || '';
     }
-    
+
     // Reinicializar os botões de fonte quando o modal é exibido
     setTimeout(() => {
         initializeFontButtons();
-        
+
         // Garantir que a fonte correta esteja selecionada
         const selectedFontBtn = document.querySelector(`.font-btn[data-font="${currentSelectedFont}"]`);
         if (selectedFontBtn) {
@@ -303,8 +238,37 @@ function showSimpleModal() {
             selectedFontBtn.classList.add('selected');
             document.getElementById('fontFamily').value = currentSelectedFont;
         }
-        
+
         // Atualizar previews
         updateSignaturePreview();
+        updateRubricPreview();
     }, 100);
 }
+
+// Inicializar quando o documento carregar
+document.addEventListener('DOMContentLoaded', function() {
+    // Eventos para os campos de texto
+    const signatureText = document.getElementById('signatureText');
+    const rubricText = document.getElementById('rubricText');
+
+    if (signatureText) {
+        signatureText.addEventListener('input', updateSignaturePreview);
+    }
+
+    if (rubricText) {
+        rubricText.addEventListener('input', updateRubricPreview);
+    }
+
+    // Definir um valor inicial para a rubrica baseado no nome se disponível
+    if (signatureText && signatureText.value && rubricText) {
+        const nameParts = signatureText.value.trim().split(' ');
+        if (nameParts.length >= 2) {
+            // Iniciais do primeiro e último nome
+            rubricText.value = nameParts[0].charAt(0) + nameParts[nameParts.length-1].charAt(0);
+        } else if (nameParts.length === 1) {
+            // Primeiros dois caracteres do nome
+            rubricText.value = nameParts[0].substring(0, Math.min(2, nameParts[0].length));
+        }
+        updateRubricPreview();
+    }
+});
