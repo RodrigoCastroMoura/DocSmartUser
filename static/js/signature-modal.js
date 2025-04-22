@@ -157,7 +157,7 @@ function generateRubricImageDoc(text, font) {
 
 // Atualizar preview de assinatura baseado no texto e fonte
 function updateSignaturePreview() {
-    const signatureText = document.getElementById('signatureText').value || 'Prévia da Fonte';
+    const signatureText = document.getElementById('signatureText').value || 'Prévia da Assinatura';
     const fontFamily = document.getElementById('fontFamily').value;
     const fontPreview = document.getElementById('fontPreview');
 
@@ -180,6 +180,9 @@ function updateSignaturePreview() {
 
     // Também atualiza o campo de entrada
     document.getElementById('signatureText').style.fontFamily = fontFamily;
+    
+    // Atualizar rubrica também para manter consistência
+    updateRubricPreview();
 }
 
 function clearModalCanvas(canvasId) {
@@ -228,6 +231,19 @@ function updateRubricPreview() {
     // Definir a fonte selecionada
     rubricPreview.style.fontFamily = fontFamily;
     rubricPreview.textContent = rubricText;
+    
+    // Ajustar o tamanho da fonte dinamicamente para a rubrica
+    const baseSize = 40; // Tamanho base um pouco menor que a assinatura
+    const textLength = rubricText.length;
+    let fontSize = baseSize;
+
+    // Ajuste de tamanho baseado na quantidade de caracteres
+    if (textLength > 3) {
+        fontSize = baseSize - (textLength - 3) * 2;
+        fontSize = Math.max(fontSize, 24); // Não deixar menor que 24px
+    }
+
+    rubricPreview.style.fontSize = `${fontSize}px`;
 }
 
 // Iniciar eventos quando o DOM estiver carregado
@@ -263,18 +279,32 @@ function showSimpleModal() {
     document.getElementById('simpleModal').style.display = 'block';
     feather.replace();
     
-    // Reinicializar os botões de fonte quando o modal é exibido
-    setTimeout(initializeFontButtons, 100);
+    // Preencher os campos corretamente
+    const signatureTextField = document.getElementById('signatureText');
+    const rubricTextField = document.getElementById('rubricText');
     
-    // Garantir que a fonte correta esteja selecionada
-    const selectedFontBtn = document.querySelector(`.font-btn[data-font="${currentSelectedFont}"]`);
-    if (selectedFontBtn) {
-        document.querySelectorAll('.font-btn').forEach(b => b.classList.remove('selected'));
-        selectedFontBtn.classList.add('selected');
-        document.getElementById('fontFamily').value = currentSelectedFont;
+    // Garantir valores iniciais para os campos caso estejam vazios
+    if (signatureTextField && !signatureTextField.value) {
+        signatureTextField.value = signatureTextField.getAttribute('value') || '';
     }
     
-    // Atualizar previews
-    updateSignaturePreview();
-    updateRubricPreview();
+    if (rubricTextField && !rubricTextField.value) {
+        rubricTextField.value = rubricTextField.getAttribute('value') || '';
+    }
+    
+    // Reinicializar os botões de fonte quando o modal é exibido
+    setTimeout(() => {
+        initializeFontButtons();
+        
+        // Garantir que a fonte correta esteja selecionada
+        const selectedFontBtn = document.querySelector(`.font-btn[data-font="${currentSelectedFont}"]`);
+        if (selectedFontBtn) {
+            document.querySelectorAll('.font-btn').forEach(b => b.classList.remove('selected'));
+            selectedFontBtn.classList.add('selected');
+            document.getElementById('fontFamily').value = currentSelectedFont;
+        }
+        
+        // Atualizar previews
+        updateSignaturePreview();
+    }, 100);
 }
