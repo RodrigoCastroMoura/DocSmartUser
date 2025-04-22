@@ -318,35 +318,7 @@ def login():
         except Exception as e:
             logger.error(f"Login error: {e}")
 
-@app.route('/signature-success/<document_id>')
-@login_required
-def signature_success(document_id):
-    try:
-        # Aqui você pode buscar informações sobre o documento assinado
-        document_info = get_document_by_id(document_id)
-        
-        if not document_info:
-            flash('Documento não encontrado', 'error')
-            return redirect(url_for('dashboard'))
-        
-        # Formatar data atual
-        from datetime import datetime
-        current_date = datetime.now().strftime('%d/%m/%Y às %H:%M')
-        
-        return render_template(
-            'signature_success.html', 
-            document_name=document_info.get('name', 'Documento'),
-            document_id=document_id,
-            signed_date=current_date
-        )
-    except Exception as e:
-        flash(f'Erro ao carregar página de sucesso: {str(e)}', 'error')
-        return redirect(url_for('dashboard'))
-
-            flash('An error occurred during login', 'error')
-
     return render_template('login.html')
-
 
 @app.route('/logout')
 @login_required
@@ -356,7 +328,6 @@ def logout():
         requests.post(LOGOUT_URL, headers=headers, timeout=REQUEST_TIMEOUT)
     except Exception as e:
         logger.error(f"Logout error: {e}")
-
     session.clear()
     return redirect(url_for('login'))
 
@@ -456,8 +427,7 @@ def document_type_documents(document_type_id):
 
 @app.route('/view_pdf/<token>')
 def view_pdf(token):
-    headers = get_auth_headers_parm(token)
-    
+    headers = get_auth_headers_parm(token) 
     try:
         # Obter informações do token
         token_response = requests.get(f"{LINKS_URL}/validate/{token}",
@@ -523,10 +493,21 @@ def view_pdf(token):
         name = ''.join(session.get('user', {}).get('name', '').split())
         
         # Determinar se o documento precisa de assinatura
-        need_signature = document.get('flow', 0) > 1 and not document.get('signature', False)
+        need_signature = document.get('signature')
         
         # URL para retornar após visualização
         back_url = request.referrer or url_for('document_types')
+        
+        if document.get('flow') == 2:
+            find = ''
+        elif len(document.get('flow_user')) > 1:
+            find = next(
+                (item["id"] for item in document.get('flow_user')
+                if item["user_id"] == document.get('user_id') and item["signature"] == False),
+                ''
+            )
+        else:
+            find = ''
         
         return render_template('pdf_viewer.html',
                                document_name=document.get('name', 'Document'),
@@ -539,6 +520,7 @@ def view_pdf(token):
                                signature=signature,
                                rubric=rubric,
                                type_font=type_font,
+                               find = find,
                                id_doc=session.get('user__id'))
                                
     except requests.Timeout:
@@ -553,10 +535,26 @@ def view_pdf(token):
         
     return redirect(url_for('token_expired'))
 
+
 @app.route('/token-expired')
 def token_expired():
     """Rota para página de token expirado ou utilizado"""
     return render_template('token_expired.html')  
+
+
+@app.route('/signature-success')
+@login_required
+def signature_success():
+    # Formatar data atual
+    from datetime import datetime
+    current_date = datetime.now().strftime('%d/%m/%Y às %H:%M')
+    session.clear()
+    return render_template(
+        'signature_success.html', 
+        signed_date=current_date
+    )
+  
+  
 
 @app.route('/api/documents')
 @login_required

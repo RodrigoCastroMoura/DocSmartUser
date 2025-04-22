@@ -1478,6 +1478,7 @@ try {
 } catch (error) {
     console.error('Erro ao salvar documento assinado:', error);
     showNotification('Erro ao salvar o documento assinado: ' + error.message, 'error');
+    closePopup();
 }
 }
 

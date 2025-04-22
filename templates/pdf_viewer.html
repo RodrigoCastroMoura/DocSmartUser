@@ -50,73 +50,72 @@
         <div id="termsOverlay" class="terms-overlay"></div>
     </div>
 </div>
-
 <!-- Modal Simples para PDF -->
 <div id="simpleModal" class="modal">
-    <div class="modal-content simple-modal">
-      <div class="modal-header">
-        <h3>Área de Texto para Assinatura e Rubrica</h3>
-        <button class="action-btn" onclick="hideModal('simpleModal')" {% if signature is none %}disabled{% endif %}>
-          <i data-feather="x"></i>
-        </button>
-      </div>
-      <div class="modal-body">
-        <div class="tabs-container">
-          <div class="tab-content">
-            <div id="text-tab" class="tab-pane active">
-              <div class="signature-fields-container">
-                <!-- Área de assinatura -->
-                <div class="form-group" style="flex: 2;">
-                  <label for="signatureText">Sua assinatura:</label>
-                  <input type="text" id="signatureText" class="form-control" style="display:none;" value="{{name}}">
-                  <div id="fontPreview" class="font-preview">Prévia da Assinatura</div>
+  <div class="modal-content simple-modal">
+    <div class="modal-header">
+      <h3>Área de Texto para Assinatura e Rubrica</h3>
+      <button class="action-btn" onclick="hideModal('simpleModal')" {% if signature is none %}disabled{% endif %}>
+        <i data-feather="x"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="tabs-container">
+        <div class="tab-content">
+          <div id="text-tab" class="tab-pane active">
+            <div class="signature-fields-container">
+              <!-- Área de assinatura -->
+              <div class="form-group" style="flex: 2;">
+                <label for="signatureText">Sua assinatura:</label>
+                <input type="text" id="signatureText" class="form-control" style="display:none;" value="{{name}}">
+                <div id="fontPreview" class="font-preview">Prévia da Assinatura</div>
+              </div>
+              <!-- Nova área de rubrica -->
+              <div class="form-group" style="flex: 1;">
+                <label for="rubricText">Sua rubrica:</label>
+                <input type="text" id="rubricText" class="form-control" oninput="updateRubricPreview()" value="{{name|truncate(2, True, '')}}" style="display:none;">
+                <div id="rubricPreview" class="font-preview" style="font-size: 28px;">Rubrica</div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Escolha a fonte para ambos:</label>
+              <div class="font-buttons-container">
+                <div class="font-btn" data-font="Dancing Script">
+                  <span style="font-family: 'Dancing Script'">Dancing Script</span>
                 </div>
-                <!-- Nova área de rubrica -->
-                <div class="form-group" style="flex: 1;">
-                  <label for="rubricText">Sua rubrica:</label>
-                  <input type="text" id="rubricText" class="form-control" oninput="updateRubricPreview()" value="{{name|truncate(2, True, '')}}" style="display:none;">
-                  <div id="rubricPreview" class="font-preview" style="font-size: 28px;">Rubrica</div>
+                <div class="font-btn" data-font="Great Vibes">
+                  <span style="font-family: 'Great Vibes'">Great Vibes</span>
+                </div>
+                <div class="font-btn" data-font="Allura">
+                  <span style="font-family: 'Allura'">Allura</span>
+                </div>
+                <div class="font-btn" data-font="Alex Brush">
+                  <span style="font-family: 'Alex Brush'">Alex Brush</span>
+                </div>
+                <div class="font-btn" data-font="Sacramento">
+                  <span style="font-family: 'Sacramento'">Sacramento</span>
+                </div>
+                <div class="font-btn" data-font="Tangerine">
+                  <span style="font-family: 'Tangerine'">Tangerine</span>
+                </div>
+                <div class="font-btn" data-font="Yellowtail">
+                  <span style="font-family: 'Yellowtail'">Yellowtail</span>
+                </div>
+                <div class="font-btn" data-font="Mr De Haviland">
+                  <span style="font-family: 'Mr De Haviland'">Mr De Haviland</span>
                 </div>
               </div>
-              <div class="form-group">
-                <label>Escolha a fonte para ambos:</label>
-                <div class="font-buttons-container">
-                  <div class="font-btn" data-font="Dancing Script">
-                    <span style="font-family: 'Dancing Script'">Dancing Script</span>
-                  </div>
-                  <div class="font-btn" data-font="Great Vibes">
-                    <span style="font-family: 'Great Vibes'">Great Vibes</span>
-                  </div>
-                  <div class="font-btn" data-font="Allura">
-                    <span style="font-family: 'Allura'">Allura</span>
-                  </div>
-                  <div class="font-btn" data-font="Alex Brush">
-                    <span style="font-family: 'Alex Brush'">Alex Brush</span>
-                  </div>
-                  <div class="font-btn" data-font="Sacramento">
-                    <span style="font-family: 'Sacramento'">Sacramento</span>
-                  </div>
-                  <div class="font-btn" data-font="Tangerine">
-                    <span style="font-family: 'Tangerine'">Tangerine</span>
-                  </div>
-                  <div class="font-btn" data-font="Yellowtail">
-                    <span style="font-family: 'Yellowtail'">Yellowtail</span>
-                  </div>
-                  <div class="font-btn" data-font="Mr De Haviland">
-                    <span style="font-family: 'Mr De Haviland'">Mr De Haviland</span>
-                  </div>
-                </div>
-                <input type="hidden" id="fontFamily" value="Dancing Script">
-              </div>
+              <input type="hidden" id="fontFamily" value="Dancing Script">
             </div>
           </div>
         </div>
       </div>
-      <div class="modal-footer">
-        <button class="action-btn" onclick="hideModal('simpleModal')" {% if signature is none %}disabled{% endif %}>Cancelar</button>
-        <button class="action-btn primary" onclick="applySignatureOrText()">Aplicar</button>
-      </div>
     </div>
+    <div class="modal-footer">
+      <button class="action-btn" onclick="hideModal('simpleModal')" {% if signature is none %}disabled{% endif %}>Cancelar</button>
+      <button class="action-btn primary" onclick="applySignatureOrText()">Aplicar</button>
+    </div>
+  </div>
 </div>
 
 <div id="signatures-container" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; pointer-events: none;"></div>
@@ -136,6 +135,8 @@
     let pdfUrl = "{{document_url}}";
     let id_doc = "{{id_doc}}";
     let document_type_id = "{{document_type_id}}";
+    let find = "{{find}}"
+    let needSignature = ("{{need_signature}}").toLowerCase() === "true";  
     
     document.addEventListener('DOMContentLoaded', function() {
         initPdfViewer();

@@ -179,7 +179,7 @@
             
             <div class="document-info">
                 <i data-feather="file-text"></i>
-                <span id="documentName">{{document_name}}</span>
+                <span id="documentName"></span>
             </div>
             
             <div class="signature-time">
@@ -188,10 +188,7 @@
             </div>
             
             <div class="action-buttons">
-                <a href="{{ url_for('dashboard') }}" class="action-btn primary">
-                    <i data-feather="home"></i>
-                    Voltar ao Início
-                </a>
+                
                 <button onclick="downloadSignedDocument()" class="action-btn secondary">
                     <i data-feather="download"></i>
                     Baixar Comprovante

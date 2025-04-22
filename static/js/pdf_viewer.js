@@ -25,6 +25,8 @@ async function initPdfViewer() {
         return;
     }
     
+    openPopup();
+
     showLoading(container);
 
     try {
@@ -51,6 +53,10 @@ async function initPdfViewer() {
                 toggleTermsAgreement();
             }
         }
+        
+        closePopup();
+        if(currentSignature == "None")
+            showSimpleModal();
     } catch (error) {
         console.error('Error loading PDF:', error);
         container.innerHTML = `
@@ -62,6 +68,7 @@ async function initPdfViewer() {
         feather.replace();
         hideLoading(container);
         showNotification(`Erro ao carregar o PDF: ${error.message}`, 'error');
+        closePopup();
     }
 }
 
@@ -119,9 +126,9 @@ async function renderPdfPages() {
 
 
     // Verificar se precisamos carregar posições de assinatura
-    //if (needSignature && currentDocumentId) {
-    await loadSignaturePositions(currentDocumentId);
-    //}
+    if (!needSignature) {
+        await loadSignaturePositions(currentDocumentId);
+    }
 
     // Renderizar cada página
     const totalPages = currentPdf.numPages;
@@ -138,11 +145,11 @@ async function renderPdfPages() {
         pageContainer.appendChild(pageCanvas);
 
         // Renderizar a página
-       // if (needSignature) {
+        if (!needSignature) {
             await renderPdfPageWithSignature(pageNum, pageCanvas);
-        //} else {
-            //await renderPdfPage(pageNum, pageCanvas);
-        //}
+        } else {
+            await renderPdfPage(pageNum, pageCanvas);
+        }
 
         // Adicionar número da página se houver mais de uma
         if (totalPages > 1) {
@@ -504,17 +511,8 @@ async function saveSignedDocument(documentId) {
         openPopup(); // Mostra o indicador de carregamento
         
         // Enviar os dados de assinatura para o servidor
-        const response = await fetch(`/api/documents/${documentId}/sign`, {
+        const response = await fetch(`/api/pdf-analyzer/${documentId}`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                signatures: signedPages,
-                signatureData: currentSignature,
-                rubricData: currentRubrica,
-                fontFamily: currentSelectedFont
-            })
         });
         
         if (!response.ok) {
@@ -525,7 +523,7 @@ async function saveSignedDocument(documentId) {
         const result = await response.json();
         
         // Redirecionar para a página de sucesso
-        window.location.href = `/signature-success/${documentId}`;
+        window.location.href = `/signature-success`;
         
     } catch (error) {
         closePopup();
@@ -693,45 +691,6 @@ async function adjustZoom(delta) {
         setTimeout(() => {
             newPagesContainer.scrollTop = scrollRatio * newPagesContainer.scrollHeight;
         }, 50);
-    }
-}
-
-// Salvar documento assinado
-async function saveSignedDocument(documentId) {
-    try {
-        openPopup();
-        const response = await fetch(`/api/pdf-analyzer/${documentId}`, {
-            method: 'POST',
-            headers: {
-                'Accept': 'application/json'
-            }
-        });
-
-        if (!response.ok) {
-            const contentType = response.headers.get('content-type');
-            if (contentType && contentType.includes('application/json')) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Falha ao salvar documento assinado');
-            } else {
-                throw new Error('Falha ao salvar documento assinado');
-            }
-        }
-
-        showNotification('Documento assinado salvo com sucesso!', 'success');
-        closePopup();
-
-        // Se existir um elemento back-link, usá-lo para redirecionamento
-        const backLink = document.querySelector('.back-link');
-        if (backLink) {
-            window.location.href = backLink.getAttribute('href');
-        } else {
-            // Caso contrário, redirecionar para a rota padrão
-            window.location.href = `/document_type/${document_type_id}/documents`;
-        }
-    } catch (error) {
-        console.error('Erro ao salvar documento assinado:', error);
-        showNotification('Erro ao salvar o documento assinado: ' + error.message, 'error');
-        closePopup();
     }
 }
 
@@ -1064,6 +1023,32 @@ function handleResponsiveLayout() {
             }
         }
     }
+}
+
+// Modificar a função applySignatureOrText para incluir a rubrica
+function applySignatureOrText() {
+    const signatureText = document.getElementById('signatureText').value;
+    const rubricText = document.getElementById('rubricText').value;
+   
+    // Gerar a assinatura como imagem
+    const signatureImg = generateTextSignature(signatureText, currentSelectedFont);
+    
+    // Gerar a rubrica como imagem
+    const rubricImg = generateRubricImage(rubricText, currentSelectedFont);
+
+    // Gerar a assinatura como imagem
+    const signatureImgDoc = generateTextSignatureDoc(signatureText, currentSelectedFont);
+    
+    // Gerar a rubrica como imagem
+    const rubricImgDoC = generateRubricImageDoc(rubricText, currentSelectedFont);
+
+
+    // Fechar o modal
+    hideModal('simpleModal');
+
+    // Armazenar tanto a assinatura quanto a rubrica
+    currentRubrica = rubricImg;
+    addSignature(signatureImg, rubricImg, signatureImgDoc, rubricImgDoC);
 }
 
 // Adicionar event listener para redimensionamento da janela
