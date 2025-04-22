@@ -89,7 +89,7 @@ function generateTextSignatureDoc(text, font) {
     if (textLength > 15) {
         fontSize = Math.max(48, 80 - (textLength - 15) * 0.4); // Também aumentei o valor mínimo
     }
- 
+
     // Texto "DocSmartSignatureBy"
     ctx.fillStyle = '#0033A0';
     ctx.font = 'bold 20px Arial';
@@ -157,7 +157,7 @@ function generateRubricImageDoc(text, font) {
 
 // Atualizar preview de assinatura baseado no texto e fonte
 function updateSignaturePreview() {
-    const signatureText = document.getElementById('signatureText').value || 'Prévia da Fonte';
+    const signatureText = document.getElementById('signatureText').value || 'Prévia da Assinatura';
     const fontFamily = document.getElementById('fontFamily').value;
     const fontPreview = document.getElementById('fontPreview');
 
@@ -165,17 +165,28 @@ function updateSignaturePreview() {
     fontPreview.style.fontFamily = fontFamily;
     fontPreview.textContent = signatureText;
 
-    // Atualizar o tamanho da fonte dinamicamente com base no tamanho do texto
-    const baseSize = 60; // Tamanho base da fonte
+    // Ajuste mais preciso baseado no comprimento do texto e na fonte
+    let baseSize = 36; // Tamanho inicial
     const textLength = signatureText.length;
-    let fontSize = baseSize;
 
-    // Ajuste de tamanho baseado na quantidade de caracteres
-    if (textLength > 15) {
-        fontSize = baseSize - (textLength - 15) * 1.5;
-        fontSize = Math.max(fontSize, 36); // Não deixar menor que 36px
+    // Ajustes específicos para fontes que são naturalmente mais largas
+    if (fontFamily === 'Great Vibes' || fontFamily === 'Mr De Haviland' || fontFamily === 'Tangerine') {
+        baseSize = 34;
     }
 
+    // Escala progressiva baseada no comprimento do texto
+    let fontSize = baseSize;
+    if (textLength > 12) {
+        fontSize = baseSize - Math.min(14, (textLength - 12) * 0.9);
+    }
+    if (textLength > 20) {
+        fontSize = fontSize - Math.min(8, (textLength - 20) * 0.7);
+    }
+
+    // Garantir tamanho mínimo da fonte
+    fontSize = Math.max(fontSize, 18);
+
+    // Aplicar a fonte ajustada
     fontPreview.style.fontSize = `${fontSize}px`;
 
     // Também atualiza o campo de entrada
@@ -212,7 +223,7 @@ function initializeFontButtons() {
 
             // Atualizar o preview
             updateSignaturePreview();
-            
+
             // Atualizar rubrica também
             updateRubricPreview();
         });
@@ -239,7 +250,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (signatureText) {
         signatureText.addEventListener('input', updateSignaturePreview);
     }
-    
+
     // Adicionar evento para o campo de texto da rubrica
     const rubricText = document.getElementById('rubricText');
     if (rubricText) {
@@ -262,10 +273,10 @@ document.addEventListener('DOMContentLoaded', function() {
 function showSimpleModal() {
     document.getElementById('simpleModal').style.display = 'block';
     feather.replace();
-    
+
     // Reinicializar os botões de fonte quando o modal é exibido
     setTimeout(initializeFontButtons, 100);
-    
+
     // Garantir que a fonte correta esteja selecionada
     const selectedFontBtn = document.querySelector(`.font-btn[data-font="${currentSelectedFont}"]`);
     if (selectedFontBtn) {
@@ -273,7 +284,7 @@ function showSimpleModal() {
         selectedFontBtn.classList.add('selected');
         document.getElementById('fontFamily').value = currentSelectedFont;
     }
-    
+
     // Atualizar previews
     updateSignaturePreview();
     updateRubricPreview();
