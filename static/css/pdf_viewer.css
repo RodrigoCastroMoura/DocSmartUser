@@ -270,24 +270,19 @@
 
 .font-preview {
     font-size: 36px;
-    padding: 15px;
+    padding: 20px;
     border: 1px solid var(--border-color);
     border-radius: 4px;
     background-color: white;
     color: black;
     min-height: 74px;
-    max-height: 150px;
     display: flex;
     align-items: center;
     justify-content: center;
+    word-break: break-word;
     text-align: center;
     line-height: 1.2;
     margin-top: 15px;
-    overflow: hidden;
-    width: 100%;
-    word-wrap: break-word;
-    word-break: break-word;
-    hyphens: auto;
 }
 
 .signature-fields-container {
