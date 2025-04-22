@@ -30,7 +30,7 @@ ALLOWED_EXTENSIONS = {
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # API endpoints
-API_BASE_URL = "http://127.0.0.1:8000/api"
+API_BASE_URL = "https://doc-smart-api-rodrigocastromo.replit.app/api"
 LOGIN_URL = f"{API_BASE_URL}/auth/login"
 LOGOUT_URL = f"{API_BASE_URL}/auth/logout"
 REFRESH_URL = f"{API_BASE_URL}/auth/refresh"
@@ -493,7 +493,7 @@ def view_pdf(token):
         name = ''.join(session.get('user', {}).get('name', '').split())
         
         # Determinar se o documento precisa de assinatura
-        need_signature = document.get('signature')
+        need_signature = str(document.get('signature'))
         
         # URL para retornar após visualização
         back_url = request.referrer or url_for('document_types')
