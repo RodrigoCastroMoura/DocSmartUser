@@ -717,11 +717,6 @@ function printDocument() {
     printWindow.document.close();
 }
 
-// Mostrar o modal simples
-function showSimpleModal() {
-    document.getElementById('simpleModal').style.display = 'block';
-    feather.replace();
-}
 
 // Esconder modal
 function hideModal(modalId) {
@@ -1049,6 +1044,35 @@ function applySignatureOrText() {
     // Armazenar tanto a assinatura quanto a rubrica
     currentRubrica = rubricImg;
     addSignature(signatureImg, rubricImg, signatureImgDoc, rubricImgDoC);
+}
+
+async function addSignature(signatureData, rubricImg, signatureDataDoc, rubricImgDoc) {
+    currentSignature = signatureData;
+    currentRubric = rubricImg;
+    try {
+        if(signatureData != null){
+            const response = await fetch(`/api/signature`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    signature : currentSignature,
+                    rubric : currentRubric,
+                    signatureDoc : signatureDataDoc,
+                    rubricDoc : rubricImgDoc,
+                    type_font : currentSelectedFont
+                })
+            });
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to create signature');
+            } 
+        }    
+    } catch (error) {
+        console.error('Error creating signature:', error);
+        showNotification(error.message, 'error');
+    } 
 }
 
 // Adicionar event listener para redimensionamento da janela
