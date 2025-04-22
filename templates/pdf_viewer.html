@@ -80,32 +80,32 @@
             <div class="form-group">
               <label>Escolha a fonte para ambos:</label>
               <div class="font-buttons-container">
-                <div class="font-btn" data-font="Dancing Script">
+                <div class="font-btn{% if type_font == 'Dancing Script' or not type_font %} selected{% endif %}" data-font="Dancing Script">
                   <span style="font-family: 'Dancing Script'">Dancing Script</span>
                 </div>
-                <div class="font-btn" data-font="Great Vibes">
+                <div class="font-btn{% if type_font == 'Great Vibes' %} selected{% endif %}" data-font="Great Vibes">
                   <span style="font-family: 'Great Vibes'">Great Vibes</span>
                 </div>
-                <div class="font-btn" data-font="Allura">
+                <div class="font-btn{% if type_font == 'Allura' %} selected{% endif %}" data-font="Allura">
                   <span style="font-family: 'Allura'">Allura</span>
                 </div>
-                <div class="font-btn" data-font="Alex Brush">
+                <div class="font-btn{% if type_font == 'Alex Brush' %} selected{% endif %}" data-font="Alex Brush">
                   <span style="font-family: 'Alex Brush'">Alex Brush</span>
                 </div>
-                <div class="font-btn" data-font="Sacramento">
+                <div class="font-btn{% if type_font == 'Sacramento' %} selected{% endif %}" data-font="Sacramento">
                   <span style="font-family: 'Sacramento'">Sacramento</span>
                 </div>
-                <div class="font-btn" data-font="Tangerine">
+                <div class="font-btn{% if type_font == 'Tangerine' %} selected{% endif %}" data-font="Tangerine">
                   <span style="font-family: 'Tangerine'">Tangerine</span>
                 </div>
-                <div class="font-btn" data-font="Yellowtail">
+                <div class="font-btn{% if type_font == 'Yellowtail' %} selected{% endif %}" data-font="Yellowtail">
                   <span style="font-family: 'Yellowtail'">Yellowtail</span>
                 </div>
-                <div class="font-btn" data-font="Mr De Haviland">
+                <div class="font-btn{% if type_font == 'Mr De Haviland' %} selected{% endif %}" data-font="Mr De Haviland">
                   <span style="font-family: 'Mr De Haviland'">Mr De Haviland</span>
                 </div>
               </div>
-              <input type="hidden" id="fontFamily" value="Dancing Script">
+              <input type="hidden" id="fontFamily" value="{{type_font|default('Dancing Script')}}">
             </div>
           </div>
         </div>

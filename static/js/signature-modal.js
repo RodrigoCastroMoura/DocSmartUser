@@ -247,6 +247,9 @@ function showSimpleModal() {
 
 // Inicializar quando o documento carregar
 document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar os botões de fonte
+    initializeFontButtons();
+
     // Eventos para os campos de texto
     const signatureText = document.getElementById('signatureText');
     const rubricText = document.getElementById('rubricText');
@@ -270,5 +273,22 @@ document.addEventListener('DOMContentLoaded', function() {
             rubricText.value = nameParts[0].substring(0, Math.min(2, nameParts[0].length));
         }
         updateRubricPreview();
+    }
+    
+    // Selecionar a fonte atual, se definida
+    if (currentSelectedFont) {
+        const selectedFontBtn = document.querySelector(`.font-btn[data-font="${currentSelectedFont}"]`);
+        if (selectedFontBtn) {
+            document.querySelectorAll('.font-btn').forEach(b => b.classList.remove('selected'));
+            selectedFontBtn.classList.add('selected');
+        }
+    } else {
+        // Seleciona a primeira fonte por padrão
+        const firstFontBtn = document.querySelector('.font-btn');
+        if (firstFontBtn) {
+            firstFontBtn.classList.add('selected');
+            currentSelectedFont = firstFontBtn.dataset.font;
+            document.getElementById('fontFamily').value = currentSelectedFont;
+        }
     }
 });
