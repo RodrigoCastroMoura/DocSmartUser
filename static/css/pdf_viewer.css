@@ -230,9 +230,16 @@
     transition: all 0.2s ease;
 }
 
-.font-btn:hover, .font-btn.selected {
-    background-color: var(--accent-color-light);
+.font-btn:hover {
+    background-color: rgba(var(--accent-color-rgb), 0.1);
     border-color: var(--accent-color);
+}
+
+.font-btn.selected {
+    background-color: rgba(var(--accent-color-rgb), 0.2);
+    border-color: var(--accent-color);
+    border-width: 2px;
+    box-shadow: 0 0 5px rgba(var(--accent-color-rgb), 0.3);
 }
 
 .font-preview {

@@ -195,8 +195,8 @@ function loadSavedSignature() {
     console.log("Load saved signature functionality to be implemented");
 }
 
-// Iniciar eventos quando o DOM estiver carregado
-document.addEventListener('DOMContentLoaded', function() {
+// Função para adicionar eventos aos botões de fonte
+function initializeFontButtons() {
     // Adicionar evento para os botões de fonte
     document.querySelectorAll('.font-btn').forEach(btn => {
         btn.addEventListener('click', function() {
@@ -212,23 +212,69 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Atualizar o preview
             updateSignaturePreview();
+            
+            // Atualizar rubrica também
+            updateRubricPreview();
         });
     });
+}
 
-    // Adicionar evento para o campo de texto
+// Função para atualizar a visualização da rubrica
+function updateRubricPreview() {
+    const rubricText = document.getElementById('rubricText').value || 'Rubrica';
+    const fontFamily = document.getElementById('fontFamily').value;
+    const rubricPreview = document.getElementById('rubricPreview');
+
+    // Definir a fonte selecionada
+    rubricPreview.style.fontFamily = fontFamily;
+    rubricPreview.textContent = rubricText;
+}
+
+// Iniciar eventos quando o DOM estiver carregado
+document.addEventListener('DOMContentLoaded', function() {
+    initializeFontButtons();
+
+    // Adicionar evento para o campo de texto da assinatura
     const signatureText = document.getElementById('signatureText');
     if (signatureText) {
         signatureText.addEventListener('input', updateSignaturePreview);
     }
+    
+    // Adicionar evento para o campo de texto da rubrica
+    const rubricText = document.getElementById('rubricText');
+    if (rubricText) {
+        rubricText.addEventListener('input', updateRubricPreview);
+    }
 
-    // Inicializar com a primeira fonte selecionada
-    const firstFontBtn = document.querySelector(`.font-btn[data-font="${ currentSelectedFont }"]`);
-    if (firstFontBtn) {
-        firstFontBtn.classList.add('selected');
-        currentSelectedFont = firstFontBtn.dataset.font;
+    // Inicializar com a fonte selecionada
+    const selectedFontBtn = document.querySelector(`.font-btn[data-font="${currentSelectedFont}"]`);
+    if (selectedFontBtn) {
+        selectedFontBtn.classList.add('selected');
         document.getElementById('fontFamily').value = currentSelectedFont;
     }
 
-    // Inicializar o preview
+    // Inicializar os previews
     updateSignaturePreview();
+    updateRubricPreview();
 });
+
+// Garantir que os botões de fonte sejam inicializados quando o modal é exibido
+function showSimpleModal() {
+    document.getElementById('simpleModal').style.display = 'block';
+    feather.replace();
+    
+    // Reinicializar os botões de fonte quando o modal é exibido
+    setTimeout(initializeFontButtons, 100);
+    
+    // Garantir que a fonte correta esteja selecionada
+    const selectedFontBtn = document.querySelector(`.font-btn[data-font="${currentSelectedFont}"]`);
+    if (selectedFontBtn) {
+        document.querySelectorAll('.font-btn').forEach(b => b.classList.remove('selected'));
+        selectedFontBtn.classList.add('selected');
+        document.getElementById('fontFamily').value = currentSelectedFont;
+    }
+    
+    // Atualizar previews
+    updateSignaturePreview();
+    updateRubricPreview();
+}
