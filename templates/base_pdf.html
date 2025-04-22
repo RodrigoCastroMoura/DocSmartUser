@@ -64,6 +64,178 @@
             overflow: hidden;
         }
 
+        /* Modal styling */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .modal-content {
+            position: relative;
+            background-color: var(--bg-secondary);
+            margin: 30px auto;
+            padding: 2rem;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 650px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+            z-index: 1001;
+            overflow: visible;
+        }
+
+        .simple-modal {
+            max-width: 650px;
+            display: flex;
+            flex-direction: column;
+            padding: 0 !important;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border-color);
+            background-color: var(--bg-secondary);
+        }
+
+        .modal-body {
+            padding: 20px;
+            flex: 1;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            padding: 15px 20px;
+            border-top: 1px solid var(--border-color);
+            background-color: var(--bg-secondary);
+        }
+
+        .notification-modal {
+            max-width: 400px;
+        }
+
+        .notification-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .notification-header i {
+            font-size: 1.5rem;
+            padding: 0.5rem;
+            border-radius: 50%;
+            background-color: var(--bg-tertiary);
+        }
+
+        .notification-header.success i {
+            color: var(--success-color);
+            background-color: rgba(var(--success-rgb), 0.1);
+        }
+
+        .notification-header.error i {
+            color: var(--danger-color);
+            background-color: rgba(var(--danger-rgb), 0.1);
+        }
+
+        .notification-header h3 {
+            margin: 0;
+            flex: 1;
+        }
+
+        .notification-body {
+            margin-bottom: 2rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .notification-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .close-btn:hover {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .action-btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+        }
+
+        .action-btn.primary {
+            background-color: var(--accent-color);
+            color: white;
+        }
+
+        .action-btn.primary:hover {
+            background-color: var(--accent-hover);
+        }
+
+        .action-btn.danger {
+            background-color: var(--danger-color);
+            color: white;
+        }
+
+        .action-btn.danger:hover {
+            background-color: var(--danger-hover);
+        }
+
+        .action-btn.success {
+            background-color: var(--success-color) !important;
+            color: white !important;
+        }
+
+        .action-btn.success:hover {
+            background-color: var(--success-hover);
+        }
+
+        .action-btn:not(.primary):not(.danger) {
+            background-color: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .action-btn:not(.primary):not(.danger):hover {
+            background-color: var(--border-color);
+        }
+
         /* Estilos para dispositivos móveis */
         @media screen and (max-width: 768px) {
             .modal-content {
@@ -105,6 +277,11 @@
                 padding: 10px;
             }
 
+            .action-btn {
+                padding: 0.5rem 1rem;
+                font-size: 0.8rem;
+            }
+
             .custom-popup {
                 z-index: 9999 !important;
             }
@@ -140,6 +317,48 @@
             position: relative;
             animation: popup-appear 0.4s ease;
             box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.5);
+        }
+
+        .custom-popup-title {
+            margin: 0 0 10px;
+            color: var(--text-primary);
+            font-size: 20px;
+        }
+
+        .custom-popup-text {
+            margin: 10px 0;
+            color: var(--text-secondary);
+            font-size: 16px;
+        }
+
+        .loader {
+            border: 4px solid var(--bg-tertiary);
+            border-top: 4px solid var(--accent-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes popup-appear {
+            from {
+                transform: scale(0.9);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
         }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
@@ -219,10 +438,17 @@
             customPopup.classList.remove('active');
         }
 
+        function toggleTheme() {
+            const currentTheme = localStorage.getItem('theme') || 'light';
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            setTheme(newTheme);
+        }
+
         // Initialize theme from localStorage or default to light
         document.addEventListener('DOMContentLoaded', () => {
             const savedTheme = localStorage.getItem('theme') || 'light';
             setTheme(savedTheme);
+            feather.replace();
         });
     </script>
 </body>
