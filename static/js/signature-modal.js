@@ -145,7 +145,7 @@ function initializeFontButtons() {
 
 // Função para atualizar a prévia da assinatura
 function updateSignaturePreview() {
-    const signatureText = document.getElementById('signatureText').value || '';
+    const signatureText = document.getElementById('signatureText').value || 'Prévia da Assinatura';
     const fontFamily = document.getElementById('fontFamily').value;
     const fontPreview = document.getElementById('fontPreview');
 
