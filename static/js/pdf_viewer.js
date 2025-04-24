@@ -1032,7 +1032,9 @@ function handleResponsiveLayout() {
     const previewContainer = document.querySelector('.preview-container');
     const mobileTermsContainer = document.querySelector('.mobile-terms-container');
     const termsCheckboxContainer = document.querySelector('.terms-checkbox-container');
-
+    const previewControlsGroup = document.querySelector('.preview-controls-group');
+    const zoomControls = document.querySelector('.zoom-controls');
+    
     if (previewContainer) {
         if (isMobile) {
             // Ajusta a altura para considerar a faixa de termos em mobile
@@ -1043,6 +1045,33 @@ function handleResponsiveLayout() {
             if (termsCheckboxContainer) {
                 termsCheckboxContainer.style.setProperty('display', 'none', 'important');
             }
+            
+            // Ajustar controles para mobile
+            if (previewControlsGroup) {
+                previewControlsGroup.style.width = '100%';
+                previewControlsGroup.style.justifyContent = 'center';
+            }
+            
+            if (zoomControls) {
+                zoomControls.style.gap = '4px';
+            }
+            
+            // Ajustar tamanho dos botões
+            document.querySelectorAll('.preview-controls-group .action-btn').forEach(btn => {
+                btn.style.minWidth = '40px';
+                btn.style.minHeight = '40px';
+                btn.style.padding = '8px';
+                btn.style.display = 'flex';
+                btn.style.alignItems = 'center';
+                btn.style.justifyContent = 'center';
+            });
+            
+            // Ajustar tamanho do texto do zoom
+            const zoomLevel = document.getElementById('zoomLevel');
+            if (zoomLevel) {
+                zoomLevel.style.fontSize = '0.75rem';
+                zoomLevel.style.minWidth = '36px';
+            }
         } else {
             // Restaura a altura original em desktop
             previewContainer.style.height = 'calc(100vh - 120px)';
@@ -1052,6 +1081,48 @@ function handleResponsiveLayout() {
             if (termsCheckboxContainer) {
                 termsCheckboxContainer.style.setProperty('display', 'flex', 'important');
             }
+            
+            // Restaurar estilos dos controles para desktop
+            if (previewControlsGroup) {
+                previewControlsGroup.style.width = '';
+                previewControlsGroup.style.justifyContent = '';
+            }
+            
+            if (zoomControls) {
+                zoomControls.style.gap = '';
+            }
+            
+            // Restaurar tamanho dos botões
+            document.querySelectorAll('.preview-controls-group .action-btn').forEach(btn => {
+                btn.style.minWidth = '';
+                btn.style.minHeight = '';
+                btn.style.padding = '';
+                btn.style.display = '';
+                btn.style.alignItems = '';
+                btn.style.justifyContent = '';
+            });
+            
+            // Restaurar tamanho do texto do zoom
+            const zoomLevel = document.getElementById('zoomLevel');
+            if (zoomLevel) {
+                zoomLevel.style.fontSize = '';
+                zoomLevel.style.minWidth = '';
+            }
+        }
+    }
+    
+    // Ajustar modal
+    const simpleModal = document.getElementById('simpleModal');
+    if (simpleModal) {
+        const modalContent = simpleModal.querySelector('.modal-content');
+        if (modalContent && isMobile) {
+            modalContent.style.width = '95%';
+            modalContent.style.maxWidth = '95%';
+            modalContent.style.margin = '5% auto';
+        } else if (modalContent) {
+            modalContent.style.width = '';
+            modalContent.style.maxWidth = '';
+            modalContent.style.margin = '';
         }
     }
 }

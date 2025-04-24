@@ -359,12 +359,25 @@
         gap: 4px;
     }
 
+    .preview-controls-group {
+        display: flex;
+        width: 100%;
+        justify-content: center;
+    }
+
     .preview-controls-group .action-btn {
         min-width: 40px;
         min-height: 40px;
         display: flex;
         align-items: center;
         justify-content: center;
+        padding: 8px !important;
+    }
+
+    .preview-header {
+        flex-wrap: wrap;
+        justify-content: space-between;
+        padding: 8px;
     }
 
     #zoomLevel {
@@ -432,6 +445,26 @@
         background-color: rgba(0, 0, 0, 0.7);
         padding: 4px 10px;
         font-size: 12px;
+    }
+    
+    /* Melhorias específicas para o simpleModal em mobile */
+    #simpleModal .modal-content {
+        width: 95%;
+        max-width: 95% !important;
+        margin: 5% auto !important;
+    }
+    
+    #simpleModal .modal-header {
+        padding: 10px 15px;
+    }
+    
+    #simpleModal .modal-body {
+        padding: 15px;
+        max-height: 60vh;
+    }
+    
+    #simpleModal .modal-footer {
+        padding: 10px 15px;
     }
 }
 
