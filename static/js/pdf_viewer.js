@@ -1049,7 +1049,7 @@ function handleResponsiveLayout() {
             // Ajustar controles para mobile
             if (previewControlsGroup) {
                 previewControlsGroup.style.width = '100%';
-                previewControlsGroup.style.justifyContent = 'center';
+                previewControlsGroup.style.justifyContent = 'flex-end';
             }
             
             if (zoomControls) {
@@ -1085,7 +1085,7 @@ function handleResponsiveLayout() {
             // Restaurar estilos dos controles para desktop
             if (previewControlsGroup) {
                 previewControlsGroup.style.width = '';
-                previewControlsGroup.style.justifyContent = '';
+                previewControlsGroup.style.justifyContent = 'flex-end';
             }
             
             if (zoomControls) {

@@ -35,9 +35,9 @@
 }
 
 .preview-controls-group {
+    display: flex;
     flex-grow: 0;
     flex-shrink: 0;
-    display: flex;
     justify-content: flex-end;
 }
 
@@ -397,7 +397,7 @@
         min-height: 60px;
         padding: 10px;
     }
-    
+
     /* Melhorias para o modal simples em dispositivos móveis */
     .modal-content.simple-modal {
         width: 95%;
@@ -405,64 +405,64 @@
         margin: 10px auto;
         padding: 0 !important;
     }
-    
+
     .modal-body {
         max-height: 60vh;
         overflow-y: auto;
         padding: 15px;
     }
-    
+
     .font-buttons-container {
         grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
         max-height: 200px;
     }
-    
+
     .font-btn {
         height: 40px;
         padding: 8px;
     }
-    
+
     .font-btn span {
         font-size: 16px;
     }
-    
+
     .modal-header, .modal-footer {
         padding: 10px 15px;
     }
-    
+
     /* Ajustar visualização de PDF para mobile */
     .pdf-pages-container {
         padding: 10px 5px;
     }
-    
+
     .pdf-page-wrapper {
         margin-bottom: 15px;
         width: 98%; /* Dar um pouco de espaço nas laterais */
     }
-    
+
     .pdf-page-number {
         bottom: -18px;
         background-color: rgba(0, 0, 0, 0.7);
         padding: 4px 10px;
         font-size: 12px;
     }
-    
+
     /* Melhorias específicas para o simpleModal em mobile */
     #simpleModal .modal-content {
         width: 95%;
         max-width: 95% !important;
         margin: 5% auto !important;
     }
-    
+
     #simpleModal .modal-header {
         padding: 10px 15px;
     }
-    
+
     #simpleModal .modal-body {
         padding: 15px;
         max-height: 60vh;
     }
-    
+
     #simpleModal .modal-footer {
         padding: 10px 15px;
     }
