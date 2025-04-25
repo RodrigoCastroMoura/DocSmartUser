@@ -166,6 +166,8 @@
     font-size: 0.875rem;
     user-select: none;
     cursor: pointer;
+    justify-content: flex-start;
+    text-align: left;
 }
 
 .terms-checkbox-label input {
@@ -177,7 +179,7 @@
     padding: 8px;
     background-color: var(--bg-secondary);
     border-bottom: 1px solid var(--border-color);
-    justify-content: center;
+    justify-content: flex-start;
     position: relative;
     z-index: 200;
 }
