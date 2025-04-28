@@ -439,7 +439,7 @@ async function detectSignatureFields(pageNumber, canvas, viewport) {
 
                 const field = {
                     x: rx0,
-                    y: (viewport.height - ry1) - 6,
+                    y: (viewport.height - ry1) + 24,
                     width: rx1 - rx0,
                     height: (ry1 - ry0) - 10,
                     type: 'rubric',
@@ -462,10 +462,10 @@ async function detectSignatureFields(pageNumber, canvas, viewport) {
                 const iconFontSize = 10 * zoomLevel;
                 const textFontSize = 8 * zoomLevel;
                 ctx.font = `${iconFontSize}px Arial`;
-                ctx.fillText('✓', field.x + 10, field.y + (field.height / 2));
+                ctx.fillText('✓', field.x + 6, field.y + (field.height / 2));
                 ctx.font = `${textFontSize}px Arial`;
                 ctx.fillStyle = '#666';
-                ctx.fillText('Clique para rubricar', field.x + 25, field.y + (field.height / 2));
+                ctx.fillText('rubricar', field.x + 14, field.y + (field.height / 2));
                 ctx.restore();
             } else if (pendingRubrics.includes(pageNumber + 1)) {
                 // Posicionar rubrica no canto superior direito como fallback
@@ -497,7 +497,7 @@ async function detectSignatureFields(pageNumber, canvas, viewport) {
                 ctx.fillText('✓', field.x + 10, field.y + (field.height / 2));
                 ctx.font = `${textFontSize}px Arial`;
                 ctx.fillStyle = '#666';
-                ctx.fillText('Clique para rubricar', field.x + 25, field.y + (field.height / 2));
+                ctx.fillText('rubricar', field.x + 20, field.y + (field.height / 2));
                 ctx.restore();
             }
         }
