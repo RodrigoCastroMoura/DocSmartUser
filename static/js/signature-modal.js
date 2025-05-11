@@ -18,8 +18,9 @@ function generateTextSignature(text, font) {
     canvas.height = 90;
 
     // Limpar o canvas
-    ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // Configurar composição para garantir transparência
+    ctx.globalCompositeOperation = 'source-over';
 
     let fontSize = 78; // Alterado de 60 para 80
     if (textLength > 15) {
@@ -35,7 +36,7 @@ function generateTextSignature(text, font) {
     ctx.fillText(text, canvas.width/2, canvas.height -40);
 
     // Retornar a imagem como URL de dados
-    return canvas.toDataURL('image/png');
+    return canvas.toDataURL('image/png', 1.0);
 }
 
 // Função para gerar a imagem da rubrica
@@ -50,8 +51,9 @@ function generateRubricImage(text, font) {
     canvas.height = 80;
 
     // Limpar o canvas
-    ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // Configurar composição para garantir transparência
+    ctx.globalCompositeOperation = 'source-over';
 
     let fontSize = 58; // Um pouco menor que a assinatura
     if (textLength > 3) {
@@ -67,7 +69,7 @@ function generateRubricImage(text, font) {
     ctx.fillText(text, canvas.width/2, canvas.height/2);
 
     // Retornar a imagem como URL de dados
-    return canvas.toDataURL('image/png');
+    return canvas.toDataURL('image/png', 1.0);
 }
 
 // Função para gerar assinatura baseada em texto com fonte específica
@@ -82,8 +84,9 @@ function generateTextSignatureDoc(text, font) {
     canvas.height = 111;
 
     // Limpar o canvas
-    ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // Configurar composição para garantir transparência
+    ctx.globalCompositeOperation = 'source-over';
 
     let fontSize = 80; // Alterado de 60 para 80
     if (textLength > 15) {
@@ -109,7 +112,7 @@ function generateTextSignatureDoc(text, font) {
 
 
     // Retornar a imagem como URL de dados
-    return canvas.toDataURL('image/png');
+    return canvas.toDataURL('image/png', 1.0);
 }
 
 // Função para gerar a imagem da rubrica
@@ -124,8 +127,10 @@ function generateRubricImageDoc(text, font) {
     canvas.height = 80;
 
     // Limpar o canvas
-    ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Configurar composição para garantir transparência
+    ctx.globalCompositeOperation = 'source-over';
 
     let fontSize = 60; // Um pouco menor que a assinatura
     if (textLength > 3) {
@@ -151,7 +156,7 @@ function generateRubricImageDoc(text, font) {
     ctx.fillText(id_doc, canvas.width/2, 75);
 
     // Retornar a imagem como URL de dados
-    return canvas.toDataURL('image/png');
+    return canvas.toDataURL('image/png', 1.0);
 }
 
 
