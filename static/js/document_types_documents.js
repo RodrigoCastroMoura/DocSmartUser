@@ -1024,7 +1024,7 @@ async function renderPdfPageSignature(pageNumber, canvas) {
                 }
             } else{
 
-                const rubrectangle = findSignature.resultados[pageNumbe-1].rect;
+                const rubrectangle = findSignature.resultados[pageNumber-1].rect;
                 const [rx0, ry0] = viewport.convertToViewportPoint(rubrectangle.x0, rubrectangle.y0);
                 const [rx1, ry1] = viewport.convertToViewportPoint(rubrectangle.x1, rubrectangle.y1);
                 

@@ -103,7 +103,7 @@ function generateTextSignatureDoc(text, font) {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     // Desenhar o texto
-    ctx.fillText(text, canvas.width/2, canvas.height -55);
+    ctx.fillText(text, canvas.width/2, canvas.height -57);
 
     // Identificador abaixo da linha
     ctx.font = '20px Courier New';
